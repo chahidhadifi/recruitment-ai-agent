@@ -13,7 +13,7 @@ export default function ContactPage() {
             <h1 className="text-4xl font-bold tracking-tight mb-4">Contactez-nous</h1>
             <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
               Vous avez des questions sur notre plateforme de recrutement IA ? Notre équipe est là pour vous aider.
-              N'hésitez pas à nous contacter par le formulaire ci-dessous ou via nos coordonnées directes.
+              N&apos;hésitez pas à nous contacter par le formulaire ci-dessous ou via nos coordonnées directes.
             </p>
           </div>
 
@@ -47,7 +47,7 @@ export default function ContactPage() {
               <h3 className="text-lg font-medium mb-2">Adresse</h3>
               <p className="text-muted-foreground mb-3">Venez nous rencontrer</p>
               <address className="not-italic text-primary">
-                123 Avenue de l'Innovation<br />
+                123 Avenue de l&apos;Innovation<br />
                 75008 Paris, France
               </address>
             </div>

@@ -227,7 +227,7 @@ export default function NewCandidatePage() {
                       <p className="pl-1">ou glisser-déposer</p>
                     </div>
                     <p className="text-xs leading-5 text-muted-foreground">
-                      PDF, DOC ou DOCX jusqu'à 10MB
+                      PDF, DOC ou DOCX jusqu&apos;à 10MB
                     </p>
                     {cvFile && (
                       <p className="mt-2 text-sm text-primary">

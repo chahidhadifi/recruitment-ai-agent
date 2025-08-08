@@ -322,7 +322,7 @@ export default function InterviewsPage() {
                         {interview.position}
                       </td>
                       <td className="px-4 py-4 whitespace-nowrap text-sm">
-                        {new Date(interview.date).toLocaleDateString('fr-FR')}
+                        {new Date(interview.date).toLocaleDateString("fr-FR")}
                       </td>
                       <td className="px-4 py-4 whitespace-nowrap text-sm">
                         {interview.duration}
@@ -424,7 +424,7 @@ export default function InterviewsPage() {
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div className="space-y-2">
-                    <Label htmlFor="title">Titre de l'entretien</Label>
+                    <Label htmlFor="title">Titre de l&apos;entretien</Label>
                     <Input
                       id="title"
                       value={newInterview.title}
@@ -518,7 +518,7 @@ export default function InterviewsPage() {
                 <CardFooter>
                   <div className="flex gap-2">
                     <Button onClick={handleCreateInterview}>
-                      Créer l'entretien
+                      Créer l&apos;entretien
                     </Button>
                     <Button variant="outline" onClick={() => setActiveTab("list")}>
                       Annuler
@@ -547,7 +547,7 @@ export default function InterviewsPage() {
                       </div>
                       <div>
                         <p className="text-sm font-medium">Date</p>
-                        <p>{new Date(selectedInterview.date).toLocaleDateString('fr-FR')}</p>
+                        <p>{new Date(selectedInterview.date).toLocaleDateString("fr-FR")}</p>
                       </div>
                       <div>
                         <p className="text-sm font-medium">Statut</p>
@@ -563,7 +563,7 @@ export default function InterviewsPage() {
                     <div className="flex gap-2">
                       {selectedInterview.status === "Planifié" && (
                         <Button onClick={() => router.push(`/interviews/candidat?id=${selectedInterview.id}`)}>
-                          Démarrer l'entretien
+                          Démarrer l&apos;entretien
                         </Button>
                       )}
                       <Button variant="outline" onClick={() => setActiveTab("list")}>

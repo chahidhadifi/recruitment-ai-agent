@@ -1,8 +1,7 @@
 import { MainLayout } from "@/components/main-layout";
-import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
-import { ArrowRight, CheckCircle, Users, Briefcase, Brain, Clock, Shield, Award, BarChart, Zap, Globe } from "lucide-react";
+import { ArrowRight, Users, Briefcase, Brain, Clock, Shield, Award, BarChart, Zap, Globe } from "lucide-react";
 
 export default function AboutPage() {
   return (
@@ -15,9 +14,9 @@ export default function AboutPage() {
               À propos de AI Recruitment Platform
             </h1>
             <p className="text-lg text-muted-foreground mb-8 max-w-3xl mx-auto">
-              Nous révolutionnons le processus de recrutement grâce à l'intelligence artificielle,
-              en aidant les entreprises à trouver les meilleurs talents plus rapidement et avec plus d'objectivité.
-              Notre plateforme complète transforme chaque étape du recrutement, de la publication des offres à l'intégration des nouveaux employés.
+              Nous révolutionnons le processus de recrutement grâce à l&apos;intelligence artificielle,
+              en aidant les entreprises à trouver les meilleurs talents plus rapidement et avec plus d&apos;objectivité.
+              Notre plateforme complète transforme chaque étape du recrutement, de la publication des offres à l&apos;intégration des nouveaux employés.
             </p>
             <div className="flex flex-wrap justify-center gap-4">
               <Button asChild size="lg">
@@ -26,7 +25,7 @@ export default function AboutPage() {
                 </Link>
               </Button>
               <Button asChild variant="outline" size="lg">
-                <Link href="/jobs">Voir nos offres d'emploi</Link>
+                <Link href="/jobs">Voir nos offres d&apos;emploi</Link>
               </Button>
             </div>
           </div>
@@ -41,7 +40,7 @@ export default function AboutPage() {
               <h2 className="text-3xl font-bold tracking-tight mb-4">Notre Mission</h2>
               <p className="text-lg text-muted-foreground">
                 Nous croyons que le recrutement devrait être efficace, équitable et basé sur les compétences réelles.
-                Notre mission est de démocratiser l'accès aux technologies d'IA pour tous les acteurs du recrutement,
+                Notre mission est de démocratiser l&apos;accès aux technologies d&apos;IA pour tous les acteurs du recrutement,
                 tout en garantissant un processus éthique et transparent.
               </p>
             </div>
@@ -64,8 +63,8 @@ export default function AboutPage() {
                 </div>
                 <h3 className="text-xl font-medium mb-2">Pour les candidats</h3>
                 <p className="text-muted-foreground">
-                  Bénéficiez d'un processus de recrutement transparent, rapide et basé sur vos compétences réelles.
-                  Notre système d'entretien IA vous permet de mettre en valeur vos talents à tout moment, sans stress.
+                  Bénéficiez d&apos;un processus de recrutement transparent, rapide et basé sur vos compétences réelles.
+                  Notre système d&apos;entretien IA vous permet de mettre en valeur vos talents à tout moment, sans stress.
                 </p>
               </div>
 
@@ -75,7 +74,7 @@ export default function AboutPage() {
                 </div>
                 <h3 className="text-xl font-medium mb-2">IA avancée</h3>
                 <p className="text-muted-foreground">
-                  Notre technologie d'IA analyse les CV, mène des entretiens et génère des rapports d'évaluation complets.
+                  Notre technologie d&apos;IA analyse les CV, mène des entretiens et génère des rapports d&apos;évaluation complets.
                   Nous utilisons des modèles de langage de pointe pour comprendre les nuances des compétences et de la personnalité.
                 </p>
               </div>
@@ -91,7 +90,7 @@ export default function AboutPage() {
             <div className="text-center mb-12">
               <h2 className="text-3xl font-bold tracking-tight mb-4">Notre Technologie</h2>
               <p className="text-lg text-muted-foreground">
-                Notre plateforme utilise des technologies d'intelligence artificielle avancées pour révolutionner chaque étape du processus de recrutement.
+                Notre plateforme utilise des technologies d&apos;intelligence artificielle avancées pour révolutionner chaque étape du processus de recrutement.
               </p>
             </div>
 
@@ -105,7 +104,7 @@ export default function AboutPage() {
                 <div>
                   <h3 className="text-xl font-medium mb-2">Analyse intelligente des CV</h3>
                   <p className="text-muted-foreground">
-                    Notre système analyse automatiquement les CV pour extraire les compétences, l'expérience et les qualifications pertinentes, en les comparant aux exigences du poste.
+                    Notre système analyse automatiquement les CV pour extraire les compétences, l&apos;expérience et les qualifications pertinentes, en les comparant aux exigences du poste.
                   </p>
                 </div>
               </div>
@@ -133,7 +132,7 @@ export default function AboutPage() {
                 <div>
                   <h3 className="text-xl font-medium mb-2">Analyse prédictive</h3>
                   <p className="text-muted-foreground">
-                    Nos algorithmes prédisent la compatibilité des candidats avec votre culture d'entreprise et les exigences du poste, en se basant sur des données historiques de réussite.
+                    Nos algorithmes prédisent la compatibilité des candidats avec votre culture d&apos;entreprise et les exigences du poste, en se basant sur des données historiques de réussite.
                   </p>
                 </div>
               </div>
@@ -178,7 +177,7 @@ export default function AboutPage() {
                   <h3 className="text-xl font-medium mb-2">Gain de temps considérable</h3>
                   <p className="text-muted-foreground">
                     Automatisez le tri des CV et les premiers entretiens pour vous concentrer sur les meilleurs candidats.
-                    Réduisez jusqu'à 70% le temps consacré aux tâches administratives du recrutement.
+                    Réduisez jusqu&apos;à 70% le temps consacré aux tâches administratives du recrutement.
                   </p>
                 </div>
               </div>
@@ -193,7 +192,7 @@ export default function AboutPage() {
                   <h3 className="text-xl font-medium mb-2">Réduction des biais</h3>
                   <p className="text-muted-foreground">
                     Notre IA est conçue pour évaluer objectivement les compétences, réduisant les biais inconscients.
-                    Nos algorithmes sont régulièrement audités pour garantir l'équité du processus.
+                    Nos algorithmes sont régulièrement audités pour garantir l&apos;équité du processus.
                   </p>
                 </div>
               </div>
@@ -208,7 +207,7 @@ export default function AboutPage() {
                   <h3 className="text-xl font-medium mb-2">Qualité des recrutements</h3>
                   <p className="text-muted-foreground">
                     Améliorez la pertinence des embauches grâce à une évaluation approfondie des compétences techniques et soft skills.
-                    Nos clients rapportent une réduction de 35% du turnover après l'adoption de notre plateforme.
+                    Nos clients rapportent une réduction de 35% du turnover après l&apos;adoption de notre plateforme.
                   </p>
                 </div>
               </div>
@@ -222,7 +221,7 @@ export default function AboutPage() {
                 <div>
                   <h3 className="text-xl font-medium mb-2">Technologie de pointe</h3>
                   <p className="text-muted-foreground">
-                    Bénéficiez des dernières avancées en matière d'IA et de traitement du langage naturel pour l'analyse des candidatures.
+                    Bénéficiez des dernières avancées en matière d&apos;IA et de traitement du langage naturel pour l&apos;analyse des candidatures.
                     Notre équipe de chercheurs améliore constamment nos algorithmes pour des résultats toujours plus précis.
                   </p>
                 </div>
@@ -239,7 +238,7 @@ export default function AboutPage() {
             <div className="text-center mb-12">
               <h2 className="text-3xl font-bold tracking-tight mb-4">Résultats Prouvés</h2>
               <p className="text-lg text-muted-foreground">
-                Notre plateforme a déjà aidé des centaines d'entreprises à transformer leur processus de recrutement.
+                Notre plateforme a déjà aidé des centaines d&apos;entreprises à transformer leur processus de recrutement.
               </p>
             </div>
 
@@ -277,7 +276,7 @@ export default function AboutPage() {
             </h2>
             <p className="text-lg text-muted-foreground mb-8">
               Rejoignez les entreprises qui ont déjà optimisé leur recrutement grâce à notre plateforme IA.
-              Commencez dès aujourd'hui et constatez les résultats en moins de 30 jours.
+              Commencez dès aujourd&apos;hui et constatez les résultats en moins de 30 jours.
             </p>
             <div className="flex flex-wrap justify-center gap-4">
               <Button asChild size="lg">

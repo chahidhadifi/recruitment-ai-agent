@@ -2,10 +2,11 @@
 
 import { useState, useEffect } from "react";
 import { useRouter, useParams } from "next/navigation";
+import Link from "next/link";
 import { useSession } from "next-auth/react";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Calendar } from "lucide-react";
 
 import { MainLayout } from "@/components/main-layout";
 import { Button } from "@/components/ui/button";
@@ -187,6 +188,8 @@ export default function JobApplicationsPage() {
         return "secondary";
       case "reviewing":
         return "warning";
+      case "interview":
+        return "primary";
       case "accepted":
         return "success";
       case "rejected":
@@ -203,6 +206,8 @@ export default function JobApplicationsPage() {
         return "En attente";
       case "reviewing":
         return "En cours d'examen";
+      case "interview":
+        return "Entretien planifié";
       case "accepted":
         return "Acceptée";
       case "rejected":
@@ -244,7 +249,7 @@ export default function JobApplicationsPage() {
       <div className="container py-10">
         <Button variant="outline" onClick={() => router.push(`/jobs/${jobId}`)} className="mb-6">
           <ArrowLeft className="mr-2 h-4 w-4" />
-          Retour à l'offre
+          Retour à l&apos;offre
         </Button>
         
         {job && (
@@ -307,7 +312,7 @@ export default function JobApplicationsPage() {
                               size="sm"
                               onClick={() => updateApplicationStatus(application.id, "reviewing")}
                             >
-                              Marquer en cours d'examen
+                              Marquer en cours d&apos;examen
                             </Button>
                           )}
                           
@@ -330,6 +335,32 @@ export default function JobApplicationsPage() {
                               Refuser
                             </Button>
                           )}
+                          
+                          {application.status !== "interview" ? (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => {
+                                updateApplicationStatus(application.id, "interview");
+                                // Rediriger vers la page d'entretien après la mise à jour du statut
+                                setTimeout(() => {
+                                  router.push(`/interviews/new?candidateId=${application.candidateId}&applicationId=${application.id}&jobId=${jobId}`);
+                                }, 500);
+                              }}
+                            >
+                              <Calendar className="mr-2 h-4 w-4" /> Planifier un entretien
+                            </Button>
+                          ) : (
+                            <Button
+                              variant="secondary"
+                              size="sm"
+                              asChild
+                            >
+                              <Link href={`/interviews/new?candidateId=${application.candidateId}&applicationId=${application.id}&jobId=${jobId}`}>
+                                Voir l&apos;entretien
+                              </Link>
+                            </Button>
+                          )}
                         </div>
                       </div>
                     </div>
@@ -340,7 +371,7 @@ export default function JobApplicationsPage() {
           </div>
         ) : (
           <div className="flex justify-center items-center h-40 bg-muted rounded-md">
-            <p className="text-muted-foreground">Aucune candidature pour cette offre d'emploi.</p>
+            <p className="text-muted-foreground">Aucune candidature pour cette offre d&apos;emploi.</p>
           </div>
         )}
       </div>

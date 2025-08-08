@@ -10,7 +10,7 @@ import { MainLayout } from "@/components/main-layout";
 import { Button } from "@/components/ui/button";
 
 export default function ProfilePage() {
-  // Création d'une session fictive pour les tests (l'authentification est désactivée)
+  // Création d&apos;une session fictive pour les tests (l&apos;authentification est désactivée)
   const { data: realSession, update } = useSession();
   
   // Session fictive pour les tests
@@ -23,7 +23,7 @@ export default function ProfilePage() {
     }
   };
   
-  // Utiliser la session fictive si aucune session réelle n'est disponible
+  // Utiliser la session fictive si aucune session réelle n&apos;est disponible
   const session = realSession || mockSession;
   const router = useRouter();
   const { toast } = useToast();
@@ -34,7 +34,7 @@ export default function ProfilePage() {
     email: session?.user?.email || "",
     company: "AI Recruitment Inc.",
     role: "Recruteur",
-    bio: "Spécialiste en recrutement avec 5 ans d'expérience dans le secteur technologique.",
+    bio: "Spécialiste en recrutement avec 5 ans d&apos;expérience dans le secteur technologique.",
   });
 
   const handleProfileChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -160,7 +160,7 @@ export default function ProfilePage() {
                     className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary/50 bg-background"
                     disabled
                   />
-                  <p className="text-xs text-muted-foreground mt-1">L'email ne peut pas être modifié.</p>
+                  <p className="text-xs text-muted-foreground mt-1">L&apos;email ne peut pas être modifié.</p>
                 </div>
                 
                 <div>

@@ -183,9 +183,9 @@ const mockJobs: Record<string, Job> = {
 };
 
 // GET /api/jobs/:id - Récupérer une offre d'emploi spécifique
-export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
+export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
-    const jobId = params.id;
+    const { id: jobId } = await params;
     
     // Vérifier si l'ID est valide
     if (!jobId) {
@@ -207,7 +207,7 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
 }
 
 // PATCH /api/jobs/:id - Mettre à jour une offre d'emploi
-export async function PATCH(request: NextRequest, { params }: { params: { id: string } }) {
+export async function PATCH(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     // Vérifier l'authentification et les autorisations
     const session = await getServerSession(authOptions);
@@ -221,7 +221,7 @@ export async function PATCH(request: NextRequest, { params }: { params: { id: st
       return NextResponse.json({ error: 'Accès refusé' }, { status: 403 });
     }
 
-    const jobId = params.id;
+    const { id: jobId } = await params;
     
     // Vérifier si l'ID est valide
     if (!jobId) {
@@ -278,7 +278,7 @@ export async function PATCH(request: NextRequest, { params }: { params: { id: st
 }
 
 // DELETE /api/jobs/:id - Supprimer une offre d'emploi
-export async function DELETE(request: NextRequest, { params }: { params: { id: string } }) {
+export async function DELETE(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     // Vérifier l'authentification et les autorisations
     const session = await getServerSession(authOptions);
@@ -292,7 +292,8 @@ export async function DELETE(request: NextRequest, { params }: { params: { id: s
       return NextResponse.json({ error: 'Accès refusé' }, { status: 403 });
     }
 
-    const jobId = params.id;
+    // Récupérer l'ID de l'offre
+    const { id: jobId } = await params;
     
     // Vérifier si l'ID est valide
     if (!jobId) {

@@ -68,10 +68,10 @@ export default function UsersPage() {
   const [userToDelete, setUserToDelete] = useState<UserWithRole | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   
-  // Vérifier si l'utilisateur est un administrateur
+  // Vérifier si l&apos;utilisateur est un administrateur
   const isAdmin = session?.user?.role === "admin";
   
-  // Rediriger si l'utilisateur n'est pas authentifié ou n'est pas un administrateur
+  // Rediriger si l&apos;utilisateur n&apos;est pas authentifié ou n&apos;est pas un administrateur
   if (status === "loading") {
     return (
       <MainLayout>
@@ -113,7 +113,7 @@ export default function UsersPage() {
     loadUsers();
   }, [searchTerm, filterRole]);
   
-  // Utilisateurs filtrés (déjà filtrés par l'API)
+  // Utilisateurs filtrés (déjà filtrés par l&apos;API)
   const filteredUsers = users;
 
   // Fonction pour ouvrir le dialogue de confirmation de suppression
@@ -138,7 +138,7 @@ export default function UsersPage() {
         setUsers(users.filter(user => user.id !== userToDelete.id));
       }
     } catch (error) {
-      console.error("Erreur lors de la suppression de l'utilisateur:", error);
+      console.error("Erreur lors de la suppression de l&apos;utilisateur:", error);
     }
   };
 

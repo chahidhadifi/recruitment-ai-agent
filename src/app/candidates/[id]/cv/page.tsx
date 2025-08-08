@@ -125,21 +125,37 @@ UX Designer créative avec 4 ans d'expérience dans la conception d'interfaces u
   },
 };
 
-export default function CandidateCVPage({ params }: { params: { id: string } }) {
+export default function CandidateCVPage({ params }: { params: Promise<{ id: string }> }) {
   const router = useRouter();
-  const [candidate, setCandidate] = useState<any>(null);
+  const [candidate, setCandidate] = useState<{
+    id: string;
+    name: string;
+    position: string;
+    cvContent: string;
+  } | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Simuler un chargement de données
-    setTimeout(() => {
-      const candidateData = mockCandidates[params.id as keyof typeof mockCandidates];
-      if (candidateData) {
-        setCandidate(candidateData);
+    // Récupérer l'ID du candidat et charger les données
+    const loadCandidate = async () => {
+      try {
+        const { id } = await params;
+        // Simuler un chargement de données
+        setTimeout(() => {
+          const candidateData = mockCandidates[id as keyof typeof mockCandidates];
+          if (candidateData) {
+            setCandidate(candidateData);
+          }
+          setLoading(false);
+        }, 500);
+      } catch (error) {
+        console.error('Erreur lors du chargement des données:', error);
+        setLoading(false);
       }
-      setLoading(false);
-    }, 500);
-  }, [params.id]);
+    };
+    
+    loadCandidate();
+  }, [params]);
 
   const downloadCV = () => {
     if (!candidate) return;
@@ -178,8 +194,11 @@ export default function CandidateCVPage({ params }: { params: { id: string } }) 
           </Button>
           <div className="flex flex-col items-center justify-center min-h-[60vh]">
             <h1 className="text-2xl font-bold mb-4">CV non trouvé</h1>
-            <p className="text-muted-foreground mb-6">Le CV que vous recherchez n'existe pas ou a été supprimé.</p>
-            <Button onClick={() => router.push(`/candidates/${params.id}`)}>Retour au profil</Button>
+            <p className="text-muted-foreground mb-6">Le CV que vous recherchez n&apos;existe pas ou a été supprimé.</p>
+            <Button onClick={async () => {
+              const { id } = await params;
+              router.push(`/candidates/${id}`);
+            }}>Retour au profil</Button>
           </div>
         </div>
       </MainLayout>
@@ -188,7 +207,7 @@ export default function CandidateCVPage({ params }: { params: { id: string } }) 
 
   // Fonction pour convertir le Markdown en HTML (version simplifiée)
   const renderMarkdown = (markdown: string) => {
-    let html = markdown
+    const html = markdown
       // Titres
       .replace(/^# (.+)$/gm, '<h1 class="text-3xl font-bold mb-2">$1</h1>')
       .replace(/^## (.+)$/gm, '<h2 class="text-2xl font-semibold mt-6 mb-2">$1</h2>')

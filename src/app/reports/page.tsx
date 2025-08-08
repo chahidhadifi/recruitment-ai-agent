@@ -107,7 +107,7 @@ export default function ReportsPage() {
           </div>
           
           <div className="bg-card rounded-lg shadow-sm p-6">
-            <h3 className="text-lg font-semibold text-muted-foreground mb-2">Taux d'embauche</h3>
+            <h3 className="text-lg font-semibold text-muted-foreground mb-2">Taux d&apos;embauche</h3>
             <p className="text-3xl font-bold">{mockStats.hiringRate}<span className="text-lg font-normal">%</span></p>
             <div className="mt-2 text-sm text-green-500 dark:text-green-400">
               +5% par rapport à la période précédente
@@ -210,9 +210,9 @@ export default function ReportsPage() {
             </div>
           </div>
           
-          {/* Statistiques d'entretien */}
+          {/* Statistiques d&apos;entretien */}
           <div className="bg-card rounded-lg shadow-sm p-6">
-            <h2 className="text-xl font-bold mb-6">Statistiques d'entretien</h2>
+            <h2 className="text-xl font-bold mb-6">Statistiques d&apos;entretien</h2>
             
             <div className="grid grid-cols-2 gap-6">
               <div className="text-center">
@@ -220,7 +220,7 @@ export default function ReportsPage() {
                   <BarChart className="h-8 w-8 text-primary" />
                 </div>
                 <h3 className="text-2xl font-bold">24 min</h3>
-                <p className="text-sm text-muted-foreground">Durée moyenne d'entretien</p>
+                <p className="text-sm text-muted-foreground">Durée moyenne d&apos;entretien</p>
               </div>
               
               <div className="text-center">
@@ -244,7 +244,7 @@ export default function ReportsPage() {
                   <Calendar className="h-8 w-8 text-primary" />
                 </div>
                 <h3 className="text-2xl font-bold">2.4</h3>
-                <p className="text-sm text-muted-foreground">Jours pour compléter l'évaluation</p>
+                <p className="text-sm text-muted-foreground">Jours pour compléter l&apos;évaluation</p>
               </div>
             </div>
           </div>

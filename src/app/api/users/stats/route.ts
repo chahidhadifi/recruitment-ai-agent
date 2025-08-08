@@ -6,7 +6,7 @@ import { UserStats } from "@/types/user";
 
 // Référence aux données mockées dans la route principale
 // Dans une application réelle, cela serait remplacé par une base de données
-let mockUsers: UserWithRole[] = [
+const mockUsers: UserWithRole[] = [
   {
     id: "admin-1",
     name: "Administrateur Principal",
@@ -52,7 +52,7 @@ let mockUsers: UserWithRole[] = [
 ];
 
 // GET /api/users/stats - Récupérer les statistiques des utilisateurs
-export async function GET(req: NextRequest) {
+export async function GET(_req: NextRequest) {
   try {
     // Vérifier l'authentification et les autorisations
     const session = await getServerSession(authOptions);

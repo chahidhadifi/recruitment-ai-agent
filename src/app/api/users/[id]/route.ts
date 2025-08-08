@@ -51,7 +51,7 @@ let mockUsers: UserWithRole[] = [
 ];
 
 // GET /api/users/[id] - Récupérer un utilisateur spécifique
-export async function GET(req: NextRequest, { params }: { params: { id: string } }) {
+export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     // Vérifier l'authentification et les autorisations
     const session = await getServerSession(authOptions);
@@ -65,7 +65,8 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
     }
     
     // Récupérer l'utilisateur par ID
-    const user = mockUsers.find(user => user.id === params.id);
+    const { id } = await params;
+    const user = mockUsers.find(user => user.id === id);
     
     if (!user) {
       return NextResponse.json({ error: "Utilisateur non trouvé" }, { status: 404 });
@@ -79,7 +80,7 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
 }
 
 // PUT /api/users/[id] - Mettre à jour un utilisateur
-export async function PUT(req: NextRequest, { params }: { params: { id: string } }) {
+export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     // Vérifier l'authentification et les autorisations
     const session = await getServerSession(authOptions);
@@ -100,15 +101,18 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
       return NextResponse.json({ error: "Données invalides" }, { status: 400 });
     }
     
+    // Récupérer l'ID de l'utilisateur
+    const { id } = await params;
+    
     // Trouver l'utilisateur à mettre à jour
-    const userIndex = mockUsers.findIndex(user => user.id === params.id);
+    const userIndex = mockUsers.findIndex(user => user.id === id);
     
     if (userIndex === -1) {
       return NextResponse.json({ error: "Utilisateur non trouvé" }, { status: 404 });
     }
     
     // Vérifier si l'email existe déjà (sauf pour l'utilisateur actuel)
-    const existingUser = mockUsers.find(user => user.email === data.email && user.id !== params.id);
+    const existingUser = mockUsers.find(user => user.email === data.email && user.id !== id);
     if (existingUser) {
       return NextResponse.json({ error: "Cet email est déjà utilisé" }, { status: 409 });
     }
@@ -136,7 +140,7 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
 }
 
 // DELETE /api/users/[id] - Supprimer un utilisateur
-export async function DELETE(req: NextRequest, { params }: { params: { id: string } }) {
+export async function DELETE(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     // Vérifier l'authentification et les autorisations
     const session = await getServerSession(authOptions);
@@ -149,8 +153,11 @@ export async function DELETE(req: NextRequest, { params }: { params: { id: strin
       return NextResponse.json({ error: "Accès non autorisé" }, { status: 403 });
     }
     
+    // Récupérer l'ID de l'utilisateur
+    const { id } = await params;
+    
     // Vérifier si l'utilisateur existe
-    const userIndex = mockUsers.findIndex(user => user.id === params.id);
+    const userIndex = mockUsers.findIndex(user => user.id === id);
     
     if (userIndex === -1) {
       return NextResponse.json({ error: "Utilisateur non trouvé" }, { status: 404 });
@@ -168,7 +175,7 @@ export async function DELETE(req: NextRequest, { params }: { params: { id: strin
     }
     
     // Supprimer l'utilisateur
-    mockUsers = mockUsers.filter(user => user.id !== params.id);
+    mockUsers = mockUsers.filter(user => user.id !== id);
     
     return NextResponse.json({ success: true });
   } catch (error) {

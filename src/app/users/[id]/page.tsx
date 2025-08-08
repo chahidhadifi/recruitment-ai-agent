@@ -64,36 +64,36 @@ export default function UserDetailsPage({ params }: { params: { id: string } }) 
   const router = useRouter();
   const { data: session, status } = useSession();
   const [user, setUser] = useState<UserWithRole | undefined>(undefined);
-  const [userDetails, setUserDetails] = useState<any | undefined>(undefined);
+  const [userDetails, setUserDetails] = useState<{
+    dateCreated: string;
+    lastLogin: string;
+    status: string;
+    department?: string;
+    specialization?: string;
+    appliedJobs?: number;
+    completedInterviews?: number;
+    averageScore?: number | null;
+  } | undefined>(undefined);
   const [isLoading, setIsLoading] = useState(true);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   
   // Vérifier si l'utilisateur est un administrateur
   const isAdmin = session?.user?.role === "admin";
   
-  // Rediriger si l'utilisateur n'est pas authentifié ou n'est pas un administrateur
-  if (status === "loading") {
-    return (
-      <MainLayout>
-        <div className="container py-10 flex justify-center items-center">
-          <p>Chargement...</p>
-        </div>
-      </MainLayout>
-    );
-  }
-  
-  if (status === "unauthenticated") {
-    router.push("/auth/login");
-    return null;
-  }
-  
-  if (session && !isAdmin) {
-    router.push("/");
-    return null;
-  }
-
-  // Charger les données de l'utilisateur
+  // Gérer la redirection et charger les données de l'utilisateur
   useEffect(() => {
+    // Rediriger si l'utilisateur n'est pas authentifié ou n'est pas un administrateur
+    if (status === "unauthenticated") {
+      router.push("/auth/login");
+      return;
+    }
+    
+    if (status === "authenticated" && !isAdmin) {
+      router.push("/");
+      return;
+    }
+    
+    // Si l'utilisateur est authentifié et est un administrateur, charger les données
     const fetchUser = async () => {
       try {
         const foundUser = await getUserById(params.id);
@@ -107,7 +107,7 @@ export default function UserDetailsPage({ params }: { params: { id: string } }) 
           router.push("/users");
         }
       } catch (error) {
-        console.error("Erreur lors du chargement de l'utilisateur:", error);
+        console.error("Erreur lors du chargement de l&apos;utilisateur:", error);
       } finally {
         setIsLoading(false);
       }

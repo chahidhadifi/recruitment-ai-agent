@@ -123,7 +123,7 @@ export default function HelpArticlePage({ params }: { params: { slug: string } }
                 href="/help" 
                 className="text-sm text-muted-foreground hover:text-foreground flex items-center"
               >
-                <ChevronLeft className="h-4 w-4 mr-1" /> Retour au centre d'aide
+                <ChevronLeft className="h-4 w-4 mr-1" /> Retour au centre d&apos;aide
               </Link>
             </div>
             
@@ -200,7 +200,7 @@ export default function HelpArticlePage({ params }: { params: { slug: string } }
               </div>
               
               <div className="p-6 border-t">
-                <h3 className="text-lg font-semibold mb-4">Besoin d'aide supplémentaire ?</h3>
+                <h3 className="text-lg font-semibold mb-4">Besoin d&apos;aide supplémentaire ?</h3>
                 <Button className="w-full">
                   Contacter le support
                 </Button>

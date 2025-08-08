@@ -1,9 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
-import { writeFile } from 'fs/promises';
-import { join } from 'path';
 import { randomUUID } from 'crypto';
+
+// Ces imports seraient utilisés dans un environnement de production pour stocker les fichiers
+// import { writeFile } from 'fs/promises';
+// import { join } from 'path';
 
 // POST /api/upload - Télécharger un fichier
 export async function POST(request: NextRequest) {
@@ -36,8 +38,9 @@ export async function POST(request: NextRequest) {
     }
 
     // Générer un nom de fichier unique
-    const bytes = await file.arrayBuffer();
-    const buffer = Buffer.from(bytes);
+    // Dans un environnement de production, nous utiliserions ces lignes pour stocker le fichier
+    // const bytes = await file.arrayBuffer();
+    // const buffer = Buffer.from(bytes);
     const fileName = `${session.user.id}-${randomUUID()}-${file.name.replace(/\s+/g, '-')}`;
 
     // Dans un environnement de production, vous utiliseriez un service de stockage comme AWS S3

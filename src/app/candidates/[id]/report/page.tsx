@@ -55,14 +55,14 @@ const mockReports = {
         score: 95,
       },
       {
-        question: "Comment abordez-vous l'accessibilité dans vos designs ?",
-        answer: "L'accessibilité est une priorité dans mes designs. Je m'assure de respecter les normes WCAG, d'utiliser des contrastes suffisants, de fournir des alternatives textuelles pour les images, et de concevoir des interfaces navigables au clavier. Je teste également avec des lecteurs d'écran et j'implique des utilisateurs ayant différents besoins dans mes tests.",
-        evaluation: "Bonne connaissance des principes d'accessibilité et engagement à créer des designs inclusifs.",
+        question: "Comment abordez-vous l&apos;accessibilité dans vos designs ?",
+        answer: "L&apos;accessibilité est une priorité dans mes designs. Je m&apos;assure de respecter les normes WCAG, d&apos;utiliser des contrastes suffisants, de fournir des alternatives textuelles pour les images, et de concevoir des interfaces navigables au clavier. Je teste également avec des lecteurs d&apos;écran et j&apos;implique des utilisateurs ayant différents besoins dans mes tests.",
+        evaluation: "Bonne connaissance des principes d&apos;accessibilité et engagement à créer des designs inclusifs.",
         score: 85,
       },
       {
         question: "Comment gérez-vous les retours critiques sur vos designs ?",
-        answer: "Je considère les retours comme une opportunité d'amélioration. J'écoute attentivement, pose des questions pour clarifier, et évite d'être défensive. Je prends le temps d'analyser les commentaires et d'identifier les améliorations possibles. Je crois que la collaboration et l'itération sont essentielles pour créer les meilleurs designs.",
+        answer: "Je considère les retours comme une opportunité d&apos;amélioration. J&apos;écoute attentivement, pose des questions pour clarifier, et évite d&apos;être défensive. Je prends le temps d&apos;analyser les commentaires et d&apos;identifier les améliorations possibles. Je crois que la collaboration et l&apos;itération sont essentielles pour créer les meilleurs designs.",
         evaluation: "Excellente attitude face aux critiques, démontrant maturité et professionnalisme.",
         score: 90,
       },
@@ -115,25 +115,25 @@ const mockReports = {
     questions: [
       {
         question: "Comment gérez-vous les projets qui prennent du retard ?",
-        answer: "Lorsqu'un projet prend du retard, j'identifie d'abord les causes profondes du retard. Ensuite, je réévalue les priorités et ajuste le plan de projet en conséquence. Je communique ouvertement avec les parties prenantes sur la situation et les solutions proposées. Si nécessaire, je mobilise des ressources supplémentaires ou je négocie une extension de délai. Je mets également en place des mesures préventives pour éviter que des retards similaires ne se reproduisent à l'avenir.",
+        answer: "Lorsqu&apos;un projet prend du retard, j&apos;identifie d&apos;abord les causes profondes du retard. Ensuite, je réévalue les priorités et ajuste le plan de projet en conséquence. Je communique ouvertement avec les parties prenantes sur la situation et les solutions proposées. Si nécessaire, je mobilise des ressources supplémentaires ou je négocie une extension de délai. Je mets également en place des mesures préventives pour éviter que des retards similaires ne se reproduisent à l&apos;avenir.",
         evaluation: "Excellente approche méthodique pour gérer les retards de projet, avec un bon équilibre entre résolution de problèmes et communication.",
         score: 95,
       },
       {
-        question: "Comment assurez-vous la communication efficace entre les membres de l'équipe ?",
-        answer: "Je mets en place plusieurs canaux de communication adaptés aux besoins de l'équipe : réunions quotidiennes courtes pour synchroniser le travail, réunions hebdomadaires plus détaillées pour discuter des problèmes et des progrès, et des outils de communication en ligne pour les échanges continus. J'établis des règles claires sur la fréquence et le format des communications. Je m'assure également que chaque membre comprend son rôle et ses responsabilités, et j'encourage une culture de feedback constructif.",
-        evaluation: "Réponse complète démontrant une compréhension approfondie de l'importance de la communication dans la gestion de projet.",
+        question: "Comment assurez-vous la communication efficace entre les membres de l&apos;équipe ?",
+        answer: "Je mets en place plusieurs canaux de communication adaptés aux besoins de l&apos;équipe : réunions quotidiennes courtes pour synchroniser le travail, réunions hebdomadaires plus détaillées pour discuter des problèmes et des progrès, et des outils de communication en ligne pour les échanges continus. J&apos;établis des règles claires sur la fréquence et le format des communications. Je m&apos;assure également que chaque membre comprend son rôle et ses responsabilités, et j&apos;encourage une culture de feedback constructif.",
+        evaluation: "Réponse complète démontrant une compréhension approfondie de l&apos;importance de la communication dans la gestion de projet.",
         score: 90,
       },
       {
         question: "Comment priorisez-vous les tâches dans un environnement où tout semble urgent ?",
-        answer: "J'utilise une matrice d'Eisenhower pour classer les tâches selon leur importance et leur urgence. Je consulte les parties prenantes pour comprendre l'impact business de chaque tâche. J'évalue également les dépendances entre les tâches pour optimiser le flux de travail. Une fois les priorités établies, je les communique clairement à l'équipe et je m'assure que tout le monde comprend le raisonnement derrière ces décisions. Je réévalue régulièrement les priorités car elles peuvent changer rapidement.",
+        answer: "J&apos;utilise une matrice d&apos;Eisenhower pour classer les tâches selon leur importance et leur urgence. Je consulte les parties prenantes pour comprendre l&apos;impact business de chaque tâche. J&apos;évalue également les dépendances entre les tâches pour optimiser le flux de travail. Une fois les priorités établies, je les communique clairement à l&apos;équipe et je m&apos;assure que tout le monde comprend le raisonnement derrière ces décisions. Je réévalue régulièrement les priorités car elles peuvent changer rapidement.",
         evaluation: "Excellente méthodologie de priorisation avec une bonne prise en compte des facteurs business et techniques.",
         score: 95,
       },
       {
         question: "Comment gérez-vous les conflits au sein de votre équipe ?",
-        answer: "Je considère les conflits comme une opportunité d'amélioration plutôt qu'un problème. J'aborde les conflits rapidement et directement, en organisant des discussions privées avec les personnes concernées. J'écoute activement toutes les parties, je reste neutre et je cherche à comprendre les perspectives de chacun. J'aide l'équipe à trouver un terrain d'entente et à élaborer des solutions mutuellement acceptables. Je m'assure ensuite de suivre la situation pour vérifier que le conflit est bien résolu.",
+        answer: "Je considère les conflits comme une opportunité d&apos;amélioration plutôt qu&apos;un problème. J&apos;aborde les conflits rapidement et directement, en organisant des discussions privées avec les personnes concernées. J&apos;écoute activement toutes les parties, je reste neutre et je cherche à comprendre les perspectives de chacun. J&apos;aide l&apos;équipe à trouver un terrain d&apos;entente et à élaborer des solutions mutuellement acceptables. Je m&apos;assure ensuite de suivre la situation pour vérifier que le conflit est bien résolu.",
         evaluation: "Très bonne approche de la gestion des conflits, démontrant maturité et leadership.",
         score: 90,
       },
@@ -143,7 +143,27 @@ const mockReports = {
 
 export default function CandidateReportPage({ params }: { params: { id: string } }) {
   const router = useRouter();
-  const [report, setReport] = useState<any>(null);
+  const [report, setReport] = useState<{
+    candidateName: string;
+    position: string;
+    interviewDate: string;
+    overallScore: number;
+    recommendation: string;
+    summary: string;
+    categories: Array<{
+      name: string;
+      score: number;
+      feedback: string;
+      strengths: string[];
+      weaknesses: string[];
+    }>;
+    questions: Array<{
+      question: string;
+      answer: string;
+      evaluation: string;
+      score: number;
+    }>;
+  } | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -161,16 +181,16 @@ export default function CandidateReportPage({ params }: { params: { id: string }
     if (!report) return;
     
     // Création d'un contenu pour le téléchargement
-    let content = `# Rapport d'évaluation - ${report.candidateName}\n`;
+    let content = `# Rapport d&apos;évaluation - ${report.candidateName}\n`;
     content += `## Poste: ${report.position}\n`;
-    content += `## Date d'entretien: ${report.interviewDate}\n`;
+    content += `## Date d&apos;entretien: ${report.interviewDate}\n`;
     content += `## Score global: ${report.overallScore}/100\n`;
     content += `## Recommandation: ${report.recommendation}\n\n`;
     
     content += `### Résumé\n${report.summary}\n\n`;
     
     content += `### Évaluation par catégorie\n\n`;
-    report.categories.forEach((category: any) => {
+    report.categories.forEach((category) => {
       content += `#### ${category.name} - ${category.score}/100\n`;
       content += `${category.feedback}\n\n`;
       content += `**Points forts:**\n`;
@@ -189,7 +209,7 @@ export default function CandidateReportPage({ params }: { params: { id: string }
     });
     
     content += `### Questions et réponses\n\n`;
-    report.questions.forEach((qa: any, index: number) => {
+    report.questions.forEach((qa, index: number) => {
       content += `#### Q${index + 1}: ${qa.question}\n`;
       content += `**Réponse:** ${qa.answer}\n`;
       content += `**Évaluation:** ${qa.evaluation}\n`;
@@ -230,7 +250,7 @@ export default function CandidateReportPage({ params }: { params: { id: string }
           </Button>
           <div className="flex flex-col items-center justify-center min-h-[60vh]">
             <h1 className="text-2xl font-bold mb-4">Rapport non trouvé</h1>
-            <p className="text-muted-foreground mb-6">Le rapport que vous recherchez n'existe pas ou n'a pas encore été généré.</p>
+            <p className="text-muted-foreground mb-6">Le rapport que vous recherchez n&apos;existe pas ou n&apos;a pas encore été généré.</p>
             <Button onClick={() => router.push(`/candidates/${params.id}`)}>Retour au profil</Button>
           </div>
         </div>
@@ -274,7 +294,7 @@ export default function CandidateReportPage({ params }: { params: { id: string }
         <div className="bg-card rounded-lg shadow-sm overflow-hidden mb-6">
           <div className="p-4 border-b flex items-center">
             <BarChart className="h-5 w-5 mr-2 text-primary" />
-            <h1 className="text-xl font-bold">Rapport d'évaluation - {report.candidateName}</h1>
+            <h1 className="text-xl font-bold">Rapport d&apos;évaluation - {report.candidateName}</h1>
           </div>
           
           <div className="p-6">
@@ -284,8 +304,8 @@ export default function CandidateReportPage({ params }: { params: { id: string }
                 <div className="text-lg font-semibold">{report.position}</div>
               </div>
               <div className="bg-muted/30 p-4 rounded-lg">
-                <div className="text-sm font-medium text-muted-foreground mb-1">Date d'entretien</div>
-                <div className="text-lg font-semibold">{new Date(report.interviewDate).toLocaleDateString('fr-FR')}</div>
+                <div className="text-sm font-medium text-muted-foreground mb-1">Date d&apos;entretien</div>
+                <div className="text-lg font-semibold">{new Date(report.interviewDate).toLocaleDateString("fr-FR")}</div>
               </div>
               <div className="bg-muted/30 p-4 rounded-lg">
                 <div className="text-sm font-medium text-muted-foreground mb-1">Score global</div>
@@ -320,7 +340,7 @@ export default function CandidateReportPage({ params }: { params: { id: string }
           </div>
           <div className="p-6">
             <div className="space-y-8">
-              {report.categories.map((category: any, index: number) => (
+              {report.categories.map((category, index: number) => (
                 <div key={index} className="border-b border-border pb-6 last:border-0 last:pb-0">
                   <div className="flex justify-between items-center mb-4">
                     <h3 className="text-lg font-semibold">{category.name}</h3>
@@ -370,11 +390,11 @@ export default function CandidateReportPage({ params }: { params: { id: string }
           </div>
           <div className="p-6">
             <div className="space-y-8">
-              {report.questions.map((qa: any, index: number) => (
+              {report.questions.map((qa, index: number) => (
                 <div key={index} className="border-b border-border pb-6 last:border-0 last:pb-0">
                   <h3 className="text-lg font-semibold mb-3">Q{index + 1}: {qa.question}</h3>
                   <div className="bg-muted/30 p-4 rounded-lg mb-4">
-                    <p className="italic">"{qa.answer}"</p>
+                    <p className="italic">&quot;{qa.answer}&quot;</p>
                   </div>
                   <div className="mb-2">
                     <h4 className="text-sm font-medium text-muted-foreground mb-1">Évaluation</h4>

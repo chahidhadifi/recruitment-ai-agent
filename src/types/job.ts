@@ -23,4 +23,9 @@ export interface JobApplication {
   status: 'pending' | 'reviewed' | 'interview' | 'accepted' | 'rejected';
   appliedAt: string;
   updatedAt: string;
+  interviewId?: string; // ID de l'entretien associé à cette candidature
+  phone?: string; // Numéro de téléphone du candidat
+  location?: string; // Localisation du candidat
+  jobTitle?: string; // Titre du poste
+  company?: string; // Nom de l'entreprise
 }

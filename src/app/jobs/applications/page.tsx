@@ -184,7 +184,7 @@ export default function ApplicationsPage() {
             <SelectContent>
               <SelectItem value="all">Tous les statuts</SelectItem>
               <SelectItem value="pending">En attente</SelectItem>
-              <SelectItem value="reviewing">En cours d'examen</SelectItem>
+              <SelectItem value="reviewing">En cours d&apos;examen</SelectItem>
               <SelectItem value="accepted">Acceptées</SelectItem>
               <SelectItem value="rejected">Refusées</SelectItem>
             </SelectContent>

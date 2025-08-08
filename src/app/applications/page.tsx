@@ -35,21 +35,13 @@ export default function ApplicationsPage() {
     }
   }, [status, isRecruiterOrAdmin, router]);
   
-  // Afficher un message de chargement pendant la vérification de l'authentification
-  if (status === "loading") {
-    return (
-      <MainLayout>
-        <div className="container py-10 flex justify-center items-center">
-          <p>Chargement...</p>
-        </div>
-      </MainLayout>
-    );
-  }
-  
-  // Ne pas afficher le contenu si l'utilisateur n'est pas authentifié ou n'a pas les droits
-  if (status === "unauthenticated" || (status === "authenticated" && !isRecruiterOrAdmin)) {
-    return null;
-  }
+  // Déplacé après les hooks useEffect
+
+  // Ce bloc est supprimé car il est dupliqué plus bas dans le code
+
+  // Ce bloc a été supprimé car il est dupliqué plus bas dans le code
+
+  // Ces fonctions ont été déplacées plus bas dans le code pour éviter les duplications
 
   // Charger les candidatures
   useEffect(() => {
@@ -100,7 +92,7 @@ export default function ApplicationsPage() {
       setApplications(prevApplications => 
         prevApplications.map(app => 
           app.id === applicationId 
-            ? { ...app, status: newStatus as any, updatedAt: new Date().toISOString() } 
+            ? { ...app, status: newStatus as JobApplication['status'], updatedAt: new Date().toISOString() } 
             : app
         )
       );
@@ -165,7 +157,7 @@ export default function ApplicationsPage() {
       case "pending":
         return "En attente";
       case "reviewing":
-        return "En cours d'examen";
+        return "En cours d&apos;examen";
       case "accepted":
         return "Acceptée";
       case "rejected":
@@ -211,7 +203,7 @@ export default function ApplicationsPage() {
           <TabsList className="mb-6">
             <TabsTrigger value="all">Toutes</TabsTrigger>
             <TabsTrigger value="pending">En attente</TabsTrigger>
-            <TabsTrigger value="reviewing">En cours d'examen</TabsTrigger>
+            <TabsTrigger value="reviewing">En cours d&apos;examen</TabsTrigger>
             <TabsTrigger value="accepted">Acceptées</TabsTrigger>
             <TabsTrigger value="rejected">Refusées</TabsTrigger>
           </TabsList>
@@ -233,7 +225,7 @@ export default function ApplicationsPage() {
                               {jobs[application.jobId]?.company || "Entreprise inconnue"}
                             </p>
                           </div>
-                          <Badge variant={getStatusBadgeVariant(application.status) as any}>
+                          <Badge variant={getStatusBadgeVariant(application.status)}>
                             {translateStatus(application.status)}
                           </Badge>
                         </div>
@@ -272,7 +264,7 @@ export default function ApplicationsPage() {
                                     size="sm"
                                     onClick={() => updateApplicationStatus(application.id, "reviewing")}
                                   >
-                                    Marquer en cours d'examen
+                                    Marquer en cours d&apos;examen
                                   </Button>
                                 )}
                                 

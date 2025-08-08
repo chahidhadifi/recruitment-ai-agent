@@ -89,7 +89,29 @@ const mockCandidates = {
 
 export default function CandidateDetailPage({ params }: { params: { id: string } }) {
   const router = useRouter();
-  const [candidate, setCandidate] = useState<any>(null);
+  const [candidate, setCandidate] = useState<{
+    id: string;
+    name: string;
+    email: string;
+    phone: string;
+    position: string;
+    status: string;
+    score?: number;
+    appliedDate: string;
+    lastActivity: string;
+    experience: Array<{
+      title: string;
+      company: string;
+      period: string;
+      description: string;
+    }>;
+    education: Array<{
+      degree: string;
+      institution: string;
+      year: string;
+    }>;
+    skills: string[];
+  } | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -126,7 +148,7 @@ export default function CandidateDetailPage({ params }: { params: { id: string }
           </Button>
           <div className="flex flex-col items-center justify-center min-h-[60vh]">
             <h1 className="text-2xl font-bold mb-4">Candidat non trouvé</h1>
-            <p className="text-muted-foreground mb-6">Le candidat que vous recherchez n'existe pas ou a été supprimé.</p>
+            <p className="text-muted-foreground mb-6">Le candidat que vous recherchez n&apos;existe pas ou a été supprimé.</p>
             <Button onClick={() => router.push("/candidates")}>Voir tous les candidats</Button>
           </div>
         </div>
@@ -166,7 +188,7 @@ export default function CandidateDetailPage({ params }: { params: { id: string }
                 </div>
                 {candidate.score && (
                   <div className="mt-4 bg-muted/30 p-3 rounded-md">
-                    <div className="text-sm font-medium text-muted-foreground mb-1">Score d'évaluation</div>
+                    <div className="text-sm font-medium text-muted-foreground mb-1">Score d&apos;évaluation</div>
                     <div className="text-3xl font-bold">{candidate.score}<span className="text-sm font-normal text-muted-foreground">/100</span></div>
                   </div>
                 )}
@@ -178,6 +200,7 @@ export default function CandidateDetailPage({ params }: { params: { id: string }
                   <div>
                     <div className="text-sm font-medium">Email</div>
                     <a href={`mailto:${candidate.email}`} className="text-sm text-primary hover:underline">{candidate.email}</a>
+                  <p className="text-sm text-muted-foreground">L&apos;email est le moyen de contact privilégié</p>
                   </div>
                 </div>
                 <div className="flex items-start">
@@ -234,7 +257,7 @@ export default function CandidateDetailPage({ params }: { params: { id: string }
             <div className="bg-card rounded-lg shadow-sm p-6">
               <h2 className="text-xl font-bold mb-4">Expérience professionnelle</h2>
               <div className="space-y-6">
-                {candidate.experience.map((exp: any, index: number) => (
+                {candidate.experience.map((exp, index) => (
                   <div key={index} className="border-l-2 border-primary/30 pl-4 pb-2">
                     <h3 className="font-semibold">{exp.title}</h3>
                     <p className="text-sm text-muted-foreground">{exp.company} | {exp.period}</p>
@@ -248,7 +271,7 @@ export default function CandidateDetailPage({ params }: { params: { id: string }
             <div className="bg-card rounded-lg shadow-sm p-6">
               <h2 className="text-xl font-bold mb-4">Formation</h2>
               <div className="space-y-6">
-                {candidate.education.map((edu: any, index: number) => (
+                {candidate.education.map((edu, index) => (
                   <div key={index} className="border-l-2 border-primary/30 pl-4 pb-2">
                     <h3 className="font-semibold">{edu.degree}</h3>
                     <p className="text-sm text-muted-foreground">{edu.institution} | {edu.year}</p>

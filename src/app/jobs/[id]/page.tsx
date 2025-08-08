@@ -207,6 +207,8 @@ export default function JobDetailPage({ params }: { params: { id: string } }) {
   const [coverLetter, setCoverLetter] = useState("");
   const [cvFile, setCvFile] = useState<File | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const [phone, setPhone] = useState("");
+  const [location, setLocation] = useState("");
   
   // Vérifier si l'utilisateur est authentifié
   const isAuthenticated = status === "authenticated";
@@ -221,13 +223,13 @@ export default function JobDetailPage({ params }: { params: { id: string } }) {
         
         const jobData = mockJobs[params.id];
         if (!jobData) {
-          setError("Offre d'emploi non trouvée");
+          setError("Offre d&apos;emploi non trouvée");
           return;
         }
         
         setJob(jobData);
       } catch (err) {
-        setError("Une erreur est survenue lors du chargement de l'offre d'emploi");
+        setError("Une erreur est survenue lors du chargement de l&apos;offre d&apos;emploi");
         console.error(err);
       } finally {
         setLoading(false);
@@ -251,6 +253,33 @@ export default function JobDetailPage({ params }: { params: { id: string } }) {
       toast({
         title: "CV requis",
         description: "Veuillez télécharger votre CV",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!coverLetter.trim()) {
+      toast({
+        title: "Lettre de motivation requise",
+        description: "Veuillez rédiger une lettre de motivation",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!phone.trim()) {
+      toast({
+        title: "Téléphone requis",
+        description: "Veuillez indiquer votre numéro de téléphone",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!location.trim()) {
+      toast({
+        title: "Localisation requise",
+        description: "Veuillez indiquer votre localisation",
         variant: "destructive",
       });
       return;
@@ -284,6 +313,10 @@ export default function JobDetailPage({ params }: { params: { id: string } }) {
         body: JSON.stringify({
           coverLetter,
           cvUrl,
+          phone,
+          location,
+          jobTitle: job.title,
+          company: job.company
         }),
       });
       
@@ -292,18 +325,31 @@ export default function JobDetailPage({ params }: { params: { id: string } }) {
         throw new Error(errorData.error || 'Erreur lors de la soumission de la candidature');
       }
       
+      // Récupérer les données de la candidature créée
+      const applicationData = await applyResponse.json();
+      
       toast({
         title: "Candidature envoyée",
-        description: "Votre candidature a été envoyée avec succès",
+        description: "Votre candidature a été envoyée avec succès. Vous allez être redirigé vers la page de vos candidatures.",
       });
       
       setIsDialogOpen(false);
       setCoverLetter("");
       setCvFile(null);
+      setPhone("");
+      setLocation("");
+      
+      // Rediriger vers la page des candidatures au lieu de l'entretien
+      if (session?.user?.role === "candidat") {
+        // Utiliser setTimeout pour permettre à l'utilisateur de voir le message de succès avant la redirection
+        setTimeout(() => {
+          router.push('/jobs/my-applications');
+        }, 1500);
+      }
     } catch (err) {
       toast({
         title: "Erreur",
-        description: err instanceof Error ? err.message : "Une erreur est survenue lors de l'envoi de votre candidature",
+        description: err instanceof Error ? err.message : "Une erreur est survenue lors de l&apos;envoi de votre candidature",
         variant: "destructive",
       });
       console.error(err);
@@ -335,7 +381,7 @@ export default function JobDetailPage({ params }: { params: { id: string } }) {
       <MainLayout>
         <div className="container mx-auto py-8 px-4">
           <div className="flex flex-col items-center justify-center h-64">
-            <h2 className="text-2xl font-bold text-red-500 mb-4">{error || "Offre d'emploi non trouvée"}</h2>
+            <h2 className="text-2xl font-bold text-red-500 mb-4">{error || "Offre d&apos;emploi non trouvée"}</h2>
             <Button onClick={() => router.push("/jobs")}>
               <ArrowLeft className="mr-2 h-4 w-4" />
               Retour aux offres
@@ -468,7 +514,7 @@ export default function JobDetailPage({ params }: { params: { id: string } }) {
           <div>
             <Card>
               <CardHeader>
-                <CardTitle>À propos de l'entreprise</CardTitle>
+                <CardTitle>À propos de l&apos;entreprise</CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="flex items-center mb-4">
@@ -524,7 +570,61 @@ export default function JobDetailPage({ params }: { params: { id: string } }) {
               </DialogDescription>
             </DialogHeader>
             <div className="grid gap-4 py-4">
-              <div className="grid gap-2">
+              {/* Informations personnelles */}
+              <div className="grid gap-4 mb-2">
+                <h3 className="font-medium">Informations personnelles</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="grid gap-2">
+                    <Label htmlFor="fullName">Nom complet</Label>
+                    <input
+                      id="fullName"
+                      type="text"
+                      className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                      placeholder="Votre nom complet"
+                      value={session?.user?.name || ''}
+                      readOnly
+                    />
+                  </div>
+                  <div className="grid gap-2">
+                    <Label htmlFor="email">Email</Label>
+                    <input
+                      id="email"
+                      type="email"
+                      className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                      placeholder="Votre email"
+                      value={session?.user?.email || ''}
+                      readOnly
+                    />
+                  </div>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="grid gap-2">
+                    <Label htmlFor="phone">Téléphone</Label>
+                    <input
+                      id="phone"
+                      type="tel"
+                      className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                      placeholder="Votre numéro de téléphone"
+                      value={phone}
+                      onChange={(e) => setPhone(e.target.value)}
+                    />
+                  </div>
+                  <div className="grid gap-2">
+                    <Label htmlFor="location">Localisation</Label>
+                    <input
+                      id="location"
+                      type="text"
+                      className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                      placeholder="Votre ville/pays"
+                      value={location}
+                      onChange={(e) => setLocation(e.target.value)}
+                    />
+                  </div>
+                </div>
+              </div>
+              
+              {/* CV */}
+              <div className="grid gap-2 mt-4">
                 <Label htmlFor="cv">CV (PDF, DOC, DOCX)</Label>
                 <div className="flex items-center gap-2">
                   <Button type="button" variant="outline" onClick={() => document.getElementById("cv")?.click()} className="w-full">
@@ -540,7 +640,9 @@ export default function JobDetailPage({ params }: { params: { id: string } }) {
                   />
                 </div>
               </div>
-              <div className="grid gap-2">
+              
+              {/* Lettre de motivation */}
+              <div className="grid gap-2 mt-4">
                 <Label htmlFor="coverLetter">Lettre de motivation</Label>
                 <Textarea
                   id="coverLetter"

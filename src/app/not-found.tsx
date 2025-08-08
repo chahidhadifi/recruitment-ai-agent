@@ -15,16 +15,16 @@ export default function NotFound() {
         <h1 className="mb-2 text-4xl font-extrabold tracking-tight">Page non trouvée</h1>
         
         <p className="mb-8 max-w-md text-muted-foreground">
-          Désolé, la page que vous recherchez n'existe pas ou a été déplacée.
+          Désolé, la page que vous recherchez n&apos;existe pas ou a été déplacée.
         </p>
         
         <div className="flex flex-col space-y-4 sm:flex-row sm:space-x-4 sm:space-y-0">
           <Button asChild size="lg">
-            <Link href="/">Retour à l'accueil</Link>
+            <Link href="/">Retour à l&apos;accueil</Link>
           </Button>
           
           <Button variant="outline" asChild size="lg">
-            <Link href="/help">Centre d'aide</Link>
+            <Link href="/help">Centre d&apos;aide</Link>
           </Button>
         </div>
       </div>

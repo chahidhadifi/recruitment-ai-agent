@@ -184,7 +184,8 @@ const mockJobs: Record<string, Job> = {
 
 // GET /api/jobs - Récupérer toutes les offres d'emploi
 export async function GET(request: NextRequest) {
-  const session = await getServerSession(authOptions);
+  // Nous pourrions utiliser la session pour filtrer les offres selon le rôle de l'utilisateur
+  // mais pour l'instant, nous récupérons toutes les offres sans vérification d'authentification
   
   // Convertir l'objet en tableau
   const jobs = Object.values(mockJobs);
@@ -248,7 +249,7 @@ export async function POST(request: NextRequest) {
     // Pour cette démonstration, nous le retournons simplement
     return NextResponse.json(newJob, { status: 201 });
   } catch (error) {
-    console.error('Erreur lors de la création de l\'offre d\'emploi:', error);
+    console.error('Erreur lors de la création de l&apos;offre d&apos;emploi:', error);
     return NextResponse.json({ error: 'Erreur serveur' }, { status: 500 });
   }
 }

@@ -23,23 +23,23 @@ const mockInterviews = {
     questions: [
       {
         question: "Pouvez-vous vous présenter brièvement et me parler de votre parcours professionnel ?",
-        answer: "Bonjour, je m'appelle Marie Martin, je suis UX Designer avec 4 ans d'expérience. J'ai obtenu un Master en Design d'Interface à l'École de Design de Nantes, puis j'ai travaillé chez Creative Studio où j'ai conçu des interfaces pour diverses applications mobiles et web. J'ai une passion pour la création d'expériences utilisateur intuitives et accessibles.",
+        answer: "Bonjour, je m&apos;appelle Marie Martin, je suis UX Designer avec 4 ans d&apos;expérience. J&apos;ai obtenu un Master en Design d&apos;Interface à l&apos;École de Design de Nantes, puis j&apos;ai travaillé chez Creative Studio où j&apos;ai conçu des interfaces pour diverses applications mobiles et web. J&apos;ai une passion pour la création d&apos;expériences utilisateur intuitives et accessibles.",
       },
       {
         question: "Pourquoi êtes-vous intéressé par ce poste et notre entreprise ?",
-        answer: "Votre entreprise est reconnue pour son approche centrée sur l'utilisateur et son innovation dans le domaine digital. J'admire particulièrement vos projets récents qui allient esthétique et fonctionnalité. Le poste de UX Designer chez vous représente pour moi l'opportunité de travailler sur des projets ambitieux avec une équipe talentueuse, tout en continuant à développer mes compétences dans un environnement stimulant.",
+        answer: "Votre entreprise est reconnue pour son approche centrée sur l&apos;utilisateur et son innovation dans le domaine digital. J&apos;admire particulièrement vos projets récents qui allient esthétique et fonctionnalité. Le poste de UX Designer chez vous représente pour moi l&apos;opportunité de travailler sur des projets ambitieux avec une équipe talentueuse, tout en continuant à développer mes compétences dans un environnement stimulant.",
       },
       {
         question: "Pouvez-vous décrire votre processus de conception UX ?",
-        answer: "Mon processus commence toujours par la recherche utilisateur pour comprendre les besoins et les problèmes. Ensuite, je crée des personas et des parcours utilisateur, suivis de wireframes et de prototypes. Je conduis des tests d'utilisabilité et j'itère sur les designs en fonction des retours. Enfin, je travaille étroitement avec les développeurs pour assurer une implémentation fidèle.",
+        answer: "Mon processus commence toujours par la recherche utilisateur pour comprendre les besoins et les problèmes. Ensuite, je crée des personas et des parcours utilisateur, suivis de wireframes et de prototypes. Je conduis des tests d&apos;utilisabilité et j&apos;itère sur les designs en fonction des retours. Enfin, je travaille étroitement avec les développeurs pour assurer une implémentation fidèle.",
       },
       {
-        question: "Comment abordez-vous l'accessibilité dans vos designs ?",
-        answer: "L'accessibilité est une priorité dans mes designs. Je m'assure de respecter les normes WCAG, d'utiliser des contrastes suffisants, de fournir des alternatives textuelles pour les images, et de concevoir des interfaces navigables au clavier. Je teste également avec des lecteurs d'écran et j'implique des utilisateurs ayant différents besoins dans mes tests.",
+        question: "Comment abordez-vous l&apos;accessibilité dans vos designs ?",
+        answer: "L&apos;accessibilité est une priorité dans mes designs. Je m&apos;assure de respecter les normes WCAG, d&apos;utiliser des contrastes suffisants, de fournir des alternatives textuelles pour les images, et de concevoir des interfaces navigables au clavier. Je teste également avec des lecteurs d&apos;écran et j&apos;implique des utilisateurs ayant différents besoins dans mes tests.",
       },
       {
         question: "Comment gérez-vous les retours critiques sur vos designs ?",
-        answer: "Je considère les retours comme une opportunité d'amélioration. J'écoute attentivement, pose des questions pour clarifier, et évite d'être défensive. Je prends le temps d'analyser les commentaires et d'identifier les améliorations possibles. Je crois que la collaboration et l'itération sont essentielles pour créer les meilleurs designs.",
+        answer: "Je considère les retours comme une opportunité d&apos;amélioration. J&apos;écoute attentivement, pose des questions pour clarifier, et évite d&apos;être défensive. Je prends le temps d&apos;analyser les commentaires et d&apos;identifier les améliorations possibles. Je crois que la collaboration et l&apos;itération sont essentielles pour créer les meilleurs designs.",
       },
     ],
   },
@@ -57,23 +57,23 @@ const mockInterviews = {
     questions: [
       {
         question: "Pouvez-vous vous présenter brièvement et me parler de votre parcours professionnel ?",
-        answer: "Bonjour, je suis Sophie Lefebvre, chef de projet avec plus de 8 ans d'expérience dans la gestion de projets digitaux. Après mes études en management de projet à HEC Paris, j'ai travaillé pour plusieurs agences digitales avant de rejoindre une grande entreprise de e-commerce où j'ai dirigé des projets de refonte de plateforme et d'amélioration de l'expérience client.",
+        answer: "Bonjour, je suis Sophie Lefebvre, chef de projet avec plus de 8 ans d&apos;expérience dans la gestion de projets digitaux. Après mes études en management de projet à HEC Paris, j&apos;ai travaillé pour plusieurs agences digitales avant de rejoindre une grande entreprise de e-commerce où j&apos;ai dirigé des projets de refonte de plateforme et d&apos;amélioration de l&apos;expérience client.",
       },
       {
         question: "Pourquoi êtes-vous intéressé par ce poste et notre entreprise ?",
-        answer: "Votre entreprise est à la pointe de l'innovation technologique et j'admire votre culture d'entreprise axée sur la collaboration et l'excellence. Le poste de Chef de Projet chez vous me permettrait de mettre à profit mon expérience tout en relevant de nouveaux défis dans un secteur en constante évolution. Je suis particulièrement intéressée par votre approche agile et votre vision à long terme.",
+        answer: "Votre entreprise est à la pointe de l&apos;innovation technologique et j&apos;admire votre culture d&apos;entreprise axée sur la collaboration et l&apos;excellence. Le poste de Chef de Projet chez vous me permettrait de mettre à profit mon expérience tout en relevant de nouveaux défis dans un secteur en constante évolution. Je suis particulièrement intéressée par votre approche agile et votre vision à long terme.",
       },
       {
         question: "Comment gérez-vous les projets qui prennent du retard ?",
-        answer: "Lorsqu'un projet prend du retard, j'identifie d'abord les causes profondes du retard. Ensuite, je réévalue les priorités et ajuste le plan de projet en conséquence. Je communique ouvertement avec les parties prenantes sur la situation et les solutions proposées. Si nécessaire, je mobilise des ressources supplémentaires ou je négocie une extension de délai. Je mets également en place des mesures préventives pour éviter que des retards similaires ne se reproduisent à l'avenir.",
+        answer: "Lorsqu&apos;un projet prend du retard, j&apos;identifie d&apos;abord les causes profondes du retard. Ensuite, je réévalue les priorités et ajuste le plan de projet en conséquence. Je communique ouvertement avec les parties prenantes sur la situation et les solutions proposées. Si nécessaire, je mobilise des ressources supplémentaires ou je négocie une extension de délai. Je mets également en place des mesures préventives pour éviter que des retards similaires ne se reproduisent à l&apos;avenir.",
       },
       {
-        question: "Comment assurez-vous la communication efficace entre les membres de l'équipe ?",
-        answer: "Je mets en place plusieurs canaux de communication adaptés aux besoins de l'équipe : réunions quotidiennes courtes pour synchroniser le travail, réunions hebdomadaires plus détaillées pour discuter des problèmes et des progrès, et des outils de communication en ligne pour les échanges continus. J'établis des règles claires sur la fréquence et le format des communications. Je m'assure également que chaque membre comprend son rôle et ses responsabilités, et j'encourage une culture de feedback constructif.",
+        question: "Comment assurez-vous la communication efficace entre les membres de l&apos;équipe ?",
+        answer: "Je mets en place plusieurs canaux de communication adaptés aux besoins de l&apos;équipe : réunions quotidiennes courtes pour synchroniser le travail, réunions hebdomadaires plus détaillées pour discuter des problèmes et des progrès, et des outils de communication en ligne pour les échanges continus. J&apos;établis des règles claires sur la fréquence et le format des communications. Je m&apos;assure également que chaque membre comprend son rôle et ses responsabilités, et j&apos;encourage une culture de feedback constructif.",
       },
       {
         question: "Comment priorisez-vous les tâches dans un environnement où tout semble urgent ?",
-        answer: "J'utilise une matrice d'Eisenhower pour classer les tâches selon leur importance et leur urgence. Je consulte les parties prenantes pour comprendre l'impact business de chaque tâche. J'évalue également les dépendances entre les tâches pour optimiser le flux de travail. Une fois les priorités établies, je les communique clairement à l'équipe et je m'assure que tout le monde comprend le raisonnement derrière ces décisions. Je réévalue régulièrement les priorités car elles peuvent changer rapidement.",
+        answer: "J&apos;utilise une matrice d&apos;Eisenhower pour classer les tâches selon leur importance et leur urgence. Je consulte les parties prenantes pour comprendre l&apos;impact business de chaque tâche. J&apos;évalue également les dépendances entre les tâches pour optimiser le flux de travail. Une fois les priorités établies, je les communique clairement à l&apos;équipe et je m&apos;assure que tout le monde comprend le raisonnement derrière ces décisions. Je réévalue régulièrement les priorités car elles peuvent changer rapidement.",
       },
     ],
   },
@@ -107,7 +107,21 @@ const mockInterviews = {
 
 export default function InterviewDetailPage({ params }: { params: { id: string } }) {
   const router = useRouter();
-  const [interview, setInterview] = useState<any>(null);
+  const [interview, setInterview] = useState<{
+    candidateName: string;
+    candidateId: string;
+    position: string;
+    date: string;
+    startTime: string;
+    endTime: string;
+    duration: string;
+    status: string;
+    score: number | null;
+    questions: Array<{
+      question: string;
+      answer: string;
+    }>;
+  } | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -144,7 +158,7 @@ export default function InterviewDetailPage({ params }: { params: { id: string }
           </Button>
           <div className="flex flex-col items-center justify-center min-h-[60vh]">
             <h1 className="text-2xl font-bold mb-4">Entretien non trouvé</h1>
-            <p className="text-muted-foreground mb-6">L'entretien que vous recherchez n'existe pas ou a été supprimé.</p>
+            <p className="text-muted-foreground mb-6">L&apos;entretien que vous recherchez n&apos;existe pas ou a été supprimé.</p>
             <Button onClick={() => router.push("/interviews")}>Voir tous les entretiens</Button>
           </div>
         </div>
@@ -247,7 +261,7 @@ export default function InterviewDetailPage({ params }: { params: { id: string }
                 className="w-full mt-4"
                 onClick={() => router.push(`/interviews/new?candidate=${interview.candidateId}`)}
               >
-                <MessageSquare className="mr-2 h-4 w-4" /> Démarrer l'entretien
+                <MessageSquare className="mr-2 h-4 w-4" /> Démarrer l&apos;entretien
               </Button>
             )}
           </div>
@@ -260,11 +274,11 @@ export default function InterviewDetailPage({ params }: { params: { id: string }
             </div>
             <div className="p-6">
               <div className="space-y-8">
-                {interview.questions.map((qa: any, index: number) => (
+                {interview.questions.map((qa, index: number) => (
                   <div key={index} className="border-b border-border pb-6 last:border-0 last:pb-0">
                     <h3 className="text-lg font-semibold mb-3">Q{index + 1}: {qa.question}</h3>
                     <div className="bg-muted/30 p-4 rounded-lg">
-                      <p className="italic">"{qa.answer}"</p>
+                      <p className="italic">&quot;{qa.answer}&quot;</p>
                     </div>
                   </div>
                 ))}
@@ -282,7 +296,7 @@ export default function InterviewDetailPage({ params }: { params: { id: string }
                 size="lg"
                 onClick={() => router.push(`/interviews/new?candidate=${interview.candidateId}`)}
               >
-                <MessageSquare className="mr-2 h-4 w-4" /> Démarrer l'entretien maintenant
+                <MessageSquare className="mr-2 h-4 w-4" /> Démarrer l&apos;entretien maintenant
               </Button>
             </div>
           </div>

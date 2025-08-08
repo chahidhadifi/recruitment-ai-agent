@@ -4,7 +4,7 @@ import { authOptions } from "@/lib/auth";
 import { UserWithRole } from "@/types/user-roles";
 
 // Données fictives pour la démonstration
-let mockUsers: UserWithRole[] = [
+const mockUsers: UserWithRole[] = [
   {
     id: "admin-1",
     name: "Administrateur Principal",
@@ -165,7 +165,7 @@ export async function POST(req: NextRequest) {
     
     return NextResponse.json(newUser, { status: 201 });
   } catch (error) {
-    console.error("Erreur lors de la création de l'utilisateur:", error);
+    console.error("Erreur lors de la création de l&apos;utilisateur:", error);
     return NextResponse.json({ error: "Erreur serveur" }, { status: 500 });
   }
 }

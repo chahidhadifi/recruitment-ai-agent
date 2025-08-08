@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
-import { JobApplication } from '@/types/job';
 
 // GET /api/jobs/applications - Récupérer les candidatures
 export async function GET(request: NextRequest) {
@@ -19,7 +18,7 @@ export async function GET(request: NextRequest) {
     const jobId = searchParams.get('jobId');
 
     // Construire la requête en fonction des paramètres
-    const whereClause: any = {};
+    const whereClause: Record<string, unknown> = {};
 
     // Si candidateOnly est true, filtrer par candidat (pour voir ses propres candidatures)
     if (candidateOnly) {
@@ -66,7 +65,11 @@ export async function GET(request: NextRequest) {
         cvUrl: "/uploads/cv-sophie-martin.pdf",
         status: "pending",
         appliedAt: "2023-05-15T10:30:00Z",
-        updatedAt: "2023-05-15T10:30:00Z"
+        updatedAt: "2023-05-15T10:30:00Z",
+        jobTitle: "Développeur Frontend React",
+        company: "TechSolutions",
+        phone: "+33 6 12 34 56 78",
+        location: "Paris, France"
       },
       {
         id: "2",
@@ -78,7 +81,11 @@ export async function GET(request: NextRequest) {
         cvUrl: "/uploads/cv-thomas-dubois.pdf",
         status: "reviewing",
         appliedAt: "2023-05-10T14:45:00Z",
-        updatedAt: "2023-05-12T09:15:00Z"
+        updatedAt: "2023-05-12T09:15:00Z",
+        jobTitle: "UX/UI Designer",
+        company: "DesignStudio",
+        phone: "+33 6 98 76 54 32",
+        location: "Lyon, France"
       }
     ];
     
@@ -134,7 +141,7 @@ export async function POST(request: NextRequest) {
     const job = mockJobs[jobId];
     
     if (!job) {
-      return NextResponse.json({ error: 'Offre d\'emploi non trouvée' }, { status: 404 });
+      return NextResponse.json({ error: 'Offre d&apos;emploi non trouvée' }, { status: 404 });
     }
     
     // Simuler la vérification si l'utilisateur a déjà postulé à cette offre
@@ -150,7 +157,7 @@ export async function POST(request: NextRequest) {
     const existingApplication = mockApplications.find(app => app.jobId === jobId && app.candidateId === session.user.id);
     
     if (existingApplication) {
-      return NextResponse.json({ error: 'Vous avez déjà postulé à cette offre' }, { status: 400 });
+      return NextResponse.json({ error: "Vous avez déjà postulé à cette offre" }, { status: 400 });
     }
     
     // Traitement du fichier CV

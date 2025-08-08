@@ -18,7 +18,7 @@ export function Footer() {
             href="/terms"
             className="text-sm text-muted-foreground hover:text-foreground"
           >
-            Conditions d'utilisation
+            Conditions d&apos;utilisation
           </Link>
           <Link
             href="/about"

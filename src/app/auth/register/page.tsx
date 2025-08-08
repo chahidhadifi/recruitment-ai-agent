@@ -36,7 +36,7 @@ export default function RegisterPage() {
   // useEffect(() => {
   //   toast({
   //     title: "Inscription désactivée",
-  //     description: "L'inscription de nouveaux comptes est actuellement désactivée. Veuillez contacter l'administrateur.",
+  //     description: "L&apos;inscription de nouveaux comptes est actuellement désactivée. Veuillez contacter l&apos;administrateur.",
   //     variant: "destructive",
   //   });
     
@@ -80,7 +80,7 @@ export default function RegisterPage() {
     } catch (error) {
       toast({
         title: "Erreur",
-        description: "Une erreur s'est produite. Veuillez réessayer.",
+        description: "Une erreur s&apos;est produite. Veuillez réessayer.",
         variant: "destructive",
       });
     } finally {
@@ -236,7 +236,7 @@ export default function RegisterPage() {
                       Inscription en cours...
                     </>
                   ) : (
-                    "S'inscrire"
+                    "S&apos;inscrire"
                   )}
                 </Button>
               </div>

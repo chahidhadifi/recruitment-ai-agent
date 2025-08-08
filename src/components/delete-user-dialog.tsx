@@ -46,7 +46,7 @@ export function DeleteUserDialog({
             Confirmer la suppression
           </DialogTitle>
           <DialogDescription>
-            Êtes-vous sûr de vouloir supprimer l'utilisateur <strong>{userName}</strong> ? Cette action est irréversible.
+            Êtes-vous sûr de vouloir supprimer l&apos;utilisateur <strong>{userName}</strong> ? Cette action est irréversible.
           </DialogDescription>
         </DialogHeader>
         <DialogFooter className="flex space-x-2 justify-end">

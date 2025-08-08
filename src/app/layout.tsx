@@ -17,7 +17,7 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: "AI Recruitment Platform",
-  description: "Plateforme d'automatisation du processus de sélection des candidats par un agent intelligent",
+  description: "Plateforme d&apos;automatisation du processus de sélection des candidats par un agent intelligent",
 };
 
 export default function RootLayout({

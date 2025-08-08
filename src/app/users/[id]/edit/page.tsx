@@ -58,7 +58,7 @@ export default function EditUserPage({ params }: { params: { id: string } }) {
           router.push("/users");
         }
       } catch (error) {
-        console.error("Erreur lors du chargement de l'utilisateur:", error);
+        console.error("Erreur lors du chargement de l&apos;utilisateur:", error);
       } finally {
         setIsLoading(false);
       }
@@ -85,7 +85,7 @@ export default function EditUserPage({ params }: { params: { id: string } }) {
       // Rediriger vers la liste des utilisateurs
       router.push("/users");
     } catch (error) {
-      console.error("Erreur lors de la mise à jour de l'utilisateur:", error);
+      console.error("Erreur lors de la mise à jour de l&apos;utilisateur:", error);
     } finally {
       setIsSubmitting(false);
     }
@@ -120,7 +120,7 @@ export default function EditUserPage({ params }: { params: { id: string } }) {
         </Button>
         
         <div className="max-w-2xl mx-auto">
-          <h1 className="text-3xl font-bold mb-6">Modifier l'utilisateur</h1>
+          <h1 className="text-3xl font-bold mb-6">Modifier l&apos;utilisateur</h1>
           
           <div className="bg-card rounded-lg shadow-sm p-6">
             {user && (

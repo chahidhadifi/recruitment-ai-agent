@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
+import Link from "next/link";
 import { Loader2, FileText, Building, MapPin, Calendar, CheckCircle, XCircle, Clock } from "lucide-react";
 
 import { MainLayout } from "@/components/main-layout";
@@ -134,7 +135,7 @@ export default function MyApplicationsPage() {
         <div className="flex justify-between items-center mb-6">
           <h1 className="text-3xl font-bold">Mes candidatures</h1>
           <Button onClick={() => router.push('/jobs')} variant="outline">
-            Voir les offres d'emploi
+            Voir les offres d&apos;emploi
           </Button>
         </div>
         
@@ -171,15 +172,15 @@ export default function MyApplicationsPage() {
             <h2 className="text-xl font-semibold mb-2">Aucune candidature trouvée</h2>
             <p className="text-muted-foreground">
               {activeTab === "all" 
-                ? "Vous n'avez pas encore postulé à des offres d'emploi." 
-                : "Vous n'avez pas de candidatures dans cette catégorie."}
+                ? "Vous n&apos;avez pas encore postulé à des offres d&apos;emploi." 
+                : "Vous n&apos;avez pas de candidatures dans cette catégorie."}
             </p>
             {activeTab === "all" && (
               <Button 
                 className="mt-4" 
                 onClick={() => router.push('/jobs')}
               >
-                Voir les offres d'emploi
+                Voir les offres d&apos;emploi
               </Button>
             )}
           </div>
@@ -216,19 +217,19 @@ export default function MyApplicationsPage() {
                       </div>
                       
                       <div className="mb-4">
-                        <h3 className="font-medium mb-2">Lettre de motivation</h3>
-                        <div className="bg-muted p-3 rounded-md text-sm">
-                          <p className="whitespace-pre-line">{application.coverLetter}</p>
+                        <div className="flex flex-wrap gap-2">
+                          <Button variant="outline" onClick={() => router.push(`/jobs/applications/${application.id}`)}>
+                            <FileText className="mr-2 h-4 w-4" /> Voir les détails
+                          </Button>
+                          
+                          {application.status === "interview" && (
+                            <Button asChild>
+                              <Link href={`/interviews/new?candidate=${session.user.id}&autostart=true`}>
+                                Passer l&apos;entretien
+                              </Link>
+                            </Button>
+                          )}
                         </div>
-                      </div>
-                      
-                      <div className="mb-4">
-                        <h3 className="font-medium mb-2">CV</h3>
-                        <Button variant="outline" asChild>
-                          <a href={application.resumeUrl} target="_blank" rel="noopener noreferrer">
-                            <FileText className="mr-2 h-4 w-4" /> Voir mon CV
-                          </a>
-                        </Button>
                       </div>
                       
                       {application.status === "accepted" && (
@@ -240,8 +241,8 @@ export default function MyApplicationsPage() {
                       
                       {application.status === "rejected" && (
                         <div className="mt-4 p-4 bg-red-50 rounded-md">
-                          <p className="text-red-700 font-medium">Votre candidature n'a pas été retenue.</p>
-                          <p className="text-red-600 mt-2">Nous vous encourageons à postuler à d'autres offres qui correspondent à votre profil.</p>
+                          <p className="text-red-700 font-medium">Votre candidature n&apos;a pas été retenue.</p>
+                          <p className="text-red-600 mt-2">Nous vous encourageons à postuler à d&apos;autres offres qui correspondent à votre profil.</p>
                         </div>
                       )}
                     </div>
@@ -251,7 +252,7 @@ export default function MyApplicationsPage() {
                         onClick={() => router.push(`/jobs/${application.jobId}`)}
                         variant="outline"
                       >
-                        Voir l'offre
+                        Voir l&apos;offre
                       </Button>
                     </div>
                   </div>

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useSession } from 'next-auth/react';
 import { Button } from '@/components/ui/button';
@@ -22,6 +22,14 @@ interface Message {
 }
 
 export default function CandidatInterviewPage() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <CandidatInterviewContent />
+    </Suspense>
+  );
+}
+
+function CandidatInterviewContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const interviewId = searchParams.get('id');
@@ -118,7 +126,7 @@ export default function CandidatInterviewPage() {
         const endMessage: Message = {
           id: 'end',
           role: 'assistant',
-          content: 'Merci pour vos réponses. L\'entretien est maintenant terminé. Nous vous contacterons prochainement avec les résultats.',
+          content: 'Merci pour vos réponses. L&apos;entretien est maintenant terminé. Nous vous contacterons prochainement avec les résultats.',
           type: 'text',
           timestamp: new Date()
         };
@@ -207,7 +215,7 @@ export default function CandidatInterviewPage() {
       mediaRecorder.start();
       setIsRecording(true);
     } catch (error) {
-      console.error("Erreur lors de l'accès au microphone:", error);
+      console.error("Erreur lors de l&apos;accès au microphone:", error);
     }
   };
 
@@ -243,7 +251,7 @@ export default function CandidatInterviewPage() {
                 </div>
               )}
             </div>
-            <h2 className="text-xl font-semibold mb-2">Assistant d'entretien IA</h2>
+            <h2 className="text-xl font-semibold mb-2">Assistant d&apos;entretien IA</h2>
             <p className="text-center text-muted-foreground">
               Je suis là pour vous guider à travers cet entretien. Répondez aux questions de la manière qui vous semble la plus appropriée.
             </p>

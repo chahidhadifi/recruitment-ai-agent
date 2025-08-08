@@ -215,7 +215,7 @@ export default function CandidatesPage() {
                 >
                   <option value="all">Tous les statuts</option>
                   <option value="completed">Entretien terminé</option>
-                  <option value="pending">En attente d'entretien</option>
+                  <option value="pending">En attente d&apos;entretien</option>
                   <option value="analyzed">CV analysé</option>
                 </select>
                 
@@ -230,7 +230,7 @@ export default function CandidatesPage() {
                       <option value="position">Trier par poste</option>
                       <option value="status">Trier par statut</option>
                       <option value="score">Trier par score</option>
-                      <option value="date">Trier par date d'entretien</option>
+                      <option value="date">Trier par date d&apos;entretien</option>
                     </select>
                     
                     <button
@@ -280,7 +280,7 @@ export default function CandidatesPage() {
                   </th>
                   {isAdmin && (
                     <th className="px-4 py-3 text-left text-sm font-medium text-muted-foreground tracking-wider">
-                      Date d'entretien
+                      Date d&apos;entretien
                     </th>
                   )}
                   {isAdmin && (
@@ -368,7 +368,7 @@ export default function CandidatesPage() {
                                   }
                                 >
                                   <MessageSquare className="h-4 w-4" />
-                                  <span className="sr-only">Démarrer l'entretien</span>
+                                  <span className="sr-only">Démarrer l&apos;entretien</span>
                                 </Button>
                               )}
                               {isAdmin && candidate.interviewId && (
@@ -385,7 +385,7 @@ export default function CandidatesPage() {
                               )}
                               <Button variant="ghost" size="icon">
                                 <MoreVertical className="h-4 w-4" />
-                                <span className="sr-only">Plus d'options</span>
+                                <span className="sr-only">Plus d&apos;options</span>
                               </Button>
                             </div>
                           </td>

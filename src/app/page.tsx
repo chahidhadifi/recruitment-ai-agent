@@ -26,19 +26,19 @@ export default function Home() {
           <div className="mx-auto max-w-7xl px-6 lg:px-8">
             <div className="mx-auto max-w-3xl text-center">
               <h1 className="text-4xl font-bold tracking-tight sm:text-6xl">
-                Automatisez votre processus de recrutement avec l'IA
+                Automatisez votre processus de recrutement avec l&apos;IA
               </h1>
               <p className="mt-6 text-lg leading-8 text-muted-foreground">
-                Notre plateforme utilise l'intelligence artificielle pour analyser les CV,
-                mener des entretiens automatisés et générer des rapports d'évaluation complets,
-                vous permettant de sélectionner les meilleurs candidats plus rapidement et avec plus d'objectivité.
+                Notre plateforme utilise l&apos;intelligence artificielle pour analyser les CV,
+                mener des entretiens automatisés et générer des rapports d&apos;évaluation complets,
+                vous permettant de sélectionner les meilleurs candidats plus rapidement et avec plus d&apos;objectivité.
               </p>
               <div className="mt-10 flex items-center justify-center gap-x-6">
                 <Button asChild size="lg">
                   <Link href="/candidates/new">Commencer maintenant <ArrowRight className="ml-2 h-4 w-4" /></Link>
                 </Button>
                 <Button asChild variant="outline" size="lg">
-                  <Link href="/jobs">Voir les offres d'emploi</Link>
+                  <Link href="/jobs">Voir les offres d&apos;emploi</Link>
                 </Button>
               </div>
             </div>
@@ -79,7 +79,7 @@ export default function Home() {
                     <div className="bg-primary/10 p-2 rounded-full mr-3">
                       <CheckCircle className="h-5 w-5 text-primary" />
                     </div>
-                    <h3 className="text-lg font-semibold">Rapports d'évaluation</h3>
+                    <h3 className="text-lg font-semibold">Rapports d&apos;évaluation</h3>
                   </div>
                   <p className="text-muted-foreground">
                     Obtenez des rapports détaillés avec scores, points forts/faibles et recommandations pour chaque candidat.
@@ -101,7 +101,7 @@ export default function Home() {
               <div className="bg-card p-6 rounded-lg shadow-sm border border-border">
                 <div className="flex flex-col h-full">
                   <div className="flex-1">
-                    <p className="italic text-muted-foreground">"Grâce à cette plateforme, nous avons réduit notre temps de recrutement de 60% tout en améliorant la qualité de nos embauches. Un outil indispensable pour notre équipe RH."</p>
+                    <p className="italic text-muted-foreground">&laquo;Grâce à cette plateforme, nous avons réduit notre temps de recrutement de 60% tout en améliorant la qualité de nos embauches. Un outil indispensable pour notre équipe RH.&raquo;</p>
                   </div>
                   <div className="mt-4 pt-4 border-t border-border">
                     <p className="font-semibold">Sophie Martin</p>
@@ -112,7 +112,7 @@ export default function Home() {
               <div className="bg-card p-6 rounded-lg shadow-sm border border-border">
                 <div className="flex flex-col h-full">
                   <div className="flex-1">
-                    <p className="italic text-muted-foreground">"L'analyse automatisée des CV nous a permis d'identifier des talents que nous aurions pu manquer avec notre processus manuel. Les entretiens IA sont remarquablement précis."</p>
+                    <p className="italic text-muted-foreground">&laquo;L&apos;analyse automatisée des CV nous a permis d&apos;identifier des talents que nous aurions pu manquer avec notre processus manuel. Les entretiens IA sont remarquablement précis.&raquo;</p>
                   </div>
                   <div className="mt-4 pt-4 border-t border-border">
                     <p className="font-semibold">Thomas Dubois</p>
@@ -123,7 +123,7 @@ export default function Home() {
               <div className="bg-card p-6 rounded-lg shadow-sm border border-border">
                 <div className="flex flex-col h-full">
                   <div className="flex-1">
-                    <p className="italic text-muted-foreground">"En tant que startup, nous n'avions pas les ressources pour un grand département RH. Cette plateforme nous a permis de recruter efficacement malgré nos contraintes."</p>
+                    <p className="italic text-muted-foreground">&laquo;En tant que startup, nous n&apos;avions pas les ressources pour un grand département RH. Cette plateforme nous a permis de recruter efficacement malgré nos contraintes.&raquo;</p>
                   </div>
                   <div className="mt-4 pt-4 border-t border-border">
                     <p className="font-semibold">Léa Moreau</p>

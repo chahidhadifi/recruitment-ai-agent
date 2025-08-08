@@ -39,8 +39,8 @@ const navigationItems = {
   ],
   candidat: [
     { name: "Accueil", href: "/" },
-    { name: "Mes entretiens", href: "/interviews/candidat" },
     { name: "Offres d'emploi", href: "/jobs" },
+    { name: "Mes candidatures", href: "/jobs/my-applications" },
     { name: "Aide", href: "/help" },
   ],
 };

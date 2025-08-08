@@ -11,7 +11,7 @@ import { MainLayout } from "@/components/main-layout";
 import { Button } from "@/components/ui/button";
 
 export default function SettingsPage() {
-  // Création d'une session fictive pour les tests (l'authentification est désactivée)
+  // Création d&apos;une session fictive pour les tests (l&apos;authentification est désactivée)
   const { data: realSession } = useSession();
   
   // Session fictive pour les tests
@@ -24,7 +24,7 @@ export default function SettingsPage() {
     }
   };
   
-  // Utiliser la session fictive si aucune session réelle n'est disponible
+  // Utiliser la session fictive si aucune session réelle n&apos;est disponible
   const session = realSession || mockSession;
   const router = useRouter();
   const { toast } = useToast();
@@ -229,7 +229,7 @@ export default function SettingsPage() {
                     <div className="flex items-center justify-between">
                       <div>
                         <h3 className="font-medium">Nouveaux candidats</h3>
-                        <p className="text-sm text-muted-foreground">Être notifié lors de l'ajout d'un nouveau candidat</p>
+                        <p className="text-sm text-muted-foreground">Être notifié lors de l&apos;ajout d&apos;un nouveau candidat</p>
                       </div>
                       <label className="relative inline-flex items-center cursor-pointer">
                         <input
@@ -244,7 +244,7 @@ export default function SettingsPage() {
                     </div>
                     <div className="flex items-center justify-between">
                       <div>
-                        <h3 className="font-medium">Rappels d'entretiens</h3>
+                        <h3 className="font-medium">Rappels d&apos;entretiens</h3>
                         <p className="text-sm text-muted-foreground">Recevoir des rappels avant les entretiens programmés</p>
                       </div>
                       <label className="relative inline-flex items-center cursor-pointer">
@@ -260,8 +260,8 @@ export default function SettingsPage() {
                     </div>
                     <div className="flex items-center justify-between">
                       <div>
-                        <h3 className="font-medium">Rapports d'évaluation</h3>
-                        <p className="text-sm text-muted-foreground">Être notifié lorsqu'un rapport d'évaluation est prêt</p>
+                        <h3 className="font-medium">Rapports d&apos;évaluation</h3>
+                         <p className="text-sm text-muted-foreground">Être notifié lorsqu&apos;un rapport d&apos;évaluation est prêt</p>
                       </div>
                       <label className="relative inline-flex items-center cursor-pointer">
                         <input

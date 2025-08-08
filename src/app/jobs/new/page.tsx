@@ -19,6 +19,20 @@ export default function NewJobPage() {
   const { data: session, status } = useSession();
   const { toast } = useToast();
   
+  // Déclarer les états avant les conditions
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [formData, setFormData] = useState({
+    title: "",
+    company: "",
+    location: "",
+    type: "CDI",
+    salary: "",
+    description: "",
+    responsibilities: "",
+    requirements: "",
+    benefits: ""
+  });
+  
   // Vérifier si l'utilisateur est un recruteur
   const isRecruiter = session?.user?.role === "recruteur" || session?.user?.role === "admin";
   
@@ -42,19 +56,6 @@ export default function NewJobPage() {
     router.push("/");
     return null;
   }
-  
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [formData, setFormData] = useState({
-    title: "",
-    company: "",
-    location: "",
-    type: "CDI",
-    salary: "",
-    description: "",
-    responsibilities: "",
-    requirements: "",
-    benefits: ""
-  });
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -105,7 +106,7 @@ export default function NewJobPage() {
       
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.message || 'Erreur lors de la création de l\'offre');
+        throw new Error(errorData.message || 'Erreur lors de la création de l&apos;offre');
       }
       
       toast({
@@ -116,10 +117,10 @@ export default function NewJobPage() {
       // Rediriger vers la liste des offres
       router.push("/jobs");
     } catch (error) {
-      console.error('Erreur lors de la création de l\'offre:', error);
+      console.error('Erreur lors de la création de l&apos;offre:', error);
       toast({
         title: "Erreur",
-        description: error instanceof Error ? error.message : "Une erreur s'est produite lors de la publication de l'offre. Veuillez réessayer.",
+        description: error instanceof Error ? error.message : "Une erreur s&apos;est produite lors de la publication de l&apos;offre. Veuillez réessayer.",
         variant: "destructive",
       });
     } finally {
@@ -136,7 +137,7 @@ export default function NewJobPage() {
         
         <Card>
           <CardHeader>
-            <CardTitle className="text-2xl">Publier une nouvelle offre d'emploi</CardTitle>
+            <CardTitle className="text-2xl">Publier une nouvelle offre d&apos;emploi</CardTitle>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-6">
@@ -262,7 +263,7 @@ export default function NewJobPage() {
                   Annuler
                 </Button>
                 <Button type="submit" disabled={isSubmitting}>
-                  {isSubmitting ? "Publication en cours..." : "Publier l'offre"}
+                  {isSubmitting ? "Publication en cours..." : "Publier l&apos;offre"}
                 </Button>
               </div>
             </form>

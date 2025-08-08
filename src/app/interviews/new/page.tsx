@@ -1,7 +1,8 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import { useSession } from "next-auth/react";
 import { ArrowLeft, Mic, MicOff, Send, User } from "lucide-react";
 
 import { MainLayout } from "@/components/main-layout";
@@ -129,10 +130,19 @@ type Message = {
 };
 
 export default function NewInterviewPage() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <NewInterviewContent />
+    </Suspense>
+  );
+}
+
+function NewInterviewContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const candidateId = searchParams.get("candidate");
   const { toast } = useToast();
+  const { data: session } = useSession();
   
   const [candidate, setCandidate] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -145,8 +155,11 @@ export default function NewInterviewPage() {
   
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
+  
+  // Vérifier si l'utilisateur est un candidat
+  const isCandidat = session?.user?.role === "candidat";
 
-  // Charger les données du candidat
+  // Charger les données du candidat et démarrer automatiquement l'entretien pour les candidats
   useEffect(() => {
     if (candidateId) {
       // Simuler un chargement de données
@@ -156,11 +169,34 @@ export default function NewInterviewPage() {
           setCandidate(candidateData);
         }
         setLoading(false);
+        
+        // Si l'utilisateur est un candidat qui vient de postuler, démarrer automatiquement l'entretien
+        if (isCandidat && searchParams.get("autostart") === "true") {
+          // Attendre un peu pour que l'interface se charge complètement
+          setTimeout(() => {
+            setInterviewStarted(true);
+            
+            // Ajouter le premier message de l'assistant
+            const firstQuestion = predefinedQuestions[0];
+            addMessage({
+              id: Date.now().toString(),
+              role: "assistant",
+              content: firstQuestion.text,
+              timestamp: new Date(),
+            });
+            
+            // Afficher un toast pour informer l'utilisateur que l'entretien a commencé
+            toast({
+              title: "Entretien démarré",
+              description: "L&apos;entretien a démarré automatiquement. Veuillez répondre aux questions de l&apos;assistant.",
+            });
+          }, 1000);
+        }
       }, 500);
     } else {
       setLoading(false);
     }
-  }, [candidateId]);
+  }, [candidateId, isCandidat, searchParams]);
 
   // Défilement automatique vers le bas lors de nouveaux messages
   useEffect(() => {
@@ -172,12 +208,19 @@ export default function NewInterviewPage() {
   };
 
   const startInterview = () => {
-    if (!candidate) {
+    // Si nous venons directement d'une candidature, nous n'avons pas besoin d'un candidat sélectionné
+    // car l'utilisateur est lui-même le candidat
+    if (!candidate && !isCandidat) {
       toast({
         title: "Erreur",
-        description: "Veuillez sélectionner un candidat pour démarrer l'entretien.",
+        description: "Veuillez sélectionner un candidat pour démarrer l&apos;entretien.",
         variant: "destructive",
       });
+      return;
+    }
+
+    // Éviter de démarrer l'entretien plusieurs fois
+    if (interviewStarted) {
       return;
     }
 
@@ -190,6 +233,12 @@ export default function NewInterviewPage() {
       role: "assistant",
       content: firstQuestion.text,
       timestamp: new Date(),
+    });
+    
+    // Afficher un toast pour informer l'utilisateur que l'entretien a commencé
+    toast({
+      title: "Entretien démarré",
+      description: "Veuillez répondre aux questions de l&apos;assistant.",
     });
   };
 
@@ -255,10 +304,15 @@ export default function NewInterviewPage() {
   };
 
   const finishInterview = () => {
+    // Message différent selon le rôle de l'utilisateur
+    const finalMessage = isCandidat
+      ? "Merci pour cet entretien. Nous avons terminé toutes les questions. Votre participation est très appréciée. Nous allons analyser vos réponses et mettre à jour le statut de votre candidature prochainement. Vous serez redirigé vers la page de vos candidatures."
+      : "Merci pour cet entretien. Nous avons terminé toutes les questions. Votre participation est très appréciée. Nous allons analyser vos réponses et vous contacterons prochainement avec les résultats.";
+    
     addMessage({
       id: Date.now().toString(),
       role: "assistant",
-      content: "Merci pour cet entretien. Nous avons terminé toutes les questions. Votre participation est très appréciée. Nous allons analyser vos réponses et vous contacterons prochainement avec les résultats.",
+      content: finalMessage,
       timestamp: new Date(),
     });
     
@@ -268,12 +322,18 @@ export default function NewInterviewPage() {
     setTimeout(() => {
       toast({
         title: "Entretien terminé",
-        description: "Le rapport d'évaluation est en cours de génération.",
+        description: isCandidat
+          ? "Votre entretien a été enregistré avec succès. Vous allez être redirigé vers vos candidatures."
+          : "Le rapport d&apos;évaluation est en cours de génération.",
       });
       
-      // Rediriger vers la page du candidat après quelques secondes
+      // Rediriger vers la page appropriée après quelques secondes
       setTimeout(() => {
-        if (candidateId) {
+        if (isCandidat) {
+          // Rediriger les candidats vers la page de leurs candidatures
+          router.push("/jobs/my-applications");
+        } else if (candidateId) {
+          // Rediriger les recruteurs vers la page du candidat
           router.push(`/candidates/${candidateId}`);
         } else {
           router.push("/candidates");
@@ -306,7 +366,7 @@ export default function NewInterviewPage() {
       
       // Simuler la transcription après 2 secondes
       setTimeout(() => {
-        const simulatedTranscription = "Voici ma réponse transcrite à partir de l'audio. Je pense que mes compétences correspondent parfaitement au poste et je suis très motivé pour rejoindre votre équipe.";
+        const simulatedTranscription = "Voici ma réponse transcrite à partir de l&apos;audio. Je pense que mes compétences correspondent parfaitement au poste et je suis très motivé pour rejoindre votre équipe.";
         setInputValue(simulatedTranscription);
         inputRef.current?.focus();
       }, 2000);
@@ -329,9 +389,32 @@ export default function NewInterviewPage() {
   return (
     <MainLayout>
       <div className="container py-10">
-        <Button variant="ghost" onClick={() => router.back()} className="mb-6">
-          <ArrowLeft className="mr-2 h-4 w-4" /> Retour
-        </Button>
+        <div className="flex justify-between items-center mb-6">
+          <Button variant="ghost" onClick={() => router.back()}>
+            <ArrowLeft className="mr-2 h-4 w-4" /> Retour
+          </Button>
+          
+          <div className="flex gap-2">
+            {isCandidat && (
+              <Button variant="outline" onClick={() => router.push("/jobs/my-applications")}>
+                Voir mes candidatures
+              </Button>
+            )}
+            
+            {!isCandidat && (
+              <>
+                {selectedCandidate && (
+                  <Button variant="outline" onClick={() => router.push(`/candidates/${selectedCandidate.id}`)}>
+                    Profil du candidat
+                  </Button>
+                )}
+                <Button variant="outline" onClick={() => router.push("/candidates")}>
+                  Tous les candidats
+                </Button>
+              </>
+            )}
+          </div>
+        </div>
 
         <div className="mb-6">
           <h1 className="text-3xl font-bold mb-2">
@@ -350,23 +433,31 @@ export default function NewInterviewPage() {
           <div className="bg-card rounded-lg shadow-sm p-6 max-w-2xl mx-auto">
             <h2 className="text-xl font-bold mb-4">Démarrer un nouvel entretien</h2>
             
-            {!candidate && (
+            {!candidate && !isCandidat && (
               <div className="mb-6 p-4 bg-yellow-100 dark:bg-yellow-900 text-yellow-800 dark:text-yellow-300 rounded-md">
                 <p>Aucun candidat sélectionné. Vous pouvez continuer sans candidat ou retourner à la liste des candidats.</p>
               </div>
             )}
             
+            {!candidate && isCandidat && (
+              <div className="mb-6 p-4 bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-300 rounded-md">
+                <p>Merci pour votre candidature ! Vous êtes maintenant prêt à passer l&apos;entretien avec notre assistant IA.</p>
+                <p className="mt-2">Cet entretien est une étape importante du processus de recrutement. Vos réponses seront analysées pour évaluer votre adéquation avec le poste.</p>
+                <p className="mt-2 font-medium">Cliquez sur le bouton ci-dessous pour commencer l&apos;entretien.</p>
+              </div>
+            )}
+            
             <p className="mb-6">
-              L'entretien sera conduit par notre assistant IA qui posera une série de questions au candidat. 
-              Les réponses seront analysées pour générer un rapport d'évaluation complet.
+              L&apos;entretien sera conduit par notre assistant IA qui posera une série de questions au candidat. 
+              Les réponses seront analysées pour générer un rapport d&apos;évaluation complet.
             </p>
             
             <div className="space-y-4">
               <div>
-                <h3 className="text-sm font-medium mb-2">L'entretien comprendra :</h3>
+                <h3 className="text-sm font-medium mb-2">L&apos;entretien comprendra :</h3>
                 <ul className="list-disc pl-5 space-y-1 text-sm">
-                  <li>Questions d'introduction et de motivation</li>
-                  <li>Questions sur l'expérience professionnelle</li>
+                  <li>Questions d&apos;introduction et de motivation</li>
+                  <li>Questions sur l&apos;expérience professionnelle</li>
                   <li>Questions techniques spécifiques au poste</li>
                   <li>Questions comportementales</li>
                   <li>Questions de conclusion</li>
@@ -377,12 +468,29 @@ export default function NewInterviewPage() {
                 <h3 className="text-sm font-medium mb-2">Durée estimée :</h3>
                 <p className="text-sm">15-20 minutes</p>
               </div>
+              
+              {isCandidat && (
+                <div className="bg-blue-50 dark:bg-blue-900 p-3 rounded-md">
+                  <h3 className="text-sm font-medium mb-2 text-blue-800 dark:text-blue-300">Conseils pour réussir votre entretien :</h3>
+                  <ul className="list-disc pl-5 space-y-1 text-sm text-blue-700 dark:text-blue-300">
+                    <li>Soyez précis et concis dans vos réponses</li>
+                    <li>Donnez des exemples concrets de vos expériences</li>
+                    <li>Prenez votre temps pour réfléchir avant de répondre</li>
+                    <li>Soyez honnête et authentique</li>
+                  </ul>
+                </div>
+              )}
             </div>
             
             <div className="mt-8 flex justify-center">
-              <Button onClick={startInterview} className="w-full max-w-xs">
-                Démarrer l'entretien
-              </Button>
+              <Button 
+              onClick={startInterview} 
+              className="w-full max-w-xs"
+              size="lg"
+              disabled={interviewStarted}
+            >
+              {interviewStarted ? "Entretien en cours..." : "Démarrer l&apos;entretien"}
+            </Button>
             </div>
           </div>
         ) : (
@@ -390,7 +498,7 @@ export default function NewInterviewPage() {
             {/* Colonne de gauche - Avatar et animation */}
             <div className="bg-card rounded-lg shadow-sm overflow-hidden flex flex-col">
               <div className="p-4 border-b">
-                <h2 className="font-semibold">Assistant d'entretien IA</h2>
+                <h2 className="font-semibold">Assistant d&apos;entretien IA</h2>
               </div>
               <div className="flex-1 flex flex-col items-center justify-center p-6 bg-gradient-to-b from-primary/5 to-primary/10">
                 <div className="w-40 h-40 rounded-full bg-primary/20 flex items-center justify-center mb-6">
@@ -472,9 +580,16 @@ export default function NewInterviewPage() {
                   </Button>
                 </div>
                 {interviewFinished && (
-                  <p className="text-sm text-muted-foreground mt-2 text-center">
-                    L'entretien est terminé. Merci pour votre participation.
-                  </p>
+                  <div className="mt-4 p-3 bg-green-50 dark:bg-green-900 rounded-md">
+                    <p className="text-sm text-green-800 dark:text-green-300 text-center font-medium">
+                      L&apos;entretien est terminé. Merci pour votre participation.
+                    </p>
+                    {isCandidat && (
+                      <p className="text-xs text-green-700 dark:text-green-400 text-center mt-1">
+                        Vous serez redirigé vers la page de vos candidatures dans quelques instants...
+                      </p>
+                    )}
+                  </div>
                 )}
               </div>
             </div>

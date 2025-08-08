@@ -27,8 +27,8 @@ const mockJobs: Job[] = [
     responsibilities: [
       "Développer des interfaces utilisateur réactives et intuitives",
       "Collaborer avec les designers UX/UI pour implémenter les maquettes",
-      "Assurer la maintenance et l'amélioration des applications existantes",
-      "Participer aux revues de code et aux réunions d'équipe",
+      "Assurer la maintenance et l&apos;amélioration des applications existantes",
+      "Participer aux revues de code et aux réunions d&apos;équipe",
       "Rester à jour sur les dernières technologies frontend"
     ],
     requirements: [
@@ -37,14 +37,14 @@ const mockJobs: Job[] = [
       "Connaissance des outils de build comme Webpack ou Vite",
       "Expérience avec les API RESTful et GraphQL",
       "Familiarité avec les méthodologies Agile",
-      "Bonne communication et esprit d'équipe"
+      "Bonne communication et esprit d&apos;équipe"
     ],
     benefits: [
       "Salaire compétitif",
       "Télétravail partiel",
       "Horaires flexibles",
       "Formation continue",
-      "Mutuelle d'entreprise",
+      "Mutuelle d&apos;entreprise",
       "Tickets restaurant"
     ],
     recruiter: "recruteur-1",
@@ -58,19 +58,19 @@ const mockJobs: Job[] = [
     type: "CDI",
     salary: "40 000€ - 55 000€",
     postedDate: "2023-11-10",
-    description: "Rejoignez notre studio de design en tant que UX/UI Designer et créez des expériences utilisateur exceptionnelles pour nos clients. Vous serez responsable de la conception d'interfaces intuitives et esthétiques pour des applications web et mobiles.",
+    description: "Rejoignez notre studio de design en tant que UX/UI Designer et créez des expériences utilisateur exceptionnelles pour nos clients. Vous serez responsable de la conception d&apos;interfaces intuitives et esthétiques pour des applications web et mobiles.",
     responsibilities: [
       "Créer des wireframes, prototypes et maquettes haute-fidélité",
       "Réaliser des tests utilisateurs et analyser les retours",
-      "Collaborer avec les développeurs pour l'implémentation des designs",
-      "Participer à l'élaboration de la stratégie UX",
+      "Collaborer avec les développeurs pour l&apos;implémentation des designs",
+        "Participer à l&apos;élaboration de la stratégie UX",
       "Maintenir et faire évoluer notre système de design"
     ],
     requirements: [
       "Expérience de 3+ ans en UX/UI Design",
       "Maîtrise de Figma, Sketch ou Adobe XD",
       "Portfolio démontrant vos compétences en design",
-      "Connaissance des principes d'accessibilité web",
+      "Connaissance des principes d&apos;accessibilité web",
       "Expérience en recherche utilisateur",
       "Capacité à défendre vos choix de design"
     ],
@@ -98,8 +98,8 @@ const mockJobs: Job[] = [
       "Concevoir et développer des API RESTful",
       "Implémenter des modèles de données et des schémas de base de données",
       "Assurer la sécurité et la performance des applications",
-      "Collaborer avec l'équipe frontend pour l'intégration des API",
-      "Participer à l'amélioration continue de notre architecture"
+      "Collaborer avec l&apos;équipe frontend pour l&apos;intégration des API",
+        "Participer à l&apos;amélioration continue de notre architecture"
     ],
     requirements: [
       "Expérience avec Node.js et Express",
@@ -107,14 +107,14 @@ const mockJobs: Job[] = [
       "Compréhension des principes de sécurité web",
       "Expérience avec Docker est un plus",
       "Familiarité avec les principes de microservices",
-      "Expérience en développement d'API RESTful"
+      "Expérience en développement d&apos;API RESTful"
     ],
     benefits: [
       "Salaire compétitif",
       "Télétravail partiel",
       "Horaires flexibles",
       "Formation continue",
-      "Mutuelle d'entreprise",
+      "Mutuelle d&apos;entreprise",
       "Tickets restaurant"
     ],
     recruiter: "recruteur-2",
@@ -157,7 +157,7 @@ export default function JobsPage() {
   // Formater la date pour l'affichage
   const formatDate = (dateString: string) => {
     const options: Intl.DateTimeFormatOptions = { year: 'numeric', month: 'long', day: 'numeric' };
-    return new Date(dateString).toLocaleDateString('fr-FR', options);
+    return new Date(dateString).toLocaleDateString("fr-FR", options);
   };
 
   // Calculer le nombre de jours depuis la publication
@@ -167,7 +167,7 @@ export default function JobsPage() {
     const diffTime = Math.abs(today.getTime() - posted.getTime());
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
     
-    if (diffDays === 0) return "Aujourd'hui";
+    if (diffDays === 0) return "Aujourd&apos;hui";
     if (diffDays === 1) return "Hier";
     return `Il y a ${diffDays} jours`;
   };
@@ -176,7 +176,7 @@ export default function JobsPage() {
     <MainLayout>
       <div className="container py-10">
         <div className="flex justify-between items-center mb-6">
-          <h1 className="text-3xl font-bold">Offres d'emploi</h1>
+          <h1 className="text-3xl font-bold">Offres d&apos;emploi</h1>
           {isRecruiter && (
             <div className="flex gap-3">
               <Button variant="outline" asChild>
@@ -209,7 +209,7 @@ export default function JobsPage() {
         {loading ? (
           <div className="flex flex-col items-center justify-center py-12">
             <div className="h-8 w-8 animate-spin text-primary mb-4" />
-            <p className="text-muted-foreground">Chargement des offres d'emploi...</p>
+            <p className="text-muted-foreground">Chargement des offres d&apos;emploi...</p>
           </div>
         ) : error ? (
           <div className="text-center py-12 bg-red-50 rounded-lg">
@@ -227,7 +227,7 @@ export default function JobsPage() {
         ) : filteredJobs.length === 0 ? (
           <div className="text-center py-12">
             <Briefcase className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
-            <h2 className="text-xl font-semibold mb-2">Aucune offre d'emploi trouvée</h2>
+            <h2 className="text-xl font-semibold mb-2">Aucune offre d&apos;emploi trouvée</h2>
             <p className="text-muted-foreground">Essayez de modifier vos critères de recherche</p>
           </div>
         ) : (
@@ -267,7 +267,7 @@ export default function JobsPage() {
                       <div className="mt-4 md:mt-0">
                         {isAuthenticated ? (
                           <Button asChild>
-                            <Link href={`/jobs/${job.id}`}>Voir l'offre</Link>
+                            <Link href={`/jobs/${job.id}`}>Voir l&apos;offre</Link>
                           </Button>
                         ) : (
                           <Button onClick={() => router.push("/auth/login")}>

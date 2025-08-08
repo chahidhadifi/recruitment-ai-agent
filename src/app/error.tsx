@@ -29,7 +29,7 @@ export default function Error({
         <h1 className="mb-2 text-4xl font-extrabold tracking-tight">Une erreur est survenue</h1>
         
         <p className="mb-2 max-w-md text-muted-foreground">
-          Désolé, quelque chose s'est mal passé lors du traitement de votre demande.
+          Désolé, quelque chose s&apos;est mal passé lors du traitement de votre demande.
         </p>
         
         {error.message && process.env.NODE_ENV === "development" && (
@@ -44,7 +44,7 @@ export default function Error({
           </Button>
           
           <Button variant="outline" asChild size="lg">
-            <Link href="/">Retour à l'accueil</Link>
+            <Link href="/">Retour à l&apos;accueil</Link>
           </Button>
         </div>
       </div>

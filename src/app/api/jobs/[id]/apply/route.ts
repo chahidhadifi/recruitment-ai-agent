@@ -7,7 +7,7 @@ import { JobApplication } from '@/types/job';
 const mockApplications: Record<string, JobApplication[]> = {};
 
 // POST /api/jobs/:id/apply - Postuler à une offre d'emploi
-export async function POST(request: NextRequest, { params }: { params: { id: string } }) {
+export async function POST(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     // Vérifier l'authentification
     const session = await getServerSession(authOptions);
@@ -21,7 +21,7 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
       return NextResponse.json({ error: 'Seuls les candidats peuvent postuler' }, { status: 403 });
     }
 
-    const jobId = params.id;
+    const { id: jobId } = await params;
     
     // Vérifier si l'ID est valide
     if (!jobId) {
@@ -55,10 +55,21 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
       candidateId: session.user.id,
       coverLetter: data.coverLetter,
       cvUrl: data.cvUrl,
-      status: 'pending',
+      status: 'pending', // Statut initial: en attente
       appliedAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString()
+      updatedAt: new Date().toISOString(),
+      phone: data.phone,
+      location: data.location,
+      jobTitle: data.jobTitle,
+      company: data.company
     };
+    
+    // Simuler la création d'un entretien automatique
+    // Dans un environnement réel, vous créeriez un entretien dans la base de données
+    const interviewId = `interview-${jobId}-${session.user.id}-${Date.now()}`;
+    
+    // Ajouter l'ID de l'entretien à l'application
+    newApplication.interviewId = interviewId;
 
     // Ajouter la candidature aux données mockées
     if (!mockApplications[jobId]) {
@@ -77,7 +88,7 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
 }
 
 // GET /api/jobs/:id/apply - Récupérer les candidatures pour une offre d'emploi (pour les recruteurs)
-export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
+export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     // Vérifier l'authentification et les autorisations
     const session = await getServerSession(authOptions);
@@ -91,7 +102,7 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
       return NextResponse.json({ error: 'Accès refusé' }, { status: 403 });
     }
 
-    const jobId = params.id;
+    const { id: jobId } = await params;
     
     // Vérifier si l'ID est valide
     if (!jobId) {

@@ -186,7 +186,7 @@ export default function DashboardPage() {
           <div className="bg-card rounded-lg shadow-sm p-6">
             <div className="flex justify-between items-start mb-4">
               <div>
-                <h2 className="text-lg font-semibold text-muted-foreground">Taux d'embauche</h2>
+                <h2 className="text-lg font-semibold text-muted-foreground">Taux d&apos;embauche</h2>
                 <p className="text-3xl font-bold">{mockStats.hiringRate}<span className="text-lg font-normal">%</span></p>
               </div>
               <div className="p-3 rounded-full bg-primary/10">
@@ -300,7 +300,7 @@ export default function DashboardPage() {
             
             {/* Statistiques d'entretien */}
             <div className="bg-card rounded-lg shadow-sm p-6">
-              <h2 className="text-xl font-bold mb-6">Statistiques d'entretien</h2>
+              <h2 className="text-xl font-bold mb-6">Statistiques d&apos;entretien</h2>
               
               <div className="grid grid-cols-2 gap-6">
                 <div className="text-center">
@@ -308,7 +308,7 @@ export default function DashboardPage() {
                     <BarChart className="h-8 w-8 text-primary" />
                   </div>
                   <h3 className="text-2xl font-bold">24 min</h3>
-                  <p className="text-sm text-muted-foreground">Durée moyenne d'entretien</p>
+                  <p className="text-sm text-muted-foreground">Durée moyenne d&apos;entretien</p>
                 </div>
                 
                 <div className="text-center">
@@ -332,7 +332,7 @@ export default function DashboardPage() {
                     <Calendar className="h-8 w-8 text-primary" />
                   </div>
                   <h3 className="text-2xl font-bold">2.4</h3>
-                  <p className="text-sm text-muted-foreground">Jours pour compléter l'évaluation</p>
+                  <p className="text-sm text-muted-foreground">Jours pour compléter l&apos;évaluation</p>
                 </div>
               </div>
             </div>

@@ -29,28 +29,33 @@ const mockCandidateReport = {
   ],
   weaknesses: [
     "Connaissance limitée des frameworks front-end",
-    "Peu d'expérience en recherche utilisateur"
+    "Peu d&apos;expérience en recherche utilisateur"
   ],
-  summary: "Marie a démontré une solide compréhension des principes de conception UX et une bonne maîtrise des outils de design. Elle a présenté un portfolio impressionnant avec des projets variés. Ses compétences en communication sont excellentes, ce qui est essentiel pour collaborer efficacement avec les développeurs et les parties prenantes. Cependant, elle pourrait bénéficier d'une formation supplémentaire sur les frameworks front-end modernes et les méthodologies de recherche utilisateur.",
-  recommendations: "Recommandée pour le poste de UX Designer. Suggérons une période d'intégration avec formation sur React et les méthodes de recherche utilisateur."
+  summary: "Marie a démontré une solide compréhension des principes de conception UX et une bonne maîtrise des outils de design. Elle a présenté un portfolio impressionnant avec des projets variés. Ses compétences en communication sont excellentes, ce qui est essentiel pour collaborer efficacement avec les développeurs et les parties prenantes. Cependant, elle pourrait bénéficier d&apos;une formation supplémentaire sur les frameworks front-end modernes et les méthodologies de recherche utilisateur.",
+  recommendations: "Recommandée pour le poste de UX Designer. Suggérons une période d&apos;intégration avec formation sur React et les méthodes de recherche utilisateur."
 };
 
 // Données fictives pour les questions et réponses de l'entretien
 const mockInterviewQA = [
   {
     question: "Pouvez-vous expliquer votre processus de conception UX ?",
-    answer: "Mon processus commence par la recherche utilisateur pour comprendre les besoins et les problèmes. Je crée ensuite des personas et des parcours utilisateurs, suivis de wireframes et de prototypes. Je teste ces prototypes avec des utilisateurs réels et j'itère en fonction des retours. Enfin, je collabore étroitement avec les développeurs pour assurer une implémentation fidèle.",
+    answer: "Mon processus commence par la recherche utilisateur pour comprendre les besoins et les problèmes. Je crée ensuite des personas et des parcours utilisateurs, suivis de wireframes et de prototypes. Je teste ces prototypes avec des utilisateurs réels et j&apos;itère en fonction des retours. Enfin, je collabore étroitement avec les développeurs pour assurer une implémentation fidèle.",
     score: 90
   },
   {
     question: "Quels outils de design utilisez-vous régulièrement ?",
-    answer: "J'utilise principalement Figma pour la conception d'interfaces et la création de prototypes. J'utilise également Adobe XD et Sketch selon les besoins du projet. Pour la recherche utilisateur, j'utilise des outils comme Hotjar et UserTesting.",
+    answer: "J&apos;utilise principalement Figma pour la conception d&apos;interfaces et la création de prototypes. J&apos;utilise également Adobe XD et Sketch selon les besoins du projet. Pour la recherche utilisateur, j&apos;utilise des outils comme Hotjar et UserTesting.",
     score: 85
   },
   {
-    question: "Comment abordez-vous l'accessibilité dans vos conceptions ?",
-    answer: "L'accessibilité est une priorité dans mes conceptions. Je m'assure que mes designs respectent les normes WCAG 2.1. Cela inclut l'utilisation de contrastes de couleurs appropriés, la fourniture d'alternatives textuelles pour les images, et la conception d'interfaces navigables au clavier. Je teste également avec des lecteurs d'écran.",
+    question: "Comment abordez-vous l&apos;accessibilité dans vos conceptions ?",
+    answer: "L&apos;accessibilité est une priorité dans mes conceptions. Je m&apos;assure que mes designs respectent les normes WCAG 2.1. Cela inclut l&apos;utilisation de contrastes de couleurs appropriés, la fourniture d&apos;alternatives textuelles pour les images, et la conception d&apos;interfaces navigables au clavier. Je teste également avec des lecteurs d&apos;écran.",
     score: 80
+  },
+  {
+    question: "Comment gérez-vous les conflits dans une équipe de design ?",
+    answer: "Pour résoudre les conflits, j&apos;essaie d&apos;abord de comprendre les différentes perspectives en écoutant activement toutes les parties. Je m&apos;efforce de trouver un terrain d&apos;entente en me concentrant sur les objectifs communs du projet. Si nécessaire, je m&apos;appuie sur des données et des tests utilisateurs pour guider la décision. L&apos;important est de maintenir une communication ouverte et respectueuse.",
+    score: 85
   },
 ];
 
@@ -102,8 +107,8 @@ export default function CandidateReportPage({ params }: { params: { id: string }
                     <p>{candidate.email}</p>
                   </div>
                   <div>
-                    <p className="text-sm font-medium text-muted-foreground">Date d'entretien</p>
-                    <p>{new Date(candidate.interviewDate).toLocaleDateString('fr-FR')}</p>
+                    <p className="text-sm font-medium text-muted-foreground">Date d&apos;entretien</p>
+                    <p>{new Date(candidate.interviewDate).toLocaleDateString("fr-FR")}</p>
                   </div>
                   <div>
                     <p className="text-sm font-medium text-muted-foreground">Durée</p>
@@ -150,13 +155,13 @@ export default function CandidateReportPage({ params }: { params: { id: string }
             <Tabs value={activeTab} onValueChange={setActiveTab}>
               <TabsList className="grid w-full grid-cols-2">
                 <TabsTrigger value="summary">Résumé</TabsTrigger>
-                <TabsTrigger value="details">Détails de l'entretien</TabsTrigger>
+                <TabsTrigger value="details">Détails de l&apos;entretien</TabsTrigger>
               </TabsList>
               
               <TabsContent value="summary">
                 <Card>
                   <CardHeader>
-                    <CardTitle>Résumé de l'évaluation</CardTitle>
+                    <CardTitle>Résumé de l&apos;évaluation</CardTitle>
                   </CardHeader>
                   <CardContent>
                     <div className="space-y-6">

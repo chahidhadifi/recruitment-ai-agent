@@ -77,7 +77,7 @@ export default function HelpPage() {
   return (
     <MainLayout>
       <div className="container py-10">
-        <h1 className="text-3xl font-bold mb-2">Centre d'aide</h1>
+        <h1 className="text-3xl font-bold mb-2">Centre d&apos;aide</h1>
         <p className="text-muted-foreground mb-8">Trouvez des réponses à vos questions et apprenez à utiliser la plateforme</p>
 
         {/* Barre de recherche */}

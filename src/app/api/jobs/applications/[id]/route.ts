@@ -31,7 +31,7 @@ const mockApplications = [
 ];
 
 // GET /api/jobs/applications/[id]
-export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
+export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     // Vérifier l'authentification
     const session = await getServerSession(authOptions);
@@ -47,7 +47,7 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
     }
     
     // Récupérer l'ID de la candidature
-    const applicationId = params.id;
+    const { id: applicationId } = await params;
     
     // Rechercher la candidature dans les données fictives
     const application = mockApplications.find(app => app.id === applicationId);
@@ -64,7 +64,7 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
 }
 
 // PATCH /api/jobs/applications/[id] - Mettre à jour le statut d'une candidature (pour les recruteurs)
-export async function PATCH(request: NextRequest, { params }: { params: { id: string } }) {
+export async function PATCH(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const session = await getServerSession(authOptions);
   
   // Vérifier si l'utilisateur est connecté
@@ -78,7 +78,7 @@ export async function PATCH(request: NextRequest, { params }: { params: { id: st
   }
   
   try {
-    const applicationId = params.id;
+    const { id: applicationId } = await params;
     
     // Définir les données mock pour les applications
     const application = mockApplications.find(app => app.id === applicationId);
