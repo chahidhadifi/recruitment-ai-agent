@@ -1,0 +1,36 @@
+<svg width="512" height="512" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Fond du visage -->
+  <circle cx="256" cy="256" r="256" fill="#F5D0A9" />
+  
+  <!-- Cheveux -->
+  <path d="M256 50C175 50 110 115 110 196V256C110 337 175 402 256 402C337 402 402 337 402 256V196C402 115 337 50 256 50Z" fill="#4B4B4B" />
+  
+  <!-- Visage -->
+  <circle cx="256" cy="270" r="150" fill="#FFD7B5" />
+  
+  <!-- Yeux -->
+  <ellipse cx="200" cy="240" rx="20" ry="15" fill="#3D5AFE" />
+  <ellipse cx="312" cy="240" rx="20" ry="15" fill="#3D5AFE" />
+  
+  <!-- Sourcils -->
+  <path d="M180 210C180 210 200 200 220 210" stroke="#333" stroke-width="5" stroke-linecap="round" />
+  <path d="M292 210C292 210 312 200 332 210" stroke="#333" stroke-width="5" stroke-linecap="round" />
+  
+  <!-- Nez -->
+  <path d="M256 260C256 260 240 290 256 300C272 290 256 260 256 260Z" fill="#FFBEA5" />
+  
+  <!-- Bouche -->
+  <path d="M220 320C220 320 256 340 292 320" stroke="#333" stroke-width="5" stroke-linecap="round" />
+  
+  <!-- Cravate -->
+  <path d="M256 370L230 420L256 470L282 420L256 370Z" fill="#3D5AFE" />
+  <path d="M230 370H282" stroke="#333" stroke-width="5" />
+  
+  <!-- Costume -->
+  <path d="M150 420C150 420 200 370 256 370C312 370 362 420 362 420V512H150V420Z" fill="#333" />
+  
+  <!-- Lunettes -->
+  <circle cx="200" cy="240" r="30" stroke="#333" stroke-width="5" fill="none" />
+  <circle cx="312" cy="240" r="30" stroke="#333" stroke-width="5" fill="none" />
+  <path d="M230 240H282" stroke="#333" stroke-width="5" />
+</svg>
