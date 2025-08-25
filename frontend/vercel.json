@@ -1,0 +1,10 @@
+{
+  "version": 2,
+  "buildCommand": "npm run build",
+  "outputDirectory": ".next",
+  "framework": "nextjs",
+  "env": {
+    "NEXTAUTH_URL": "https://recruitmentaiagent.vercel.app",
+    "NEXTAUTH_SECRET": "a_very_long_secret_value_at_least_32_characters_long_for_jwt_encryption"
+  }
+}
