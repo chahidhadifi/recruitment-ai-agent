@@ -64,6 +64,7 @@ class ApplicationStatus(enum.Enum):
     interview = "interview"
     accepted = "accepted"
     rejected = "rejected"
+    analyzed = "analyzed"
 
 
 class JobApplication(Base):
@@ -79,6 +80,15 @@ class JobApplication(Base):
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
     phone = Column(String, nullable=True)
     location = Column(String, nullable=True)
+    
+    # Analysis fields
+    score = Column(Integer, nullable=True)
+    observations = Column(Text, nullable=True)
+    qualified = Column(Boolean, nullable=True)
+    strengths = Column(Text, nullable=True)
+    weaknesses = Column(Text, nullable=True)
+    keywords_match = Column(Text, nullable=True)
+    analyzed_at = Column(DateTime(timezone=True), nullable=True)
     
     # Relationships
     job = relationship("Job", back_populates="applications")

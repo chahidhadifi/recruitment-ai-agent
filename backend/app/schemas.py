@@ -161,6 +161,7 @@ class ApplicationStatus(str, Enum):
     interview = "interview"
     accepted = "accepted"
     rejected = "rejected"
+    analyzed = "analyzed"
 
 
 class JobApplicationBase(BaseModel):
@@ -184,6 +185,13 @@ class JobApplicationUpdate(BaseModel):
     phone: Optional[str] = None
     location: Optional[str] = None
     status: Optional[ApplicationStatus] = None
+    score: Optional[int] = None
+    observations: Optional[str] = None
+    qualified: Optional[bool] = None
+    strengths: Optional[str] = None
+    weaknesses: Optional[str] = None
+    keywords_match: Optional[str] = None
+    analyzed_at: Optional[datetime] = None
 
 
 class JobApplication(JobApplicationBase):
@@ -193,6 +201,13 @@ class JobApplication(JobApplicationBase):
     updated_at: Optional[datetime] = None
     job_title: Optional[str] = None
     company: Optional[str] = None
+    score: Optional[int] = None
+    observations: Optional[str] = None
+    qualified: Optional[bool] = None
+    strengths: Optional[str] = None
+    weaknesses: Optional[str] = None
+    keywords_match: Optional[str] = None
+    analyzed_at: Optional[datetime] = None
 
     class Config:
         from_attributes = True
