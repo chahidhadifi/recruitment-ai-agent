@@ -81,7 +81,7 @@ class JobApplication(Base):
     phone = Column(String, nullable=True)
     location = Column(String, nullable=True)
     
-    # Analysis fields
+    # Analysis fields from migration
     score = Column(Integer, nullable=True)
     observations = Column(Text, nullable=True)
     qualified = Column(Boolean, nullable=True)
@@ -167,7 +167,7 @@ class RecruiterProfile(Base):
     __tablename__ = "recruiter_profiles"
     
     id = Column(Integer, primary_key=True, index=True)
-    user_id = Column(Integer, unique=True, index=True, nullable=False)
+    user_id = Column(Integer, ForeignKey("users.id"), unique=True, index=True, nullable=False)
     department = Column(String, nullable=True)
     specialization = Column(String, nullable=True)
     assigned_candidates = Column(Integer, default=0)
@@ -176,13 +176,14 @@ class RecruiterProfile(Base):
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
     
     # Relationships
+    user = relationship("User")
     jobs = relationship("Job", back_populates="recruiter")
 
 class CandidateProfile(Base):
     __tablename__ = "candidate_profiles"
     
     id = Column(Integer, primary_key=True, index=True)
-    user_id = Column(Integer, unique=True, index=True, nullable=False)
+    user_id = Column(Integer, ForeignKey("users.id"), unique=True, index=True, nullable=False)
     applied_jobs = Column(Integer, default=0)
     completed_interviews = Column(Integer, default=0)
     average_score = Column(Float, nullable=True)
@@ -192,5 +193,6 @@ class CandidateProfile(Base):
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
     
     # Relationships
+    user = relationship("User")
     applications = relationship("JobApplication", back_populates="candidate")
     interviews = relationship("Interview", back_populates="candidate")

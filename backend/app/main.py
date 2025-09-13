@@ -133,30 +133,49 @@ def create_user(user: schemas.UserCreate, db: Session = Depends(get_db)):
     # Hash the password
     hashed_password = hash_password(user.password)
     
-    # Create the user
-    db_user = models.User(
-        email=user.email, 
-        name=user.name, 
-        image=user.image,
-        role=user.role,
-        status=models.UserStatus.actif,
-        password=hashed_password
-    )
-    db.add(db_user)
-    db.commit()
-    db.refresh(db_user)
-    
-    # Create profile based on role
-    if user.role == models.UserRole.recruteur:
-        recruiter_profile = models.RecruiterProfile(user_id=db_user.id)
-        db.add(recruiter_profile)
+    try:
+        # Ensure role is properly converted to enum if it's a string
+        user_role = user.role
+        if isinstance(user_role, str):
+            try:
+                user_role = models.UserRole(user_role)
+            except ValueError:
+                # Default to candidat if invalid role
+                user_role = models.UserRole.candidat
+                logger.warning(f"Invalid role provided: {user.role}, defaulting to candidat")
+        
+        # Create the user
+        db_user = models.User(
+            email=user.email, 
+            name=user.name, 
+            image=user.image,
+            role=user_role,
+            status=models.UserStatus.actif,
+            password=hashed_password
+        )
+        db.add(db_user)
+        db.flush()  # Flush to get the user ID without committing
+        db.refresh(db_user)
+        
+        # Create profile based on role
+        if db_user.role == models.UserRole.recruteur:
+            recruiter_profile = models.RecruiterProfile(user_id=db_user.id)
+            db.add(recruiter_profile)
+            logger.info(f"Created recruiter profile for user {db_user.id}")
+        elif db_user.role == models.UserRole.candidat:
+            candidate_profile = models.CandidateProfile(user_id=db_user.id)
+            db.add(candidate_profile)
+            logger.info(f"Created candidate profile for user {db_user.id}")
+        
+        # Commit all changes in a single transaction
         db.commit()
-    elif user.role == models.UserRole.candidat:
-        candidate_profile = models.CandidateProfile(user_id=db_user.id)
-        db.add(candidate_profile)
-        db.commit()
-    
-    return db_user
+        
+        return db_user
+    except Exception as e:
+        db.rollback()
+        logger.error(f"Error creating user: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to create user: {str(e)}")
+
 
 @app.get("/api/users/{user_id}", response_model=schemas.UserWithDetails)
 def read_user(user_id: int, db: Session = Depends(get_db)):
