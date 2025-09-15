@@ -1,6 +1,6 @@
 from pydantic import BaseModel, EmailStr, Field
 from datetime import datetime
-from typing import Optional, List, Union, Any
+from typing import Optional, List, Union, Any, Dict
 from enum import Enum
 
 class UserRole(str, Enum):
@@ -105,11 +105,11 @@ class UserStats(BaseModel):
 
 # Job schemas
 class JobType(str, Enum):
-    cdi = "CDI"
-    cdd = "CDD"
-    stage = "Stage"
-    alternance = "Alternance"
-    freelance = "Freelance"
+    CDI = "CDI"
+    CDD = "CDD"
+    Stage = "Stage"
+    Alternance = "Alternance"
+    Freelance = "Freelance"
 
 
 class JobBase(BaseModel):
@@ -227,6 +227,11 @@ class InterviewBase(BaseModel):
     position: str
     date: datetime
     duration: Optional[str] = None
+    questions: Optional[List[Dict[str, Any]]] = None
+    detailed_scores: Optional[Dict[str, Any]] = None
+    question_by_question_analysis: Optional[List[Dict[str, Any]]] = None
+    overall_assessment: Optional[Dict[str, Any]] = None
+    interview_summary: Optional[Dict[str, Any]] = None
 
 
 class InterviewCreate(InterviewBase):
@@ -241,6 +246,26 @@ class InterviewUpdate(BaseModel):
     duration: Optional[str] = None
     status: Optional[InterviewStatus] = None
     score: Optional[float] = None
+    questions: Optional[List[Dict[str, Any]]] = None
+    detailed_scores: Optional[Dict[str, Any]] = None
+    question_by_question_analysis: Optional[List[Dict[str, Any]]] = None
+    overall_assessment: Optional[Dict[str, Any]] = None
+    interview_summary: Optional[Dict[str, Any]] = None
+
+
+class InterviewPatch(BaseModel):
+    candidate_id: Optional[int] = None
+    application_id: Optional[int] = None
+    position: Optional[str] = None
+    date: Optional[datetime] = None
+    duration: Optional[str] = None
+    status: Optional[InterviewStatus] = None
+    score: Optional[float] = None
+    questions: Optional[List[Dict[str, Any]]] = None
+    detailed_scores: Optional[Dict[str, Any]] = None
+    question_by_question_analysis: Optional[List[Dict[str, Any]]] = None
+    overall_assessment: Optional[Dict[str, Any]] = None
+    interview_summary: Optional[Dict[str, Any]] = None
 
 
 class Interview(InterviewBase):
@@ -256,7 +281,6 @@ class Interview(InterviewBase):
 
 
 class InterviewDetail(Interview):
-    questions: Optional[List[Any]] = None  # Will be replaced with Question
     messages: Optional[List[Any]] = None  # Will be replaced with Message
 
 

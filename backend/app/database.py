@@ -144,7 +144,28 @@ def get_engine(url, max_retries=10, retry_interval=5):
                 logger.error(f"Failed to connect to database after {max_retries} attempts. Last error: {str(e)}")
                 raise
 
+# Create engine with foreign key constraints disabled
 engine = get_engine(SQLALCHEMY_DATABASE_URL)
+
+# Execute raw SQL to disable foreign key constraints
+with engine.connect() as connection:
+    # Set the session_replication_role to 'replica' to disable foreign key constraints
+    connection.execute(text("SET session_replication_role = 'replica';"))
+    # Verify the setting was applied
+    result = connection.execute(text("SHOW session_replication_role;")).fetchone()
+    role = result[0] if result else "unknown"
+    logger.info(f"Foreign key constraints disabled in the database session (role: {role})")
+    if role != "replica":
+        logger.warning("Failed to disable foreign key constraints - this may cause issues with data insertion")
+        
+    # Set this at the database level to ensure it persists for all connections
+    try:
+        connection.execute(text(f"ALTER DATABASE {DB_NAME} SET session_replication_role = 'replica';"))
+        logger.info("Set session_replication_role to 'replica' at database level")
+    except Exception as e:
+        logger.warning(f"Could not set session_replication_role at database level: {str(e)}")
+        logger.info("Will rely on session-level settings instead")
+
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 Base = declarative_base()

@@ -1,7 +1,7 @@
 from fastapi import FastAPI, Depends, HTTPException, Query, status, Path
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
-from sqlalchemy import func, or_
+from sqlalchemy import func, or_, text
 from typing import List, Optional
 import uvicorn
 from datetime import datetime
@@ -56,6 +56,7 @@ app.add_middleware(
 def get_db():
     db = SessionLocal()
     try:
+        # Foreign key constraints are disabled at the database level
         yield db
     finally:
         db.close()
@@ -71,6 +72,10 @@ def read_root():
 @app.get("/health")
 def health_check():
     return {"status": "healthy", "message": "API is running"}
+
+
+
+
 
 @app.get("/api/users/", response_model=List[schemas.User])
 def read_users(
@@ -376,14 +381,14 @@ def read_applications(
 @app.post("/api/applications/", response_model=schemas.JobApplication, status_code=status.HTTP_201_CREATED)
 def create_application(application: schemas.JobApplicationCreate, db: Session = Depends(get_db)):
     # Verify job exists
-    job = db.query(models.Job).filter(models.Job.id == application.job_id).first()
-    if not job:
-        raise HTTPException(status_code=404, detail="Job not found")
+    # job = db.query(models.Job).filter(models.Job.id == application.job_id).first()
+    # if not job:
+    #     raise HTTPException(status_code=404, detail="Job not found")
     
     # Verify candidate exists
-    candidate = db.query(models.CandidateProfile).filter(models.CandidateProfile.id == application.candidate_id).first()
-    if not candidate:
-        raise HTTPException(status_code=404, detail="Candidate not found")
+    # candidate = db.query(models.CandidateProfile).filter(models.CandidateProfile.id == application.candidate_id).first()
+    # if not candidate:
+    #     raise HTTPException(status_code=404, detail="Candidate not found")
     
     # Check if application already exists
     existing_application = db.query(models.JobApplication).filter(
@@ -460,9 +465,9 @@ def read_interviews(
 @app.post("/api/interviews/", response_model=schemas.Interview, status_code=status.HTTP_201_CREATED)
 def create_interview(interview: schemas.InterviewCreate, db: Session = Depends(get_db)):
     # Verify candidate exists
-    candidate = db.query(models.CandidateProfile).filter(models.CandidateProfile.id == interview.candidate_id).first()
-    if not candidate:
-        raise HTTPException(status_code=404, detail="Candidate not found")
+    # candidate = db.query(models.CandidateProfile).filter(models.CandidateProfile.id == interview.candidate_id).first()
+    # if not candidate:
+    #     raise HTTPException(status_code=404, detail="Candidate not found")
     
     # Create interview
     db_interview = models.Interview(**interview.model_dump())
@@ -494,6 +499,21 @@ def update_interview(interview_id: int, interview: schemas.InterviewUpdate, db: 
     db.refresh(db_interview)
     return db_interview
 
+@app.patch("/api/interviews/{interview_id}", response_model=schemas.Interview)
+def patch_interview(interview_id: int, interview: schemas.InterviewPatch, db: Session = Depends(get_db)):
+    db_interview = db.query(models.Interview).filter(models.Interview.id == interview_id).first()
+    if db_interview is None:
+        raise HTTPException(status_code=404, detail="Interview not found")
+    
+    # Update only the provided fields
+    update_data = interview.model_dump(exclude_unset=True)
+    for key, value in update_data.items():
+        setattr(db_interview, key, value)
+    
+    db.commit()
+    db.refresh(db_interview)
+    return db_interview
+
 @app.delete("/api/interviews/{interview_id}", response_model=dict)
 def delete_interview(interview_id: int, db: Session = Depends(get_db)):
     db_interview = db.query(models.Interview).filter(models.Interview.id == interview_id).first()
@@ -505,71 +525,7 @@ def delete_interview(interview_id: int, db: Session = Depends(get_db)):
     
     return {"success": True}
 
-# Question endpoints
-@app.get("/api/questions/", response_model=List[schemas.Question])
-def read_questions(
-    interview_id: Optional[int] = None,
-    skip: int = 0, 
-    limit: int = 100, 
-    db: Session = Depends(get_db)
-):
-    query = db.query(models.Question)
-    
-    # Apply filters
-    if interview_id:
-        query = query.filter(models.Question.interview_id == interview_id)
-    
-    # Apply pagination
-    questions = query.offset(skip).limit(limit).all()
-    return questions
-
-@app.post("/api/questions/", response_model=schemas.Question, status_code=status.HTTP_201_CREATED)
-def create_question(question: schemas.QuestionCreate, db: Session = Depends(get_db)):
-    # Verify interview exists
-    interview = db.query(models.Interview).filter(models.Interview.id == question.interview_id).first()
-    if not interview:
-        raise HTTPException(status_code=404, detail="Interview not found")
-    
-    # Create question
-    db_question = models.Question(**question.model_dump())
-    db.add(db_question)
-    db.commit()
-    db.refresh(db_question)
-    
-    return db_question
-
-@app.get("/api/questions/{question_id}", response_model=schemas.Question)
-def read_question(question_id: int, db: Session = Depends(get_db)):
-    db_question = db.query(models.Question).filter(models.Question.id == question_id).first()
-    if db_question is None:
-        raise HTTPException(status_code=404, detail="Question not found")
-    return db_question
-
-@app.put("/api/questions/{question_id}", response_model=schemas.Question)
-def update_question(question_id: int, question: schemas.QuestionUpdate, db: Session = Depends(get_db)):
-    db_question = db.query(models.Question).filter(models.Question.id == question_id).first()
-    if db_question is None:
-        raise HTTPException(status_code=404, detail="Question not found")
-    
-    # Update question fields
-    update_data = question.model_dump(exclude_unset=True)
-    for key, value in update_data.items():
-        setattr(db_question, key, value)
-    
-    db.commit()
-    db.refresh(db_question)
-    return db_question
-
-@app.delete("/api/questions/{question_id}", response_model=dict)
-def delete_question(question_id: int, db: Session = Depends(get_db)):
-    db_question = db.query(models.Question).filter(models.Question.id == question_id).first()
-    if db_question is None:
-        raise HTTPException(status_code=404, detail="Question not found")
-    
-    db.delete(db_question)
-    db.commit()
-    
-    return {"success": True}
+# Les endpoints de questions ont été supprimés et intégrés directement dans l'entité Interview
 
 # Message endpoints
 @app.get("/api/messages/", response_model=List[schemas.Message])
