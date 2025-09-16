@@ -1,4 +1,4 @@
-from fastapi import FastAPI, Depends, HTTPException, Query, status, Path
+from fastapi import FastAPI, Depends, HTTPException, Query, status, Path, Header
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
 from sqlalchemy import func, or_, text
@@ -46,7 +46,7 @@ async def create_tables():
 # Add CORS middleware
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # In production, replace with specific origins
+    allow_origins=["*", "http://frontend:3000", "http://localhost:3000"],  # Include Docker service name
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -61,9 +61,89 @@ def get_db():
     finally:
         db.close()
         
+# Dependency to get current authenticated user
+def get_current_user(db: Session = Depends(get_db), authorization: str = Header(None)):
+    if authorization is None:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Not authenticated",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+    
+    # Extract token from Authorization header
+    scheme, token = authorization.split()
+    if scheme.lower() != "bearer":
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid authentication scheme",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+    
+    # Parse user ID from token (format: user_{id}_{random_hex})
+    try:
+        parts = token.split('_')
+        if len(parts) < 3 or parts[0] != "user":
+            raise ValueError("Invalid token format")
+        
+        user_id = int(parts[1])
+    except (ValueError, IndexError):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid token",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+    
+    # Get user from database
+    user = db.query(models.User).filter(models.User.id == user_id).first()
+    if user is None:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="User not found",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+    
+    return user
+        
 # Helper function to hash passwords
 def hash_password(password: str) -> str:
     return hashlib.sha256(password.encode()).hexdigest()
+
+# Authentication endpoint
+@app.post("/api/auth/login", response_model=schemas.Token)
+def login(login_data: schemas.UserLogin, db: Session = Depends(get_db)):
+    user = db.query(models.User).filter(models.User.email == login_data.email).first()
+    if not user:
+        raise HTTPException(status_code=401, detail="Invalid email or password")
+    
+    # Verify password
+    hashed_password = hash_password(login_data.password)
+    if user.password != hashed_password:
+        raise HTTPException(status_code=401, detail="Invalid email or password")
+    
+    # Update last login time
+    user.last_login = datetime.now()
+    db.commit()
+    
+    # Convert user to dictionary for serialization
+    user_dict = {
+        "id": user.id,
+        "email": user.email,
+        "name": user.name,
+        "image": user.image,
+        "role": user.role.value,
+        "status": user.status.value,
+        "is_active": user.is_active,
+        "created_at": user.created_at.isoformat() if user.created_at else None,
+        "updated_at": user.updated_at.isoformat() if user.updated_at else None,
+        "last_login": user.last_login.isoformat() if user.last_login else None
+    }
+    
+    # Return user data with token
+    return {
+        "access_token": f"user_{user.id}_{secrets.token_hex(16)}",
+        "token_type": "bearer",
+        "user": user_dict
+    }
 
 @app.get("/")
 def read_root():
@@ -131,6 +211,7 @@ def read_users(
 
 @app.post("/api/users/", response_model=schemas.User, status_code=status.HTTP_201_CREATED)
 def create_user(user: schemas.UserCreate, db: Session = Depends(get_db)):
+    # No authentication required for user registration
     db_user = db.query(models.User).filter(models.User.email == user.email).first()
     if db_user:
         raise HTTPException(status_code=400, detail="Email already registered")
@@ -360,7 +441,8 @@ def read_applications(
     status: Optional[schemas.ApplicationStatus] = None,
     skip: int = 0, 
     limit: int = 100, 
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user)
 ):
     query = db.query(models.JobApplication)
     
@@ -376,6 +458,26 @@ def read_applications(
     
     # Apply pagination
     applications = query.offset(skip).limit(limit).all()
+    
+    # For candidate role, check if there are upcoming interviews
+    if current_user.role == "candidat":
+        now = datetime.now()
+        for app in applications:
+            # If interview is scheduled and within 24 hours, add interview link
+            if app.interview_at and app.status == models.ApplicationStatus.interview:
+                time_diff = app.interview_at - now
+                # If interview is within 24 hours or already started but not more than 1 hour ago
+                if time_diff.total_seconds() < 86400 and time_diff.total_seconds() > -3600:
+                    # Get interview details
+                    interview = db.query(models.Interview).filter(
+                        models.Interview.candidate_id == app.candidate_id,
+                        models.Interview.date == app.interview_at
+                    ).first()
+                    
+                    if interview:
+                        # Add interview ID to the application for frontend to create link
+                        app.interview_id = interview.id
+    
     return applications
 
 @app.post("/api/applications/", response_model=schemas.JobApplication, status_code=status.HTTP_201_CREATED)

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, Download, BarChart, ThumbsUp, ThumbsDown, CheckCircle, XCircle, AlertCircle } from "lucide-react";
 
@@ -142,6 +142,8 @@ const mockReports = {
 };
 
 export default function CandidateReportPage({ params }: { params: { id: string } }) {
+  // Utiliser React.use() pour accéder aux params
+  const resolvedParams = React.use(params);
   const router = useRouter();
   const [report, setReport] = useState<{
     candidateName: string;
@@ -169,13 +171,13 @@ export default function CandidateReportPage({ params }: { params: { id: string }
   useEffect(() => {
     // Simuler un chargement de données
     setTimeout(() => {
-      const reportData = mockReports[params.id as keyof typeof mockReports];
+      const reportData = mockReports[resolvedParams.id as keyof typeof mockReports];
       if (reportData) {
         setReport(reportData);
       }
       setLoading(false);
     }, 500);
-  }, [params.id]);
+  }, [resolvedParams.id]);
 
   const downloadReport = () => {
     if (!report) return;
@@ -251,7 +253,7 @@ export default function CandidateReportPage({ params }: { params: { id: string }
           <div className="flex flex-col items-center justify-center min-h-[60vh]">
             <h1 className="text-2xl font-bold mb-4">Rapport non trouvé</h1>
             <p className="text-muted-foreground mb-6">Le rapport que vous recherchez n&apos;existe pas ou n&apos;a pas encore été généré.</p>
-            <Button onClick={() => router.push(`/candidates/${params.id}`)}>Retour au profil</Button>
+            <Button onClick={() => router.push(`/candidates/${resolvedParams.id}`)}>Retour au profil</Button>
           </div>
         </div>
       </MainLayout>

@@ -1,33 +1,56 @@
 import { api } from '../api';
 import { JobApplication } from '@/types/job';
 
+/**
+ * Service API pour les candidatures
+ */
 export const applicationsApi = {
-  async list(params: { job_id?: string; candidate_id?: string; status?: string } = {}, accessToken?: string): Promise<JobApplication[]> {
-    const search = new URLSearchParams();
-    if (params.job_id) search.append('job_id', params.job_id);
-    if (params.candidate_id) search.append('candidate_id', params.candidate_id);
-    if (params.status) search.append('status', params.status);
-    const headers: HeadersInit = accessToken ? { Authorization: `Bearer ${accessToken}` } : {};
-    return api.get<JobApplication[]>(`/api/applications/${search.toString() ? `?${search.toString()}` : ''}`, { headers });
+  /**
+   * Récupère toutes les candidatures
+   */
+  async getAll(): Promise<JobApplication[]> {
+    return api.get<JobApplication[]>('/api/applications/');
   },
 
-  async getById(id: string, accessToken?: string): Promise<JobApplication> {
-    const headers: HeadersInit = accessToken ? { Authorization: `Bearer ${accessToken}` } : {};
-    return api.get<JobApplication>(`/api/applications/${id}`, { headers });
+  /**
+   * Récupère une candidature par son ID
+   */
+  async getById(id: string): Promise<JobApplication> {
+    return api.get<JobApplication>(`/api/applications/${id}`);
   },
 
-  async create(data: Omit<JobApplication, 'id' | 'status' | 'applied_at'>, accessToken?: string): Promise<JobApplication> {
-    const headers: HeadersInit = accessToken ? { Authorization: `Bearer ${accessToken}` } : {};
-    return api.post<JobApplication>(`/api/applications/`, data, { headers });
+  /**
+   * Crée une nouvelle candidature
+   */
+  async create(applicationData: Omit<JobApplication, 'id' | 'appliedAt' | 'updatedAt'>): Promise<JobApplication> {
+    return api.post<JobApplication>('/api/applications/', applicationData);
   },
 
-  async update(id: string, data: Partial<JobApplication>, accessToken?: string): Promise<JobApplication> {
-    const headers: HeadersInit = accessToken ? { Authorization: `Bearer ${accessToken}` } : {};
-    return api.put<JobApplication>(`/api/applications/${id}`, data, { headers });
+  /**
+   * Met à jour une candidature existante
+   */
+  async update(id: string, applicationData: Partial<JobApplication>): Promise<JobApplication> {
+    return api.put<JobApplication>(`/api/applications/${id}`, applicationData);
   },
 
-  async remove(id: string, accessToken?: string): Promise<void> {
-    const headers: HeadersInit = accessToken ? { Authorization: `Bearer ${accessToken}` } : {};
-    await api.delete<void>(`/api/applications/${id}`, { headers });
+  /**
+   * Supprime une candidature
+   */
+  async delete(id: string): Promise<void> {
+    return api.delete<void>(`/api/applications/${id}`);
   },
+
+  /**
+   * Récupère toutes les candidatures d'un candidat
+   */
+  async getByCandidate(candidateId: string): Promise<JobApplication[]> {
+    return api.get<JobApplication[]>(`/api/applications?candidateId=${candidateId}`);
+  },
+
+  /**
+   * Change le statut d'une candidature
+   */
+  async updateStatus(id: string, status: JobApplication['status']): Promise<JobApplication> {
+    return api.patch<JobApplication>(`/api/applications/${id}/status`, { status });
+  }
 };

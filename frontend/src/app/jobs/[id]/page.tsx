@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { ArrowLeft, Building, MapPin, Calendar, Clock, Briefcase, DollarSign, Users, FileText, Upload } from "lucide-react";
@@ -197,6 +197,8 @@ const mockJobs: Record<string, Job> = {
 };
 
 export default function JobDetailPage({ params }: { params: { id: string } }) {
+  // Utiliser React.use() pour accéder aux params
+  const resolvedParams = React.use(params);
   const router = useRouter();
   const { toast } = useToast();
   const { data: session, status } = useSession();
@@ -221,7 +223,7 @@ export default function JobDetailPage({ params }: { params: { id: string } }) {
         // Simuler un délai réseau
         await new Promise(resolve => setTimeout(resolve, 500));
         
-        const jobData = mockJobs[params.id];
+        const jobData = mockJobs[resolvedParams.id];
         if (!jobData) {
           setError("Offre d&apos;emploi non trouvée");
           return;
@@ -237,7 +239,7 @@ export default function JobDetailPage({ params }: { params: { id: string } }) {
     };
 
     fetchJob();
-  }, [params.id]);
+  }, [resolvedParams.id]);
 
   const handleApply = async () => {
     if (!session) {
@@ -305,7 +307,7 @@ export default function JobDetailPage({ params }: { params: { id: string } }) {
       const { url: cvUrl } = await uploadResponse.json();
       
       // Soumettre la candidature
-      const applyResponse = await fetch(`/api/jobs/${params.id}/apply`, {
+      const applyResponse = await fetch(`/api/jobs/${resolvedParams.id}/apply`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -458,7 +460,7 @@ export default function JobDetailPage({ params }: { params: { id: string } }) {
                   {isAuthenticated && (session?.user?.role === "recruteur" || session?.user?.role === "admin") && (
                     <Button 
                       variant="outline" 
-                      onClick={() => router.push(`/jobs/${params.id}/applications`)} 
+                      onClick={() => router.push(`/jobs/${resolvedParams.id}/applications`)} 
                       className="w-full sm:w-auto"
                     >
                       <Users className="mr-2 h-4 w-4" />

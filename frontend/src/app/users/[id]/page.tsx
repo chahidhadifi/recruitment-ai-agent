@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { ArrowLeft, Edit, Trash2, Mail, User, Calendar, Shield } from "lucide-react";
@@ -61,6 +61,8 @@ const mockUserDetails = {
 };
 
 export default function UserDetailsPage({ params }: { params: { id: string } }) {
+  // Utiliser React.use() pour accéder aux params
+  const resolvedParams = React.use(params);
   const router = useRouter();
   const { data: session, status } = useSession();
   const [user, setUser] = useState<UserWithRole | undefined>(undefined);
@@ -96,8 +98,8 @@ export default function UserDetailsPage({ params }: { params: { id: string } }) 
     // Si l'utilisateur est authentifié et est un administrateur, charger les données
     const fetchUser = async () => {
       try {
-        const foundUser = await getUserById(params.id);
-        const details = mockUserDetails[params.id as keyof typeof mockUserDetails];
+        const foundUser = await getUserById(resolvedParams.id);
+        const details = mockUserDetails[resolvedParams.id as keyof typeof mockUserDetails];
         
         if (foundUser) {
           setUser(foundUser);
@@ -114,7 +116,7 @@ export default function UserDetailsPage({ params }: { params: { id: string } }) 
     };
     
     fetchUser();
-  }, [params.id, router]);
+  }, [resolvedParams.id, router]);
 
   const handleDeleteUser = async () => {
     try {

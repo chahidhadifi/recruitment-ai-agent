@@ -65,7 +65,7 @@ export default function MyApplicationsPage() {
   // Filtrer les candidatures en fonction de l'onglet actif
   const filteredApplications = applications.filter(app => {
     if (activeTab === "all") return true;
-    if (activeTab === "pending") return app.status === "pending" || app.status === "reviewing";
+    if (activeTab === "pending") return app.status === "pending" || app.status === "reviewing" || app.status === "interview";
     if (activeTab === "accepted") return app.status === "accepted";
     if (activeTab === "rejected") return app.status === "rejected";
     return true;
@@ -100,6 +100,8 @@ export default function MyApplicationsPage() {
         return "En attente";
       case "reviewing":
         return "En cours d'examen";
+      case "interview":
+        return "Entretien à passer";
       case "accepted":
         return "Acceptée";
       case "rejected":
@@ -116,6 +118,8 @@ export default function MyApplicationsPage() {
         return <Clock className="h-4 w-4" />;
       case "reviewing":
         return <FileText className="h-4 w-4" />;
+      case "interview":
+        return <Calendar className="h-4 w-4" />;
       case "accepted":
         return <CheckCircle className="h-4 w-4" />;
       case "rejected":
@@ -223,8 +227,8 @@ export default function MyApplicationsPage() {
                           </Button>
                           
                           {application.status === "interview" && (
-                            <Button asChild>
-                              <Link href={`/interviews/new?candidate=${session.user.id}&autostart=true`}>
+                            <Button asChild variant="default">
+                              <Link href={`/interviews/candidat/ai-interview?application=${application.id}&candidate=${session.user.id}&autostart=true`}>
                                 Passer l&apos;entretien
                               </Link>
                             </Button>
@@ -243,6 +247,13 @@ export default function MyApplicationsPage() {
                         <div className="mt-4 p-4 bg-red-50 rounded-md">
                           <p className="text-red-700 font-medium">Votre candidature n&apos;a pas été retenue.</p>
                           <p className="text-red-600 mt-2">Nous vous encourageons à postuler à d&apos;autres offres qui correspondent à votre profil.</p>
+                        </div>
+                      )}
+                      
+                      {application.status === "interview" && (
+                        <div className="mt-4 p-4 bg-blue-50 rounded-md">
+                          <p className="text-blue-700 font-medium">Vous êtes invité(e) à passer un entretien.</p>
+                          <p className="text-blue-600 mt-2">Cliquez sur le bouton "Passer l&apos;entretien" pour commencer votre entretien avec notre assistant IA.</p>
                         </div>
                       )}
                     </div>

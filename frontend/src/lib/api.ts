@@ -34,23 +34,17 @@ export class ApiError extends Error {
  */
 async function checkResponse(response: Response) {
   if (!response.ok) {
-    let body: any = undefined;
-    let message = `Erreur ${response.status}`;
+    let errorData;
     try {
-      body = await response.json();
-      if (body && (body.detail || body.error)) {
-        message = body.detail || body.error;
-      }
-    } catch {
-      try {
-        const text = await response.text();
-        body = { detail: text };
-        if (text) message = text.slice(0, 300);
-      } catch {
-        body = { detail: 'Réponse illisible du serveur' };
-      }
+      errorData = await response.json();
+    } catch (e) {
+      errorData = { detail: 'Une erreur inconnue est survenue' };
     }
-    throw new ApiError(response.status, message, body);
+    throw new ApiError(
+      response.status,
+      errorData.detail || `Erreur ${response.status}`,
+      errorData
+    );
   }
   return response;
 }
@@ -64,8 +58,8 @@ export const api = {
    */
   async get<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
     const response = await fetch(`${API_URL}${endpoint}`, {
+      ...defaultOptions,
       ...options,
-      headers: { ...(defaultOptions.headers || {}), ...(options.headers || {}) },
       method: 'GET',
     });
     await checkResponse(response);
@@ -77,8 +71,8 @@ export const api = {
    */
   async post<T>(endpoint: string, data: any, options: RequestInit = {}): Promise<T> {
     const response = await fetch(`${API_URL}${endpoint}`, {
+      ...defaultOptions,
       ...options,
-      headers: { ...(defaultOptions.headers || {}), ...(options.headers || {}) },
       method: 'POST',
       body: JSON.stringify(data),
     });
@@ -91,8 +85,8 @@ export const api = {
    */
   async put<T>(endpoint: string, data: any, options: RequestInit = {}): Promise<T> {
     const response = await fetch(`${API_URL}${endpoint}`, {
+      ...defaultOptions,
       ...options,
-      headers: { ...(defaultOptions.headers || {}), ...(options.headers || {}) },
       method: 'PUT',
       body: JSON.stringify(data),
     });
@@ -105,8 +99,8 @@ export const api = {
    */
   async patch<T>(endpoint: string, data: any, options: RequestInit = {}): Promise<T> {
     const response = await fetch(`${API_URL}${endpoint}`, {
+      ...defaultOptions,
       ...options,
-      headers: { ...(defaultOptions.headers || {}), ...(options.headers || {}) },
       method: 'PATCH',
       body: JSON.stringify(data),
     });
@@ -119,8 +113,8 @@ export const api = {
    */
   async delete<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
     const response = await fetch(`${API_URL}${endpoint}`, {
+      ...defaultOptions,
       ...options,
-      headers: { ...(defaultOptions.headers || {}), ...(options.headers || {}) },
       method: 'DELETE',
     });
     await checkResponse(response);

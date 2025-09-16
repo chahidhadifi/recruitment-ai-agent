@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, User, Calendar, Clock, BarChart, MessageSquare } from "lucide-react";
 
@@ -106,6 +106,8 @@ const mockInterviews = {
 };
 
 export default function InterviewDetailPage({ params }: { params: { id: string } }) {
+  // Utiliser React.use() pour accéder aux params
+  const resolvedParams = React.use(params);
   const router = useRouter();
   const [interview, setInterview] = useState<{
     candidateName: string;
@@ -127,13 +129,13 @@ export default function InterviewDetailPage({ params }: { params: { id: string }
   useEffect(() => {
     // Simuler un chargement de données
     setTimeout(() => {
-      const interviewData = mockInterviews[params.id as keyof typeof mockInterviews];
+      const interviewData = mockInterviews[resolvedParams.id as keyof typeof mockInterviews];
       if (interviewData) {
         setInterview(interviewData);
       }
       setLoading(false);
     }, 500);
-  }, [params.id]);
+  }, [resolvedParams.id]);
 
   if (loading) {
     return (

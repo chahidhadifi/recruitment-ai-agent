@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { ArrowLeft, Building, MapPin, Calendar, FileText, Phone, MapPin as LocationIcon, User } from "lucide-react";
@@ -13,6 +13,8 @@ import { useToast } from "@/components/ui/use-toast";
 import { JobApplication } from "@/types/job";
 
 export default function ApplicationDetailsPage({ params }: { params: { id: string } }) {
+  // Utiliser React.use() pour accéder aux params
+  const resolvedParams = React.use(params);
   const router = useRouter();
   const { data: session } = useSession();
   const { toast } = useToast();
@@ -42,7 +44,7 @@ export default function ApplicationDetailsPage({ params }: { params: { id: strin
         
         // Données fictives pour la démonstration
         const mockApplication: JobApplication = {
-          id: params.id,
+          id: resolvedParams.id,
           jobId: "1",
           candidateId: session.user.id,
           coverLetter: "Je suis très intéressé par ce poste car il correspond parfaitement à mes compétences et aspirations professionnelles. Avec mon expérience en développement web et ma passion pour les nouvelles technologies, je suis convaincu de pouvoir apporter une contribution significative à votre équipe.",
@@ -68,7 +70,7 @@ export default function ApplicationDetailsPage({ params }: { params: { id: strin
     };
 
     fetchApplicationDetails();
-  }, [session, params.id]);
+  }, [session, resolvedParams.id]);
   
   // Formater la date pour l'affichage
   const formatDate = (dateString: string) => {

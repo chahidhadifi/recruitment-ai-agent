@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { ArrowLeft } from "lucide-react";
@@ -15,6 +15,8 @@ import { UpdateUserData } from "@/types/user";
 
 
 export default function EditUserPage({ params }: { params: { id: string } }) {
+  // Utiliser React.use() pour accéder aux params
+  const resolvedParams = React.use(params);
   const router = useRouter();
   const { data: session, status } = useSession();
   const [user, setUser] = useState<UserWithRole | undefined>(undefined);
@@ -49,7 +51,7 @@ export default function EditUserPage({ params }: { params: { id: string } }) {
   useEffect(() => {
     const fetchUser = async () => {
       try {
-        const foundUser = await getUserById(params.id);
+        const foundUser = await getUserById(resolvedParams.id);
         
         if (foundUser) {
           setUser(foundUser);
@@ -65,7 +67,7 @@ export default function EditUserPage({ params }: { params: { id: string } }) {
     };
     
     fetchUser();
-  }, [params.id, router]);
+  }, [resolvedParams.id, router]);
 
   const handleSubmit = async (userData: Partial<UserWithRole>) => {
     setIsSubmitting(true);

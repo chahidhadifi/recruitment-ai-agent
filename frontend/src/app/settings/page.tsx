@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { Save, User, Bell, Lock, Globe, Moon, Sun, Laptop } from "lucide-react";
@@ -11,21 +11,15 @@ import { MainLayout } from "@/components/main-layout";
 import { Button } from "@/components/ui/button";
 
 export default function SettingsPage() {
-  // Création d&apos;une session fictive pour les tests (l&apos;authentification est désactivée)
-  const { data: realSession } = useSession();
+  // Utiliser uniquement la session réelle
+  const { data: session } = useSession();
   
-  // Session fictive pour les tests
-  const mockSession = {
-    user: {
-      id: "1",
-      name: "Utilisateur Test",
-      email: "test@example.com",
-      image: "https://ui-avatars.com/api/?name=Utilisateur+Test",
+  // Rediriger vers la page de connexion si l'utilisateur n'est pas authentifié
+  useEffect(() => {
+    if (!session) {
+      router.push('/auth/login');
     }
-  };
-  
-  // Utiliser la session fictive si aucune session réelle n&apos;est disponible
-  const session = realSession || mockSession;
+  }, [session]);
   const router = useRouter();
   const { toast } = useToast();
   const { theme, setTheme } = useTheme();

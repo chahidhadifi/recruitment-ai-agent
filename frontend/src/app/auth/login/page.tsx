@@ -100,7 +100,7 @@ export default function LoginPage() {
                     type="email"
                     autoComplete="email"
                     className="block w-full rounded-md border-0 bg-background py-2 shadow-sm ring-1 ring-inset ring-input placeholder:text-muted-foreground focus:ring-2 focus:ring-inset focus:ring-primary sm:text-sm sm:leading-6 px-3 transition-colors"
-                    placeholder="votre@email.com"
+                    placeholder="votre@exemple.com"
                     {...register("email")}
                     disabled={isLoading}
                   />
@@ -113,12 +113,14 @@ export default function LoginPage() {
               </div>
 
               <div>
-                <label
-                  htmlFor="password"
-                  className="block text-sm font-medium leading-6"
-                >
-                  Mot de passe
-                </label>
+                <div>
+                  <label
+                    htmlFor="password"
+                    className="block text-sm font-medium leading-6"
+                  >
+                    Mot de passe
+                  </label>
+                </div>
                 <div className="mt-2 relative">
                   <input
                     id="password"
@@ -145,6 +147,14 @@ export default function LoginPage() {
                       {errors.password.message}
                     </p>
                   )}
+                </div>
+                <div className="mt-1 text-right">
+                  <Link
+                    href="/auth/forgot-password"
+                    className="text-sm font-semibold text-primary hover:text-primary/80 transition-colors underline-offset-2 hover:underline"
+                  >
+                    Mot de passe oublié ?
+                  </Link>
                 </div>
               </div>
 

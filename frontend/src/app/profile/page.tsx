@@ -1,32 +1,26 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
-import { Save, User, Mail, Building, Briefcase, Camera } from "lucide-react";
+import { Save, User, Mail, Building, Briefcase, Camera, Upload } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 
 import { MainLayout } from "@/components/main-layout";
 import { Button } from "@/components/ui/button";
 
 export default function ProfilePage() {
-  // Création d&apos;une session fictive pour les tests (l&apos;authentification est désactivée)
-  const { data: realSession, update } = useSession();
-  
-  // Session fictive pour les tests
-  const mockSession = {
-    user: {
-      id: "1",
-      name: "Utilisateur Test",
-      email: "test@example.com",
-      image: "https://ui-avatars.com/api/?name=Utilisateur+Test",
-    }
-  };
-  
-  // Utiliser la session fictive si aucune session réelle n&apos;est disponible
-  const session = realSession || mockSession;
+  // Utiliser uniquement la session réelle
+  const { data: session, update } = useSession();
   const router = useRouter();
   const { toast } = useToast();
+  
+  // Rediriger vers la page de connexion si l'utilisateur n'est pas authentifié
+  useEffect(() => {
+    if (!session) {
+      router.push('/auth/login');
+    }
+  }, [session, router]);
 
   const [saving, setSaving] = useState(false);
   const [profileForm, setProfileForm] = useState({
@@ -35,7 +29,59 @@ export default function ProfilePage() {
     company: "AI Recruitment Inc.",
     role: "Recruteur",
     bio: "Spécialiste en recrutement avec 5 ans d&apos;expérience dans le secteur technologique.",
+    first_name: "",
+    last_name: "",
+    cnie: "",
+    nationality: "Marocaine",
+    phone: "",
+    city: "",
+    address: "",
+    image: "",
+    cv_url: "",
+    cover_letter_url: "",
   });
+  
+  // Charger les données utilisateur depuis l'API
+  useEffect(() => {
+    if (session?.user?.email) {
+      const fetchUserData = async () => {
+        try {
+          const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/users/me`, {
+            headers: {
+              Authorization: `Bearer ${session.user.accessToken}`,
+            },
+          });
+          
+          if (response.ok) {
+            const userData = await response.json();
+            console.log('Données utilisateur reçues:', userData);
+            
+            // Récupérer les données du profil candidat si disponibles
+            const candidateProfile = userData.candidate_profile || {};
+            
+            setProfileForm(prev => ({
+              ...prev,
+              name: userData.name || prev.name,
+              first_name: userData.first_name || "",
+              last_name: userData.last_name || "",
+              cnie: userData.cnie || "",
+              nationality: userData.nationality || "Marocaine",
+              phone: userData.phone || "",
+              city: userData.city || "",
+              address: userData.address || "",
+              bio: candidateProfile.biography || prev.bio,
+              cv_url: candidateProfile.cv_url || "",
+              cover_letter_url: candidateProfile.cover_letter_url || "",
+            }));
+          }
+        } catch (error) {
+          console.error("Erreur lors du chargement des données utilisateur", error);
+        }
+      };
+      
+      fetchUserData();
+    }
+  }, [session]);
 
   const handleProfileChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -46,10 +92,39 @@ export default function ProfilePage() {
     setSaving(true);
     
     try {
-      // Simulation d'une requête API
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      // Préparer les données pour le backend
+      const userData = {
+        name: profileForm.name,
+        first_name: profileForm.first_name,
+        last_name: profileForm.last_name,
+        cnie: profileForm.cnie,
+        nationality: profileForm.nationality,
+        phone: profileForm.phone,
+        city: profileForm.city,
+        address: profileForm.address,
+        // Les données spécifiques au profil candidat
+        biography: profileForm.bio,
+        cv_url: profileForm.cv_url,
+        cover_letter_url: profileForm.cover_letter_url,
+      };
       
-      // Mise à jour de la session (dans un environnement réel, cela serait fait via une API)
+      console.log('Données à envoyer:', userData);
+      
+      // Envoyer les données au backend
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/users/me`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${session?.user?.accessToken}`,
+        },
+        body: JSON.stringify(userData),
+      });
+      
+      if (!response.ok) {
+        throw new Error('Erreur lors de la mise à jour du profil');
+      }
+      
+      // Mise à jour de la session
       await update({
         ...session,
         user: {
@@ -63,6 +138,7 @@ export default function ProfilePage() {
         description: "Vos informations de profil ont été enregistrées avec succès.",
       });
     } catch (error) {
+      console.error('Erreur lors de la mise à jour du profil:', error);
       toast({
         title: "Erreur",
         description: "Une erreur est survenue lors de la mise à jour du profil.",
@@ -73,6 +149,55 @@ export default function ProfilePage() {
     }
   };
 
+  // Fonction pour gérer l'upload de fichiers (CV, lettre de motivation, photo)  
+  const [isUploading, setIsUploading] = useState(false);
+  
+  const handleFileUpload = async (event, fileType) => {
+    const file = event.target.files[0];
+    if (!file) return;
+    
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('type', fileType);
+    
+    try {
+      setIsUploading(true);
+      const response = await fetch('/api/upload', {
+        method: 'POST',
+        body: formData,
+      });
+      
+      if (!response.ok) {
+        throw new Error('Erreur lors de l\'upload du fichier');
+      }
+      
+      const data = await response.json();
+      
+      // Mettre à jour le formulaire avec l'URL du fichier uploadé
+      if (fileType === 'cv') {
+        setProfileForm(prev => ({ ...prev, cv_url: data.fileUrl }));
+      } else if (fileType === 'cover_letter') {
+        setProfileForm(prev => ({ ...prev, cover_letter_url: data.fileUrl }));
+      } else if (fileType === 'profile_image') {
+        setProfileForm(prev => ({ ...prev, image: data.fileUrl }));
+      }
+      
+      toast({
+        title: "Succès",
+        description: "Fichier téléchargé avec succès",
+      });
+    } catch (error) {
+      console.error('Erreur upload:', error);
+      toast({
+        title: "Erreur",
+        description: "Impossible de télécharger le fichier",
+        variant: "destructive",
+      });
+    } finally {
+      setIsUploading(false);
+    }
+  };
+  
   return (
     <MainLayout>
       <div className="container py-10">
@@ -95,9 +220,16 @@ export default function ProfilePage() {
                       <User className="h-16 w-16 text-primary" />
                     )}
                   </div>
-                  <button className="absolute bottom-0 right-0 p-2 rounded-full bg-primary text-primary-foreground">
+                  <label htmlFor="profile-image-upload" className="absolute bottom-0 right-0 p-2 rounded-full bg-primary text-primary-foreground cursor-pointer">
                     <Camera className="h-4 w-4" />
-                  </button>
+                    <input 
+                      type="file" 
+                      id="profile-image-upload" 
+                      className="hidden" 
+                      accept="image/*"
+                      onChange={(e) => handleFileUpload(e, 'profile_image')}
+                    />
+                  </label>
                 </div>
                 
                 <h2 className="text-xl font-bold">{session?.user?.name || "Utilisateur"}</h2>
@@ -133,6 +265,36 @@ export default function ProfilePage() {
               <h2 className="text-xl font-bold mb-6">Informations personnelles</h2>
               
               <div className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label htmlFor="first_name" className="block text-sm font-medium mb-1">
+                      Prénom
+                    </label>
+                    <input
+                      type="text"
+                      id="first_name"
+                      name="first_name"
+                      value={profileForm.first_name}
+                      onChange={handleProfileChange}
+                      className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary/50 bg-background"
+                    />
+                  </div>
+                  
+                  <div>
+                    <label htmlFor="last_name" className="block text-sm font-medium mb-1">
+                      Nom
+                    </label>
+                    <input
+                      type="text"
+                      id="last_name"
+                      name="last_name"
+                      value={profileForm.last_name}
+                      onChange={handleProfileChange}
+                      className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary/50 bg-background"
+                    />
+                  </div>
+                </div>
+                
                 <div>
                   <label htmlFor="name" className="block text-sm font-medium mb-1">
                     Nom complet
@@ -161,6 +323,80 @@ export default function ProfilePage() {
                     disabled
                   />
                   <p className="text-xs text-muted-foreground mt-1">L&apos;email ne peut pas être modifié.</p>
+                </div>
+                
+                <div>
+                  <label htmlFor="phone" className="block text-sm font-medium mb-1">
+                    Téléphone
+                  </label>
+                  <input
+                    type="tel"
+                    id="phone"
+                    name="phone"
+                    value={profileForm.phone}
+                    onChange={handleProfileChange}
+                    className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary/50 bg-background"
+                  />
+                </div>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label htmlFor="cnie" className="block text-sm font-medium mb-1">
+                      CNIE
+                    </label>
+                    <input
+                      type="text"
+                      id="cnie"
+                      name="cnie"
+                      value={profileForm.cnie}
+                      onChange={handleProfileChange}
+                      className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary/50 bg-background"
+                    />
+                  </div>
+                  
+                  <div>
+                    <label htmlFor="nationality" className="block text-sm font-medium mb-1">
+                      Nationalité
+                    </label>
+                    <input
+                      type="text"
+                      id="nationality"
+                      name="nationality"
+                      value={profileForm.nationality}
+                      onChange={handleProfileChange}
+                      className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary/50 bg-background"
+                    />
+                  </div>
+                </div>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label htmlFor="city" className="block text-sm font-medium mb-1">
+                      Ville
+                    </label>
+                    <input
+                      type="text"
+                      id="city"
+                      name="city"
+                      value={profileForm.city}
+                      onChange={handleProfileChange}
+                      className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary/50 bg-background"
+                    />
+                  </div>
+                  
+                  <div>
+                    <label htmlFor="address" className="block text-sm font-medium mb-1">
+                      Adresse
+                    </label>
+                    <input
+                      type="text"
+                      id="address"
+                      name="address"
+                      value={profileForm.address}
+                      onChange={handleProfileChange}
+                      className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary/50 bg-background"
+                    />
+                  </div>
                 </div>
                 
                 <div>
@@ -204,6 +440,84 @@ export default function ProfilePage() {
                     className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary/50 bg-background resize-none"
                   />
                 </div>
+                
+                <div>
+                   <label htmlFor="cv_url" className="block text-sm font-medium mb-1">
+                     CV
+                   </label>
+                   <div className="flex items-center space-x-2">
+                     <input
+                       type="text"
+                       id="cv_url"
+                       name="cv_url"
+                       value={profileForm.cv_url}
+                       onChange={handleProfileChange}
+                       className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary/50 bg-background"
+                       placeholder="URL de votre CV"
+                       readOnly
+                     />
+                     <label htmlFor="cv-file-upload">
+                       <Button type="button" size="sm" variant="outline" disabled={isUploading} asChild>
+                         <span>
+                           {isUploading ? 'Chargement...' : <><Upload className="h-4 w-4 mr-2" /> Importer</>}
+                         </span>
+                       </Button>
+                       <input 
+                         type="file" 
+                         id="cv-file-upload" 
+                         className="hidden" 
+                         accept=".pdf,.doc,.docx"
+                         onChange={(e) => handleFileUpload(e, 'cv')}
+                       />
+                     </label>
+                   </div>
+                   {profileForm.cv_url && (
+                     <p className="text-xs text-muted-foreground mt-1">
+                       <a href={profileForm.cv_url} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">
+                         Voir le CV
+                       </a>
+                     </p>
+                   )}
+                 </div>
+                 
+                 <div>
+                   <label htmlFor="cover_letter_url" className="block text-sm font-medium mb-1">
+                     Lettre de motivation
+                   </label>
+                   <div className="flex items-center space-x-2">
+                     <input
+                       type="text"
+                       id="cover_letter_url"
+                       name="cover_letter_url"
+                       value={profileForm.cover_letter_url}
+                       onChange={handleProfileChange}
+                       className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary/50 bg-background"
+                       placeholder="URL de votre lettre de motivation"
+                       readOnly
+                     />
+                     <label htmlFor="cover-letter-file-upload">
+                       <Button type="button" size="sm" variant="outline" disabled={isUploading} asChild>
+                         <span>
+                           {isUploading ? 'Chargement...' : <><Upload className="h-4 w-4 mr-2" /> Importer</>}
+                         </span>
+                       </Button>
+                       <input 
+                         type="file" 
+                         id="cover-letter-file-upload" 
+                         className="hidden" 
+                         accept=".pdf,.doc,.docx"
+                         onChange={(e) => handleFileUpload(e, 'cover_letter')}
+                       />
+                     </label>
+                   </div>
+                   {profileForm.cover_letter_url && (
+                     <p className="text-xs text-muted-foreground mt-1">
+                       <a href={profileForm.cover_letter_url} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">
+                         Voir la lettre de motivation
+                       </a>
+                     </p>
+                   )}
+                 </div>
               </div>
               
               <div className="mt-8 pt-4 border-t">

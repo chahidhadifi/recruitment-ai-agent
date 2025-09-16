@@ -1,14 +1,10 @@
 import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
-import { writeFile } from 'fs/promises';
+import { writeFile, mkdir } from 'fs/promises';
 import * as fs from 'fs/promises';
 import path from 'path';
 const { v4: uuidv4 } = require('uuid');
-
-// Forcer l'exécution sur le runtime Node.js et éviter la mise en cache
-export const runtime = 'nodejs';
-export const dynamic = 'force-dynamic';
 
 // Configuration pour les types de fichiers autorisés
 const allowedFileTypes = {
@@ -24,7 +20,9 @@ export async function POST(request) {
   try {
     // Vérifier l'authentification
     const session = await getServerSession(authOptions);
-    // Ne pas bloquer l'upload si la session est absente; on autorise l'upload local
+    if (!session) {
+      return NextResponse.json({ error: 'Non autorisé' }, { status: 401 });
+    }
 
     // Récupérer les données du formulaire
     const formData = await request.formData();
@@ -74,31 +72,13 @@ export async function POST(request) {
     // Écrire le fichier sur le disque
     await writeFile(filePath, buffer);
 
-    // URL publique du fichier (relative et absolue)
-    const relativeUrl = `/uploads/${fileName}`;
-    const proto = request.headers.get('x-forwarded-proto') || 'http';
-    const host = request.headers.get('host');
-    const absoluteUrl = host ? `${proto}://${host}${relativeUrl}` : relativeUrl;
+    // URL publique du fichier
+    const fileUrl = `/uploads/${fileName}`;
 
-    // Mettre à jour l'image utilisateur côté backend si c'est une image de profil
-    try {
-      if (session && fileType === 'profile_image') {
-        const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
-        await fetch(`${baseUrl}/api/users/me`, {
-          method: 'PUT',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${session.user.accessToken}`,
-          },
-          body: JSON.stringify({ image: absoluteUrl })
-        });
-      }
-    } catch (e) {
-      // Ne pas échouer l'upload si la mise à jour du backend échoue
-      console.error('Erreur lors de la mise à jour de la photo de profil:', e);
-    }
+    // Mettre à jour l'utilisateur dans la base de données avec l'URL du fichier
+    // Cette partie serait implémentée avec un appel à l'API backend
 
-    return NextResponse.json({ success: true, fileUrl: absoluteUrl, relativeUrl });
+    return NextResponse.json({ success: true, fileUrl });
   } catch (error) {
     console.error('Erreur lors de l\'upload:', error);
     return NextResponse.json({ error: 'Erreur lors du traitement du fichier' }, { status: 500 });

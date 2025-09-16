@@ -1,38 +1,68 @@
 import { api } from '../api';
 
+// Types pour les questions
 export interface Question {
   id: number;
   interview_id: number;
-  question_text: string;
-  answer_text?: string | null;
-  score?: number | null;
-  created_at?: string;
+  content: string;
+  answer?: string;
+  created_at: string;
+  updated_at: string;
 }
 
+export interface QuestionCreate {
+  interview_id: number;
+  content: string;
+}
+
+export interface QuestionUpdate {
+  content?: string;
+  answer?: string;
+}
+
+/**
+ * Service API pour les questions d'entretien
+ */
 export const questionsApi = {
-  async list(interview_id?: string, accessToken?: string): Promise<Question[]> {
-    const params = interview_id ? `?interview_id=${encodeURIComponent(interview_id)}` : '';
-    const headers: HeadersInit = accessToken ? { Authorization: `Bearer ${accessToken}` } : {};
-    return api.get<Question[]>(`/api/questions/${params}`, { headers });
+  /**
+   * Récupère toutes les questions d'un entretien
+   */
+  async getByInterview(interviewId: number): Promise<Question[]> {
+    return api.get<Question[]>(`/api/questions?interview_id=${interviewId}`);
   },
 
-  async getById(id: string, accessToken?: string): Promise<Question> {
-    const headers: HeadersInit = accessToken ? { Authorization: `Bearer ${accessToken}` } : {};
-    return api.get<Question>(`/api/questions/${id}`, { headers });
+  /**
+   * Récupère une question par son ID
+   */
+  async getById(id: number): Promise<Question> {
+    return api.get<Question>(`/api/questions/${id}`);
   },
 
-  async create(data: Omit<Question, 'id' | 'created_at'>, accessToken?: string): Promise<Question> {
-    const headers: HeadersInit = accessToken ? { Authorization: `Bearer ${accessToken}` } : {};
-    return api.post<Question>(`/api/questions/`, data, { headers });
+  /**
+   * Crée une nouvelle question
+   */
+  async create(questionData: QuestionCreate): Promise<Question> {
+    return api.post<Question>('/api/questions/', questionData);
   },
 
-  async update(id: string, data: Partial<Question>, accessToken?: string): Promise<Question> {
-    const headers: HeadersInit = accessToken ? { Authorization: `Bearer ${accessToken}` } : {};
-    return api.put<Question>(`/api/questions/${id}`, data, { headers });
+  /**
+   * Met à jour une question existante
+   */
+  async update(id: number, questionData: QuestionUpdate): Promise<Question> {
+    return api.put<Question>(`/api/questions/${id}`, questionData);
   },
 
-  async remove(id: string, accessToken?: string): Promise<void> {
-    const headers: HeadersInit = accessToken ? { Authorization: `Bearer ${accessToken}` } : {};
-    await api.delete<void>(`/api/questions/${id}`, { headers });
+  /**
+   * Supprime une question
+   */
+  async delete(id: number): Promise<void> {
+    return api.delete<void>(`/api/questions/${id}`);
   },
+
+  /**
+   * Ajoute une réponse à une question
+   */
+  async addAnswer(id: number, answer: string): Promise<Question> {
+    return api.patch<Question>(`/api/questions/${id}/answer`, { answer });
+  }
 };

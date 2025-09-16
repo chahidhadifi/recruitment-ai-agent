@@ -1,38 +1,60 @@
 import { api } from '../api';
 
+// Types pour les messages
 export interface Message {
   id: number;
   interview_id: number;
-  role: 'user' | 'assistant';
   content: string;
-  type?: 'text' | 'audio';
-  audio_url?: string | null;
-  timestamp?: string;
+  sender_type: 'system' | 'candidate' | 'interviewer';
+  created_at: string;
 }
 
+export interface MessageCreate {
+  interview_id: number;
+  content: string;
+  sender_type: 'system' | 'candidate' | 'interviewer';
+}
+
+export interface MessageUpdate {
+  content?: string;
+}
+
+/**
+ * Service API pour les messages d'entretien
+ */
 export const messagesApi = {
-  async list(interview_id: string, accessToken?: string): Promise<Message[]> {
-    const headers: HeadersInit = accessToken ? { Authorization: `Bearer ${accessToken}` } : {};
-    return api.get<Message[]>(`/api/messages/?interview_id=${encodeURIComponent(interview_id)}`, { headers });
+  /**
+   * Récupère tous les messages d'un entretien
+   */
+  async getByInterview(interviewId: number): Promise<Message[]> {
+    return api.get<Message[]>(`/api/messages?interview_id=${interviewId}`);
   },
 
-  async getById(id: string, accessToken?: string): Promise<Message> {
-    const headers: HeadersInit = accessToken ? { Authorization: `Bearer ${accessToken}` } : {};
-    return api.get<Message>(`/api/messages/${id}`, { headers });
+  /**
+   * Récupère un message par son ID
+   */
+  async getById(id: number): Promise<Message> {
+    return api.get<Message>(`/api/messages/${id}`);
   },
 
-  async create(data: Omit<Message, 'id' | 'timestamp'>, accessToken?: string): Promise<Message> {
-    const headers: HeadersInit = accessToken ? { Authorization: `Bearer ${accessToken}` } : {};
-    return api.post<Message>(`/api/messages/`, data, { headers });
+  /**
+   * Crée un nouveau message
+   */
+  async create(messageData: MessageCreate): Promise<Message> {
+    return api.post<Message>('/api/messages/', messageData);
   },
 
-  async update(id: string, data: Partial<Message>, accessToken?: string): Promise<Message> {
-    const headers: HeadersInit = accessToken ? { Authorization: `Bearer ${accessToken}` } : {};
-    return api.put<Message>(`/api/messages/${id}`, data, { headers });
+  /**
+   * Met à jour un message existant
+   */
+  async update(id: number, messageData: MessageUpdate): Promise<Message> {
+    return api.put<Message>(`/api/messages/${id}`, messageData);
   },
 
-  async remove(id: string, accessToken?: string): Promise<void> {
-    const headers: HeadersInit = accessToken ? { Authorization: `Bearer ${accessToken}` } : {};
-    await api.delete<void>(`/api/messages/${id}`, { headers });
-  },
+  /**
+   * Supprime un message
+   */
+  async delete(id: number): Promise<void> {
+    return api.delete<void>(`/api/messages/${id}`);
+  }
 };

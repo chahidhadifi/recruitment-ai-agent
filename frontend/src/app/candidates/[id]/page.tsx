@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, FileText, MessageSquare, BarChart, User, Mail, Phone, Briefcase, Calendar, Clock } from "lucide-react";
 
@@ -88,6 +88,8 @@ const mockCandidates = {
 };
 
 export default function CandidateDetailPage({ params }: { params: { id: string } }) {
+  // Utiliser React.use() pour accéder aux params
+  const resolvedParams = React.use(params);
   const router = useRouter();
   const [candidate, setCandidate] = useState<{
     id: string;
@@ -117,13 +119,13 @@ export default function CandidateDetailPage({ params }: { params: { id: string }
   useEffect(() => {
     // Simuler un chargement de données
     setTimeout(() => {
-      const candidateData = mockCandidates[params.id as keyof typeof mockCandidates];
+      const candidateData = mockCandidates[resolvedParams.id as keyof typeof mockCandidates];
       if (candidateData) {
         setCandidate(candidateData);
       }
       setLoading(false);
     }, 500);
-  }, [params.id]);
+  }, [resolvedParams.id]);
 
   if (loading) {
     return (

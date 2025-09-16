@@ -50,22 +50,14 @@ export function Header() {
   const router = useRouter();
   const { data: realSession } = useSession();
   
-  // Session fictive pour les tests avec rôle par défaut
-  const mockSession = {
-    user: {
-      ...DEFAULT_ADMIN_USER,
-      role: "admin"
-    }
-  };
-  
   // Vérifier si l'utilisateur est authentifié avec une vraie session
   const isAuthenticated = !!realSession;
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   
-  // Utiliser la session fictive si aucune session réelle n'est disponible (pour le développement)
-  const session = isAuthenticated ? realSession : null;
+  // Utiliser uniquement la session réelle
+  const session = realSession;
   
   // Obtenir la navigation en fonction de l'état d'authentification
   const navigation = isAuthenticated && session

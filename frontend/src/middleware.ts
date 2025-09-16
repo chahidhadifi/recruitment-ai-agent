@@ -6,7 +6,7 @@ import { ROLE_BASED_ROUTES, UserRole } from "./types/user-roles";
 export async function middleware(req: NextRequest) {
   const path = req.nextUrl.pathname;
   
-  // Définir les chemins qui sont considérés comme publics
+  // Définir les chemins qui sont considérés comme publics (authentification)
   const publicPaths = [
     "/auth/login",
     "/auth/register",
@@ -19,7 +19,7 @@ export async function middleware(req: NextRequest) {
   //   return NextResponse.redirect(new URL("/auth/login", req.url));
   // }
 
-  // Vérifier si le chemin demandé est public
+  // Vérifier si le chemin demandé est public (authentification)
   const isPublicPath = publicPaths.some((publicPath) =>
     path.startsWith(publicPath)
   );
@@ -54,6 +54,22 @@ export async function middleware(req: NextRequest) {
   const isPublicAccessPath = publicAccessPaths.some((publicPath) =>
     path === publicPath || path.startsWith(`${publicPath}/`)
   );
+  
+  // Définir explicitement toutes les routes protégées qui nécessitent une authentification
+  const protectedPaths = [
+    "/dashboard",
+    "/interviews",
+    "/applications",
+    "/profile",
+    "/settings",
+    "/reports",
+    "/users"
+  ];
+  
+  // Vérifier si le chemin est une route protégée
+  const isProtectedPath = protectedPaths.some((protectedPath) =>
+    path === protectedPath || path.startsWith(`${protectedPath}/`)
+  );
 
   // Vérifier si le chemin est réservé aux recruteurs
   const isRecruiterOnlyPath = recruiterOnlyPaths.some((recruiterPath) =>
@@ -66,6 +82,12 @@ export async function middleware(req: NextRequest) {
   );
 
   // Rediriger vers la page de connexion si l'utilisateur n'est pas authentifié et tente d'accéder à une route protégée
+  if (!token && isProtectedPath) {
+    // Redirection forcée vers la page de connexion pour les routes protégées
+    return NextResponse.redirect(new URL("/auth/login", req.url));
+  }
+  
+  // Rediriger vers la page de connexion pour les autres routes non publiques
   if (!token && !isPublicPath && !isPublicAccessPath) {
     return NextResponse.redirect(new URL("/auth/login", req.url));
   }
@@ -115,5 +137,13 @@ export const config = {
      * - public folder
      */
     "/((?!api|_next/static|_next/image|favicon.ico|public).*)",
+    // Assurer que ces routes spécifiques sont toujours protégées
+    "/dashboard/:path*",
+    "/interviews/:path*",
+    "/applications/:path*",
+    "/profile/:path*",
+    "/settings/:path*",
+    "/reports/:path*",
+    "/users/:path*"
   ],
 };

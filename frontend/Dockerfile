@@ -4,16 +4,16 @@ WORKDIR /app
 
 # Install dependencies
 COPY package.json package-lock.json ./
-RUN npm ci
+RUN npm install
 
 # Copy project files
 COPY . .
 
-# Build the application
-RUN npm run build
+# Skip build step for development
+# RUN npm run build
 
 # Expose the port the app runs on
 EXPOSE 3000
 
-# Start the application
-CMD ["npm", "start"]
+# Start the development server
+CMD ["npm", "run", "dev"]

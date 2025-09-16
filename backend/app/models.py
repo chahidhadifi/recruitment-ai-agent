@@ -80,6 +80,7 @@ class JobApplication(Base):
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
     phone = Column(String, nullable=True)
     location = Column(String, nullable=True)
+    interview_at = Column(DateTime(timezone=True), nullable=True)
     
     # Analysis fields from migration
     score = Column(Integer, nullable=True)

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { useRouter, useParams } from "next/navigation";
 import Link from "next/link";
 import { useSession } from "next-auth/react";
@@ -18,7 +18,9 @@ import { Job, JobApplication } from "@/types/job";
 export default function JobApplicationsPage() {
   const router = useRouter();
   const params = useParams();
-  const jobId = params.id as string;
+  // Utiliser React.use() pour accéder aux params
+  const resolvedParams = React.use(params);
+  const jobId = resolvedParams.id as string;
   const { data: session, status } = useSession();
   const { toast } = useToast();
   

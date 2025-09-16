@@ -21,30 +21,41 @@ export const authOptions: NextAuthOptions = {
           return null;
         }
 
-        // Pour la démonstration, nous acceptons différents utilisateurs selon l'email
-        if (credentials.password === "password") {
-          // Déterminer le rôle en fonction de l'email
-          let role: UserRole = "candidat";
-          let userData = DEFAULT_CANDIDAT_USER;
+        // Vérification du mot de passe avec le backend
+        try {
+          const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/auth/login`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/x-www-form-urlencoded',
+            },
+            body: new URLSearchParams({
+              'username': credentials.email,
+              'password': credentials.password,
+            }),
+          });
           
-          if (credentials.email.includes("admin")) {
-            role = "admin";
-            userData = DEFAULT_ADMIN_USER;
-          } else if (credentials.email.includes("recruteur")) {
-            role = "recruteur";
-            userData = DEFAULT_RECRUTEUR_USER;
+          if (!response.ok) {
+            console.error('Authentication failed:', await response.text());
+            return null;
           }
           
+          const userData = await response.json();
+          console.log('Authentication successful, received data:', userData);
+          
           return {
-            id: userData.id,
+            id: userData.id.toString(),
             name: userData.name,
-            email: credentials.email,
-            image: userData.image,
-            role: role
+            email: userData.email,
+            image: userData.image || '',
+            role: userData.role as UserRole,
+            accessToken: userData.access_token
           };
+        } catch (error) {
+          console.error('Authentication error:', error);
+          return null;
         }
-
-        return null;
+        
+        // Cette ligne n'est jamais atteinte car nous acceptons tous les mots de passe
       }
     })
   ],
@@ -63,6 +74,7 @@ export const authOptions: NextAuthOptions = {
       if (user) {
         token.id = user.id;
         token.role = user.role as UserRole;
+        token.accessToken = user.accessToken;
       }
       return token;
     },
@@ -70,6 +82,7 @@ export const authOptions: NextAuthOptions = {
       if (session.user) {
         session.user.id = token.id as string;
         session.user.role = token.role as UserRole;
+        session.user.accessToken = token.accessToken as string;
       }
       return session;
     },
