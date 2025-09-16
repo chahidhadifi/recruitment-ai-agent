@@ -14,6 +14,8 @@ A comprehensive recruitment platform with AI-powered features for managing the e
   - [Running without Docker](#running-without-docker)
 - [Project Structure](#project-structure)
 - [API Documentation](#api-documentation)
+- [Talking Avatar](#talking-avatar)
+- [Workflow Automation with n8n](#workflow-automation-with-n8n)
 
 ## Overview
 
@@ -274,6 +276,33 @@ The easiest way to run the application is using Docker Compose:
 │   └── package.json
 └── docker-compose.yml    # Docker Compose configuration
 ```
+
+## Talking Avatar
+
+The project includes a 3D talking avatar component that can speak input text with facial expressions.
+
+### Features
+
+- 3D avatar with realistic facial expressions
+- Text-to-speech conversion
+- Automatic lip sync animation
+- Free backend implementation (no Azure API required)
+
+### How It Works
+
+The talking avatar consists of two parts:
+
+1. **Frontend**: A React application that displays a 3D avatar and handles user input
+2. **Backend**: A Node.js server that converts text to speech and generates lip sync data
+
+The backend uses:
+- StreamElements TTS API for text-to-speech conversion with female voice
+- Custom algorithm for generating viseme data for lip sync
+- Express.js for the API server
+
+## Workflow Automation with n8n
+
+This project uses n8n for workflow automation. n8n is a powerful workflow automation tool that helps automate various processes in the recruitment platform.
 
 ## API Documentation
 
