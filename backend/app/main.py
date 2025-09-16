@@ -19,29 +19,18 @@ logger = logging.getLogger(__name__)
 # Create FastAPI app
 app = FastAPI(title="Recruitment AI Platform API", version="1.0.0")
 
-# Create database tables on startup
+# Initialize database tables on startup
 @app.on_event("startup")
 async def create_tables():
+    from .database import init_db
+    
     try:
-        logger.info("Creating database tables if they don't exist")
-        models.Base.metadata.create_all(bind=engine)
-        logger.info("Database tables created successfully")
-        
-        # Verify tables were created
-        db = SessionLocal()
-        try:
-            # Try a simple query to verify database is working
-            db.execute("SELECT 1")
-            logger.info("Database connection verified after table creation")
-        except Exception as e:
-            logger.error(f"Error verifying database connection: {str(e)}")
-            raise
-        finally:
-            db.close()
+        # Initialize database using the function that replaces Alembic migrations
+        init_db()
     except Exception as e:
-        logger.error(f"Failed to create database tables: {str(e)}")
+        logger.error(f"Failed to initialize database: {str(e)}")
         # Don't raise the exception here to allow the application to start
-        # even if table creation fails initially
+        # even if initialization fails initially
 
 # Add CORS middleware
 app.add_middleware(

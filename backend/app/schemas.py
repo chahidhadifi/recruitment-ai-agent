@@ -33,6 +33,13 @@ class UserBase(BaseModel):
     email: EmailStr
     name: str
     image: Optional[str] = None
+    first_name: Optional[str] = None
+    last_name: Optional[str] = None
+    cnie: Optional[str] = None
+    nationality: Optional[str] = None
+    phone: Optional[str] = None
+    city: Optional[str] = None
+    address: Optional[str] = None
 
 class UserCreate(UserBase):
     password: str
@@ -43,6 +50,13 @@ class UserUpdate(BaseModel):
     email: Optional[EmailStr] = None
     role: Optional[UserRole] = None
     status: Optional[UserStatus] = None
+    first_name: Optional[str] = None
+    last_name: Optional[str] = None
+    cnie: Optional[str] = None
+    nationality: Optional[str] = None
+    phone: Optional[str] = None
+    city: Optional[str] = None
+    address: Optional[str] = None
     department: Optional[str] = None
     specialization: Optional[str] = None
 
@@ -67,6 +81,9 @@ class RecruiterProfile(RecruiterProfileBase):
 class CandidateProfileBase(BaseModel):
     skills: Optional[List[str]] = None
     preferred_positions: Optional[List[str]] = None
+    biography: Optional[str] = None
+    cv_url: Optional[str] = None
+    cover_letter_url: Optional[str] = None
 
 class CandidateProfileCreate(CandidateProfileBase):
     user_id: int

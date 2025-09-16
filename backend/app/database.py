@@ -48,6 +48,41 @@ db_url_parts = SQLALCHEMY_DATABASE_URL.split('@')
 if len(db_url_parts) > 1:
     auth_parts = db_url_parts[0].split(':')
     if len(auth_parts) > 2:
+        # Mask the password for logging
+        masked_password = auth_parts[2][0] + '*****' if auth_parts[2] else ''
+        masked_url = f"{auth_parts[0]}:{auth_parts[1]}:{masked_password}@{db_url_parts[1]}"
+        logger.info(f"Database URL: {masked_url}")
+
+# Create SQLAlchemy engine and session
+engine = create_engine(SQLALCHEMY_DATABASE_URL)
+SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+Base = declarative_base()
+
+# Function to initialize database (replaces Alembic migrations)
+def init_db():
+    from . import models
+    
+    logger.info("Initializing database tables...")
+    try:
+        # Create all tables
+        models.Base.metadata.create_all(bind=engine)
+        logger.info("Database tables created successfully")
+        
+        # Verify database connection
+        db = SessionLocal()
+        try:
+            db.execute(text("SELECT 1"))
+            logger.info("Database connection verified")
+        except Exception as e:
+            logger.error(f"Error verifying database connection: {str(e)}")
+            raise
+        finally:
+            db.close()
+            
+        logger.info("Database initialization completed successfully")
+    except Exception as e:
+        logger.error(f"Failed to initialize database: {str(e)}")
+        raise
         # Only show first character of password for security
         masked_password = auth_parts[2][0] + '*****' if auth_parts[2] else ''
         logger.info(f"Connecting to database with user: {auth_parts[1].split('//')[1]}, password: {masked_password}, host: {db_url_parts[1]}")
