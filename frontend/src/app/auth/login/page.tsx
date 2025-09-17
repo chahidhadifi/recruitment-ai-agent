@@ -42,19 +42,25 @@ export default function LoginPage() {
     setIsLoading(true);
 
     try {
+      console.log('Tentative de connexion avec:', { email: data.email });
+      
       const result = await signIn("credentials", {
         email: data.email,
         password: data.password,
         redirect: false,
       });
 
+      console.log('Résultat de la connexion:', result);
+
       if (result?.error) {
+        console.error('Erreur de connexion détaillée:', result.error);
         toast({
           title: "Erreur de connexion",
-          description: "Email ou mot de passe incorrect",
+          description: `Erreur: ${result.error}`,
           variant: "destructive",
         });
       } else {
+        console.log('Connexion réussie, redirection...');
         router.push("/");
         router.refresh();
       }

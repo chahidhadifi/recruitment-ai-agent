@@ -6,6 +6,9 @@ import { randomBytes } from "crypto";
 // Générer un secret aléatoire si NEXTAUTH_SECRET n'est pas défini
 const secret = process.env.NEXTAUTH_SECRET || randomBytes(32).toString('hex');
 
+// Afficher des informations de débogage pour l'authentification
+console.log('Auth configuration loaded with secret:', secret ? 'Secret defined' : 'No secret defined');
+
 export const authOptions: NextAuthOptions = {
   providers: [
     CredentialsProvider({
@@ -23,16 +26,19 @@ export const authOptions: NextAuthOptions = {
 
         // Vérification du mot de passe avec le backend
         try {
-          const response = await fetch(`http://localhost:8000/api/auth/login`, {
+          console.log('Tentative de connexion avec les identifiants:', { email: credentials.email });
+          // Utiliser l'URL du backend définie dans l'API_URL
+          const response = await fetch(`http://backend:8000/api/auth/login`, {
             method: 'POST',
             headers: {
-              'Content-Type': 'application/x-www-form-urlencoded',
+              'Content-Type': 'application/json',
             },
-            body: new URLSearchParams({
-              'username': credentials.email,
-              'password': credentials.password,
+            body: JSON.stringify({
+              email: credentials.email,
+              password: credentials.password,
             }),
           });
+          console.log('Réponse du backend:', { status: response.status, ok: response.ok });
           
           if (!response.ok) {
             console.error('Authentication failed:', await response.text());
@@ -43,11 +49,11 @@ export const authOptions: NextAuthOptions = {
           console.log('Authentication successful, received data:', userData);
           
           return {
-            id: userData.id.toString(),
-            name: userData.name,
-            email: userData.email,
-            image: userData.image || '',
-            role: userData.role as UserRole,
+            id: userData.user.id.toString(),
+            name: userData.user.name,
+            email: userData.user.email,
+            image: userData.user.image || '',
+            role: userData.user.role as UserRole,
             accessToken: userData.access_token
           };
         } catch (error) {
