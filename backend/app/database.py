@@ -83,6 +83,11 @@ def init_db():
     except Exception as e:
         logger.error(f"Failed to initialize database: {str(e)}")
         raise
+
+# Log additional connection details if not already logged
+if len(db_url_parts) > 1 and '@' in SQLALCHEMY_DATABASE_URL:
+    auth_parts = db_url_parts[0].split(':')
+    if len(auth_parts) > 2:
         # Only show first character of password for security
         masked_password = auth_parts[2][0] + '*****' if auth_parts[2] else ''
         logger.info(f"Connecting to database with user: {auth_parts[1].split('//')[1]}, password: {masked_password}, host: {db_url_parts[1]}")

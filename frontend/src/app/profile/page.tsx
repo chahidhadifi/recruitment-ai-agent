@@ -46,7 +46,7 @@ export default function ProfilePage() {
     if (session?.user?.email) {
       const fetchUserData = async () => {
         try {
-          const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/users/me`, {
+          const response = await fetch(`http://localhost:8000/api/users/me`, {
             headers: {
               Authorization: `Bearer ${session.user.accessToken}`,
             },
@@ -111,7 +111,7 @@ export default function ProfilePage() {
       console.log('Données à envoyer:', userData);
       
       // Envoyer les données au backend
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/users/me`, {
+      const response = await fetch(`http://localhost:8000/api/users/me`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
