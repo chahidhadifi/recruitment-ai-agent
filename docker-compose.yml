@@ -16,7 +16,7 @@ services:
       - POSTGRES_HOST=db
       - POSTGRES_PORT=5432
     volumes:
-      - /mnt/c/Users/dell/Documents/projects/recruitment-ai-full-platform/backend/app:/app/app
+      - ./backend/app:/app/app
     restart: unless-stopped
     networks:
       - recruitment-ai-network 
