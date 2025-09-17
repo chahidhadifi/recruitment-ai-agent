@@ -127,7 +127,7 @@ export default function RegisterPage() {
 
     try {
       // Appel à l'API backend pour créer un nouvel utilisateur
-      console.log('Envoi de la requête à:', `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8001'}/api/users/`);
+      console.log('Envoi de la requête à:', `http://localhost:8000/api/users/`);
       
       // Utilisation d'un timeout pour éviter que la requête reste bloquée indéfiniment
       const controller = new AbortController();
@@ -143,7 +143,7 @@ export default function RegisterPage() {
           // Ne pas logger le mot de passe pour des raisons de sécurité
         });
 
-        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8001'}/api/users/`, {
+        const response = await fetch(`http://localhost:8000/api/users/`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
