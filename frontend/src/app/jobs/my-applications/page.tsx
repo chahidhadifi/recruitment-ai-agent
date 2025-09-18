@@ -38,25 +38,23 @@ export default function MyApplicationsPage() {
   useEffect(() => {
     const fetchApplications = async () => {
       if (!session) return;
-      
       try {
         setLoading(true);
         // Récupérer l'ID du candidat depuis le profil utilisateur
-        const userResponse = await fetch('/api/users/me');
+        const accessToken = session.user?.accessToken;
+        const userResponse = await fetch('/api/users/me', {
+          headers: accessToken ? { Authorization: `Bearer ${accessToken}` } : {}
+        });
         if (!userResponse.ok) {
           throw new Error(`Erreur lors de la récupération du profil: ${userResponse.status}`);
         }
-        
         const userData = await userResponse.json();
         const candidateId = userData.candidate_profile?.id;
-        
         if (!candidateId) {
           throw new Error("Profil candidat non trouvé");
         }
-        
         // Récupérer les candidatures du candidat
         const response = await fetch(`/api/applications/?candidate_id=${candidateId}`);
-        
         if (!response.ok) {
           throw new Error(`Erreur lors de la récupération des candidatures: ${response.status}`);
         }
