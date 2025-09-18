@@ -132,12 +132,12 @@ export default function JobsPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Charger les offres d'emploi depuis l'API
+  // Charger les offres d'emploi depuis l'API backend
   useEffect(() => {
     const fetchJobs = async () => {
       try {
         setLoading(true);
-        const response = await fetch('/api/jobs/');
+        const response = await fetch('http://localhost:8000/api/jobs/');
         
         if (!response.ok) {
           throw new Error(`Erreur lors de la récupération des offres: ${response.status}`);
@@ -148,8 +148,9 @@ export default function JobsPage() {
         setError(null);
       } catch (err) {
         console.error("Erreur lors du chargement des offres:", err);
-        setError("Impossible de charger les offres d'emploi. Veuillez réessayer plus tard.");
-        setJobs([]);
+        setError("Impossible de charger les offres d'emploi. Le serveur backend peut ne pas être démarré.");
+        // Fallback sur les données mockées en cas d'erreur
+        setJobs(mockJobs);
       } finally {
         setLoading(false);
       }

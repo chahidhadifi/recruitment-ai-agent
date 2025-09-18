@@ -484,6 +484,23 @@ def update_job(job_id: int, job: schemas.JobUpdate, db: Session = Depends(get_db
     
     return applications
 
+@app.get("/api/applications/", response_model=List[schemas.JobApplication])
+def read_applications(
+    candidate_id: Optional[int] = None,
+    skip: int = 0, 
+    limit: int = 100, 
+    db: Session = Depends(get_db)
+):
+    query = db.query(models.JobApplication)
+    
+    # Apply filters
+    if candidate_id:
+        query = query.filter(models.JobApplication.candidate_id == candidate_id)
+    
+    # Apply pagination
+    applications = query.offset(skip).limit(limit).all()
+    return applications
+
 @app.post("/api/applications/", response_model=schemas.JobApplication, status_code=status.HTTP_201_CREATED)
 def create_application(application: schemas.JobApplicationCreate, db: Session = Depends(get_db)):
     # Verify job exists

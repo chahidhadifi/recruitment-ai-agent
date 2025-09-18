@@ -40,21 +40,15 @@ export default function MyApplicationsPage() {
       if (!session) return;
       try {
         setLoading(true);
-        // Récupérer l'ID du candidat depuis le profil utilisateur
-        const accessToken = session.user?.accessToken;
-        const userResponse = await fetch('/api/users/me', {
-          headers: accessToken ? { Authorization: `Bearer ${accessToken}` } : {}
-        });
-        if (!userResponse.ok) {
-          throw new Error(`Erreur lors de la récupération du profil: ${userResponse.status}`);
-        }
-        const userData = await userResponse.json();
-        const candidateId = userData.candidate_profile?.id;
+        // Récupérer l'ID du candidat depuis le backend
+        // Pour l'instant, nous utilisons l'ID utilisateur directement comme fallback
+        // Dans une implémentation réelle, vous auriez un endpoint backend pour récupérer le profil candidat
+        const candidateId = session.user?.id;
         if (!candidateId) {
           throw new Error("Profil candidat non trouvé");
         }
-        // Récupérer les candidatures du candidat
-        const response = await fetch(`/api/applications/?candidate_id=${candidateId}`);
+        // Récupérer les candidatures du candidat depuis le backend
+        const response = await fetch(`http://localhost:8000/api/applications/?candidate_id=${candidateId}`);
         if (!response.ok) {
           throw new Error(`Erreur lors de la récupération des candidatures: ${response.status}`);
         }

@@ -3,51 +3,36 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { UserWithRole } from "@/types/user-roles";
 
-// Données fictives pour la démonstration
-const mockUsers: UserWithRole[] = [
-  {
-    id: "admin-1",
-    name: "Administrateur Principal",
-    email: "admin@example.com",
-    image: "https://ui-avatars.com/api/?name=Administrateur&background=0D8ABC&color=fff",
-    role: "admin"
-  },
-  {
-    id: "recruteur-1",
-    name: "Sophie Martin",
-    email: "sophie.martin@example.com",
-    image: "https://ui-avatars.com/api/?name=Sophie+Martin&background=2E8B57&color=fff",
-    role: "recruteur"
-  },
-  {
-    id: "recruteur-2",
-    name: "Thomas Dubois",
-    email: "thomas.dubois@example.com",
-    image: "https://ui-avatars.com/api/?name=Thomas+Dubois&background=2E8B57&color=fff",
-    role: "recruteur"
-  },
-  {
-    id: "candidat-1",
-    name: "Jean Dupont",
-    email: "jean.dupont@example.com",
-    image: "https://ui-avatars.com/api/?name=Jean+Dupont&background=CD7F32&color=fff",
-    role: "candidat"
-  },
-  {
-    id: "candidat-2",
-    name: "Marie Lefebvre",
-    email: "marie.lefebvre@example.com",
-    image: "https://ui-avatars.com/api/?name=Marie+Lefebvre&background=CD7F32&color=fff",
-    role: "candidat"
-  },
-  {
-    id: "candidat-3",
-    name: "Pierre Bernard",
-    email: "pierre.bernard@example.com",
-    image: "https://ui-avatars.com/api/?name=Pierre+Bernard&background=CD7F32&color=fff",
-    role: "candidat"
-  },
-];
+// Configuration de l'API backend
+const BACKEND_URL = process.env.BACKEND_URL || "http://localhost:8000";
+
+// Fonction pour récupérer les utilisateurs depuis le backend
+async function fetchUsersFromBackend(token: string): Promise<UserWithRole[]> {
+  try {
+    const response = await fetch(`${BACKEND_URL}/api/users/`, {
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error(`Erreur backend: ${response.status}`);
+    }
+
+    const users = await response.json();
+    return users.map((user: any) => ({
+      id: user.id.toString(),
+      name: user.name || user.email,
+      email: user.email,
+      image: user.image || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name || user.email)}&background=0D8ABC&color=fff`,
+      role: user.role
+    }));
+  } catch (error) {
+    console.error("Erreur lors de la récupération des utilisateurs depuis le backend:", error);
+    throw new Error("Impossible de récupérer les utilisateurs depuis le backend");
+  }
+}
 
 // GET /api/users - Récupérer tous les utilisateurs
 export async function GET(req: NextRequest) {
