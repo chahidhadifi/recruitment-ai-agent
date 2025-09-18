@@ -79,7 +79,7 @@ export default function MyApplicationsPage() {
   // Filtrer les candidatures en fonction de l'onglet actif
   const filteredApplications = applications.filter(app => {
     if (activeTab === "all") return true;
-    if (activeTab === "pending") return app.status === "pending" || app.status === "reviewing" || app.status === "interview";
+    if (activeTab === "pending") return app.status === "pending" || app.status === "reviewed" || app.status === "interview";
     if (activeTab === "accepted") return app.status === "accepted";
     if (activeTab === "rejected") return app.status === "rejected";
     return true;
