@@ -508,6 +508,12 @@ def create_application(application: schemas.JobApplicationCreate, db: Session = 
     # Create application
     db_application = models.JobApplication(**application.model_dump())
     db.add(db_application)
+    
+    # Update candidate's applied_jobs counter
+    candidate = db.query(models.CandidateProfile).filter(models.CandidateProfile.id == application.candidate_id).first()
+    if candidate:
+        candidate.applied_jobs += 1
+    
     db.commit()
     db.refresh(db_application)
     
@@ -578,6 +584,13 @@ def create_interview(interview: schemas.InterviewCreate, db: Session = Depends(g
     # Create interview
     db_interview = models.Interview(**interview.model_dump())
     db.add(db_interview)
+    
+    # Update candidate's completed_interviews counter if interview is completed
+    if interview.status == "completed":
+        candidate = db.query(models.CandidateProfile).filter(models.CandidateProfile.id == interview.candidate_id).first()
+        if candidate:
+            candidate.completed_interviews += 1
+    
     db.commit()
     db.refresh(db_interview)
     
@@ -597,9 +610,16 @@ def update_interview(interview_id: int, interview: schemas.InterviewUpdate, db: 
         raise HTTPException(status_code=404, detail="Interview not found")
     
     # Update interview fields
+    old_status = db_interview.status
     update_data = interview.model_dump(exclude_unset=True)
     for key, value in update_data.items():
         setattr(db_interview, key, value)
+    
+    # Update candidate's completed_interviews counter if status changed to completed
+    if old_status != "completed" and db_interview.status == "completed":
+        candidate = db.query(models.CandidateProfile).filter(models.CandidateProfile.id == db_interview.candidate_id).first()
+        if candidate:
+            candidate.completed_interviews += 1
     
     db.commit()
     db.refresh(db_interview)

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
@@ -128,11 +128,38 @@ export default function JobsPage() {
   const session = realSession;
   
   const [searchTerm, setSearchTerm] = useState("");
+  const [jobs, setJobs] = useState<Job[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // Charger les offres d'emploi depuis l'API
+  useEffect(() => {
+    const fetchJobs = async () => {
+      try {
+        setLoading(true);
+        const response = await fetch('/api/jobs/');
+        
+        if (!response.ok) {
+          throw new Error(`Erreur lors de la récupération des offres: ${response.status}`);
+        }
+        
+        const data = await response.json();
+        setJobs(data);
+        setError(null);
+      } catch (err) {
+        console.error("Erreur lors du chargement des offres:", err);
+        setError("Impossible de charger les offres d'emploi. Veuillez réessayer plus tard.");
+        setJobs([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchJobs();
+  }, []);
+
   // Filtrer les offres d'emploi en fonction du terme de recherche
-  const filteredJobs = mockJobs.filter(job => {
+  const filteredJobs = jobs.filter(job => {
     if (!searchTerm) return true;
     
     const searchTermLower = searchTerm.toLowerCase();
