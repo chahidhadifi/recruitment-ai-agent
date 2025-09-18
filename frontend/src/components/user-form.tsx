@@ -19,7 +19,7 @@ export function UserForm({ user, onSubmit, onCancel }: UserFormProps) {
   const [formData, setFormData] = useState<Partial<UserWithRole>>({
     name: "",
     email: "",
-    role: "candidat",
+    role: user?.role || "candidat",
     ...user,
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -110,19 +110,14 @@ export function UserForm({ user, onSubmit, onCancel }: UserFormProps) {
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="role">Rôle</Label>
-          <select
+          <Label htmlFor="role">Poste / Fonction</Label>
+          <Input
             id="role"
             name="role"
             value={formData.role || "candidat"}
-            onChange={handleChange}
-            className={`w-full rounded-md border ${errors.role ? "border-red-500" : "border-input"} bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary`}
-          >
-            <option value="admin">Administrateur</option>
-            <option value="recruteur">Recruteur</option>
-            <option value="candidat">Candidat</option>
-          </select>
-          {errors.role && <p className="text-sm text-red-500">{errors.role}</p>}
+            readOnly
+            className="bg-gray-100 cursor-not-allowed"
+          />
         </div>
 
         {!user && (

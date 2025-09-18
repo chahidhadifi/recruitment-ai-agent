@@ -138,7 +138,7 @@ def login(login_data: schemas.UserLogin, db: Session = Depends(get_db)):
         "last_login": user.last_login.isoformat() if user.last_login else None
     }
     # Générer un JWT standard
-    SECRET_KEY = os.getenv("JWT_SECRET", "mysecret")
+    SECRET_KEY = os.getenv("JWT_SECRET_KEY", "your-secure-jwt-secret-key-for-production")
     payload = {
         "sub": user.id,
         "exp": datetime.utcnow() + timedelta(hours=1),
@@ -243,7 +243,14 @@ def create_user(user: schemas.UserCreate, db: Session = Depends(get_db)):
             image=user.image,
             role=user_role,
             status=models.UserStatus.actif,
-            password=hashed_password
+            password=hashed_password,
+            first_name=user.first_name,
+            last_name=user.last_name,
+            cnie=user.cnie,
+            nationality=user.nationality,
+            phone=user.phone,
+            city=user.city,
+            address=user.address
         )
         db.add(db_user)
         db.flush()  # Flush to get the user ID without committing

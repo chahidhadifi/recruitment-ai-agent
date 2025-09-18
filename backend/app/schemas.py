@@ -44,6 +44,13 @@ class UserBase(BaseModel):
 class UserCreate(UserBase):
     password: str
     role: UserRole = UserRole.candidat
+    first_name: Optional[str] = None
+    last_name: Optional[str] = None
+    cnie: Optional[str] = None
+    nationality: Optional[str] = None
+    phone: Optional[str] = None
+    city: Optional[str] = None
+    address: Optional[str] = None
 
 class UserUpdate(BaseModel):
     name: Optional[str] = None
