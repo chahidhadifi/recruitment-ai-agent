@@ -15,7 +15,7 @@ from .database import get_db
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/auth/login")
 
 # Clé secrète pour JWT (doit correspondre à celle utilisée pour signer les tokens)
-SECRET_KEY = os.getenv("JWT_SECRET_KEY", "your-secret-key-for-jwt-tokens")
+SECRET_KEY = os.getenv("JWT_SECRET_KEY", "your-secure-jwt-secret-key-for-production")
 ALGORITHM = "HS256"
 
 def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(get_db)):
