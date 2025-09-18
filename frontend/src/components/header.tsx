@@ -64,21 +64,8 @@ export function Header() {
     ? navigationItems[session.user.role as keyof typeof navigationItems || "candidat"]
     : publicLinks;
   
-  // Vérifier si l'utilisateur a accès à la page actuelle
-  useEffect(() => {
-    // Ne vérifier l'accès que si l'utilisateur est authentifié
-    if (isAuthenticated && session) {
-      const userRoutes = ROLE_BASED_ROUTES[session.user.role as keyof typeof ROLE_BASED_ROUTES || "candidat"];
-      const isAuthorized = userRoutes.some(route => 
-        pathname === route || pathname.startsWith(`${route}/`)
-      );
-      
-      if (!isAuthorized && pathname !== "/auth/login") {
-        // Rediriger vers la page d'accueil si l'utilisateur n'a pas accès
-        router.push("/");
-      }
-    }
-  }, [pathname, router, session, isAuthenticated]);
+  // Note: La vérification des autorisations est maintenant gérée par le middleware
+  // pour éviter les conflits de redirection
 
   // Effet pour gérer les clics en dehors du menu déroulant
   useEffect(() => {

@@ -4,13 +4,16 @@ from sqlalchemy.orm import Session
 from sqlalchemy import func, or_, text
 from typing import List, Optional
 import uvicorn
-from datetime import datetime
+from datetime import datetime, timedelta
 import secrets
 import hashlib
 import logging
+import jwt
+import os
 
 from . import models, schemas
 from .database import SessionLocal, engine
+from .routers import me
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -18,6 +21,8 @@ logger = logging.getLogger(__name__)
 
 # Create FastAPI app
 app = FastAPI(title="Recruitment AI Platform API", version="1.0.0")
+# Inclure le router /me pour l’endpoint profil utilisateur
+app.include_router(me.router, prefix="/api/users", tags=["users"])
 
 # Initialize database tables on startup
 @app.on_event("startup")
@@ -67,21 +72,28 @@ def get_current_user(db: Session = Depends(get_db), authorization: str = Header(
             detail="Invalid authentication scheme",
             headers={"WWW-Authenticate": "Bearer"},
         )
-    
-    # Parse user ID from token (format: user_{id}_{random_hex})
     try:
-        parts = token.split('_')
-        if len(parts) < 3 or parts[0] != "user":
-            raise ValueError("Invalid token format")
-        
-        user_id = int(parts[1])
-    except (ValueError, IndexError):
+        SECRET_KEY = os.getenv("JWT_SECRET", "mysecret")
+        payload = jwt.decode(token, SECRET_KEY, algorithms=["HS256"])
+        user_id = payload.get("sub")
+        if not user_id:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Token payload missing user_id",
+                headers={"WWW-Authenticate": "Bearer"},
+            )
+    except jwt.ExpiredSignatureError:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Token expired",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+    except jwt.InvalidTokenError:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid token",
             headers={"WWW-Authenticate": "Bearer"},
         )
-    
     # Get user from database
     user = db.query(models.User).filter(models.User.id == user_id).first()
     if user is None:
@@ -90,7 +102,6 @@ def get_current_user(db: Session = Depends(get_db), authorization: str = Header(
             detail="User not found",
             headers={"WWW-Authenticate": "Bearer"},
         )
-    
     return user
         
 # Helper function to hash passwords
@@ -126,10 +137,16 @@ def login(login_data: schemas.UserLogin, db: Session = Depends(get_db)):
         "updated_at": user.updated_at.isoformat() if user.updated_at else None,
         "last_login": user.last_login.isoformat() if user.last_login else None
     }
-    
-    # Return user data with token
+    # Générer un JWT standard
+    SECRET_KEY = os.getenv("JWT_SECRET", "mysecret")
+    payload = {
+        "sub": user.id,
+        "exp": datetime.utcnow() + timedelta(hours=1),
+        "iat": datetime.utcnow()
+    }
+    token = jwt.encode(payload, SECRET_KEY, algorithm="HS256")
     return {
-        "access_token": f"user_{user.id}_{secrets.token_hex(16)}",
+        "access_token": token,
         "token_type": "bearer",
         "user": user_dict
     }
@@ -400,42 +417,33 @@ def read_job(job_id: int = Path(..., title="The ID of the job to get"), db: Sess
 def update_job(job_id: int, job: schemas.JobUpdate, db: Session = Depends(get_db)):
     db_job = db.query(models.Job).filter(models.Job.id == job_id).first()
     if db_job is None:
-        raise HTTPException(status_code=404, detail="Job not found")
-    
-    # Update job fields
-    update_data = job.model_dump(exclude_unset=True)
-    for key, value in update_data.items():
-        setattr(db_job, key, value)
-    
-    db.commit()
-    db.refresh(db_job)
-    return db_job
-
-@app.delete("/api/jobs/{job_id}", response_model=dict)
-def delete_job(job_id: int, db: Session = Depends(get_db)):
-    db_job = db.query(models.Job).filter(models.Job.id == job_id).first()
-    if db_job is None:
-        raise HTTPException(status_code=404, detail="Job not found")
-    
-    db.delete(db_job)
-    db.commit()
-    
-    return {"success": True}
-
-# Job Application endpoints
-@app.get("/api/applications/", response_model=List[schemas.JobApplication])
-def read_applications(
-    job_id: Optional[int] = None,
-    candidate_id: Optional[int] = None,
-    status: Optional[schemas.ApplicationStatus] = None,
-    skip: int = 0, 
-    limit: int = 100, 
-    db: Session = Depends(get_db),
-    current_user: models.User = Depends(get_current_user)
-):
-    query = db.query(models.JobApplication)
-    
-    # Apply filters
+        scheme, token = authorization.split()
+        if scheme.lower() != "bearer":
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Invalid authentication scheme",
+                headers={"WWW-Authenticate": "Bearer"},
+            )
+        # Vérifier et décoder le JWT
+        jwt_secret = os.environ.get("JWT_SECRET", "supersecretkey")
+        try:
+            payload = jwt.decode(token, jwt_secret, algorithms=["HS256"])
+            user_id = int(payload["sub"])
+        except Exception:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Invalid or expired token",
+                headers={"WWW-Authenticate": "Bearer"},
+            )
+        # Récupérer l'utilisateur
+        user = db.query(models.User).filter(models.User.id == user_id).first()
+        if user is None:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="User not found",
+                headers={"WWW-Authenticate": "Bearer"},
+            )
+        return user
     if job_id:
         query = query.filter(models.JobApplication.job_id == job_id)
     
@@ -683,6 +691,9 @@ def delete_message(message_id: int, db: Session = Depends(get_db)):
     db.commit()
     
     return {"success": True}
+
+# Include me router
+app.include_router(me.router, prefix="/api/users", tags=["users"])
 
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8000)

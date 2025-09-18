@@ -27,6 +27,9 @@ def read_current_user(current_user: models.User = Depends(get_current_user), db:
         candidate_profile = db.query(models.CandidateProfile).filter(models.CandidateProfile.user_id == user_id).first()
         if candidate_profile:
             user_dict["candidate_profile"] = schemas.CandidateProfile.model_validate(candidate_profile)
+            # Récupérer les candidatures du candidat
+            applications = db.query(models.JobApplication).filter(models.JobApplication.candidate_id == candidate_profile.id).all()
+            user_dict["applications"] = [schemas.JobApplication.model_validate(app) for app in applications]
     
     return schemas.UserWithDetails(**user_dict)
 

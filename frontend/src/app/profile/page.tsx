@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { Save, User, Mail, Building, Briefcase, Camera, Upload } from "lucide-react";
@@ -8,31 +8,34 @@ import { useToast } from "@/components/ui/use-toast";
 
 import { MainLayout } from "@/components/main-layout";
 import { Button } from "@/components/ui/button";
+import { api } from "@/lib/api";
 
 export default function ProfilePage() {
+  const [applications, setApplications] = useState<any[]>([]);
   // Utiliser uniquement la session réelle
-  const { data: session, update } = useSession();
+  const { data: session, status, update } = useSession();
   const router = useRouter();
   const { toast } = useToast();
   
-  // Rediriger vers la page de connexion si l'utilisateur n'est pas authentifié
+  // Rediriger vers la page de connexion uniquement si le chargement est terminé et l'utilisateur n'est pas authentifié
   useEffect(() => {
-    if (!session) {
+    if (status === "loading") return;
+    if (status === "unauthenticated") {
       router.push('/auth/login');
     }
-  }, [session, router]);
+  }, [status, router]);
 
   const [saving, setSaving] = useState(false);
   const [profileForm, setProfileForm] = useState({
     name: session?.user?.name || "",
     email: session?.user?.email || "",
     company: "AI Recruitment Inc.",
-    role: "Recruteur",
-    bio: "Spécialiste en recrutement avec 5 ans d&apos;expérience dans le secteur technologique.",
+    role: session?.user?.role === "candidat" ? "Candidat" : "Recruteur",
+    bio: "",
     first_name: "",
     last_name: "",
     cnie: "",
-    nationality: "Marocaine",
+    nationality: "",
     phone: "",
     city: "",
     address: "",
@@ -40,52 +43,50 @@ export default function ProfilePage() {
     cv_url: "",
     cover_letter_url: "",
   });
-  
-  // Charger les données utilisateur depuis l'API
   useEffect(() => {
-    if (session?.user?.email) {
-      const fetchUserData = async () => {
-        try {
-          const response = await fetch(`http://localhost:8000/api/users/me`, {
-            headers: {
-              Authorization: `Bearer ${session.user.accessToken}`,
-            },
-          });
-          
-          if (response.ok) {
-            const userData = await response.json();
-            console.log('Données utilisateur reçues:', userData);
-            
-            // Récupérer les données du profil candidat si disponibles
-            const candidateProfile = userData.candidate_profile || {};
-            
-            setProfileForm(prev => ({
-              ...prev,
-              name: userData.name || prev.name,
-              first_name: userData.first_name || "",
-              last_name: userData.last_name || "",
-              cnie: userData.cnie || "",
-              nationality: userData.nationality || "Marocaine",
-              phone: userData.phone || "",
-              city: userData.city || "",
-              address: userData.address || "",
-              bio: candidateProfile.biography || prev.bio,
-              cv_url: candidateProfile.cv_url || "",
-              cover_letter_url: candidateProfile.cover_letter_url || "",
-            }));
-          }
-        } catch (error) {
-          console.error("Erreur lors du chargement des données utilisateur", error);
+    if (!session?.user?.accessToken) return;
+    const fetchUserData = async () => {
+      try {
+        const response = await api.get('/api/users/me', {
+          headers: {
+            Authorization: `Bearer ${session.user.accessToken}`,
+          },
+        });
+        const userData = response as any;
+        const candidateProfile = userData.candidate_profile || {};
+        setProfileForm(prev => ({
+          ...prev,
+          name: userData.name || prev.name,
+          first_name: userData.first_name || "",
+          last_name: userData.last_name || "",
+          cnie: userData.cnie || "",
+          nationality: userData.nationality || "Marocaine",
+          phone: userData.phone || "",
+          city: userData.city || "",
+          address: userData.address || "",
+          bio: candidateProfile.biography || prev.bio,
+          cv_url: candidateProfile.cv_url || "",
+          cover_letter_url: candidateProfile.cover_letter_url || "",
+          role: userData.role === "candidat" ? "Candidat" : "Recruteur"
+        }));
+        if (userData.applications) {
+          setApplications(userData.applications);
         }
-      };
-      
-      fetchUserData();
-    }
+      } catch (error: any) {
+        console.error("Erreur lors du chargement des données utilisateur", error);
+        toast({
+          title: "Erreur API",
+          description: error?.data?.detail || error?.message || `Erreur API (code: ${error?.status})`,
+          variant: "destructive",
+        });
+      }
+    };
+    fetchUserData();
   }, [session]);
 
   const handleProfileChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
-    setProfileForm((prev) => ({ ...prev, [name]: value }));
+  setProfileForm((prev: typeof profileForm) => ({ ...prev, [name]: value }));
   };
 
   const saveProfile = async () => {
@@ -111,18 +112,11 @@ export default function ProfilePage() {
       console.log('Données à envoyer:', userData);
       
       // Envoyer les données au backend
-      const response = await fetch(`http://localhost:8000/api/users/me`, {
-        method: 'PUT',
+      await api.put('/api/users/me', userData, {
         headers: {
-          'Content-Type': 'application/json',
           Authorization: `Bearer ${session?.user?.accessToken}`,
         },
-        body: JSON.stringify(userData),
       });
-      
-      if (!response.ok) {
-        throw new Error('Erreur lors de la mise à jour du profil');
-      }
       
       // Mise à jour de la session
       await update({
@@ -152,9 +146,9 @@ export default function ProfilePage() {
   // Fonction pour gérer l'upload de fichiers (CV, lettre de motivation, photo)  
   const [isUploading, setIsUploading] = useState(false);
   
-  const handleFileUpload = async (event, fileType) => {
-    const file = event.target.files[0];
-    if (!file) return;
+  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>, fileType: string) => {
+  const file = event.target.files?.[0];
+  if (!file) return;
     
     const formData = new FormData();
     formData.append('file', file);
@@ -175,11 +169,11 @@ export default function ProfilePage() {
       
       // Mettre à jour le formulaire avec l'URL du fichier uploadé
       if (fileType === 'cv') {
-        setProfileForm(prev => ({ ...prev, cv_url: data.fileUrl }));
+  setProfileForm((prev: typeof profileForm) => ({ ...prev, cv_url: data.fileUrl }));
       } else if (fileType === 'cover_letter') {
-        setProfileForm(prev => ({ ...prev, cover_letter_url: data.fileUrl }));
+  setProfileForm((prev: typeof profileForm) => ({ ...prev, cover_letter_url: data.fileUrl }));
       } else if (fileType === 'profile_image') {
-        setProfileForm(prev => ({ ...prev, image: data.fileUrl }));
+  setProfileForm((prev: typeof profileForm) => ({ ...prev, image: data.fileUrl }));
       }
       
       toast({
@@ -199,7 +193,7 @@ export default function ProfilePage() {
   };
   
   return (
-    <MainLayout>
+  <MainLayout>
       <div className="container py-10">
         <h1 className="text-3xl font-bold mb-8">Mon profil</h1>
 
@@ -537,6 +531,34 @@ export default function ProfilePage() {
           </div>
         </div>
       </div>
+      {/* Section Mes candidatures */}
+      {applications.length > 0 && (
+        <div className="mt-12">
+          <h2 className="text-2xl font-bold mb-4">Mes candidatures</h2>
+          <div className="overflow-x-auto">
+            <table className="min-w-full bg-background border rounded-lg">
+              <thead>
+                <tr>
+                  <th className="px-4 py-2 text-left">Poste</th>
+                  <th className="px-4 py-2 text-left">Entreprise</th>
+                  <th className="px-4 py-2 text-left">Statut</th>
+                  <th className="px-4 py-2 text-left">Date</th>
+                </tr>
+              </thead>
+              <tbody>
+                {applications.map(app => (
+                  <tr key={app.id} className="border-t">
+                    <td className="px-4 py-2">{app.job_title || '-'}</td>
+                    <td className="px-4 py-2">{app.company || '-'}</td>
+                    <td className="px-4 py-2">{app.status}</td>
+                    <td className="px-4 py-2">{app.applied_at ? new Date(app.applied_at).toLocaleDateString() : '-'}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
     </MainLayout>
   );
 }

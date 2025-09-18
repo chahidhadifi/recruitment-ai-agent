@@ -14,8 +14,8 @@ COPY ./app ./app
 
 # No longer using Alembic for migrations
 
-# Copy Docker-specific .env file
-COPY .env.docker .env
+# Copy environment example file
+COPY .env.example .env
 
 # Expose port
 EXPOSE 8000
