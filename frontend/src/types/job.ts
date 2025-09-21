@@ -20,7 +20,7 @@ export interface JobApplication {
   candidateId: string;
   coverLetter: string;
   cvUrl: string;
-  status: 'pending' | 'reviewed' | 'interview' | 'accepted' | 'rejected';
+  status: 'pending' | 'reviewed' | 'interview' | 'accepted' | 'rejected' | 'reviewing';
   appliedAt: string;
   updatedAt: string;
   interviewId?: string; // ID de l'entretien associé à cette candidature

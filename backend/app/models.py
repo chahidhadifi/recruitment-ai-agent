@@ -51,6 +51,8 @@ class Job(Base):
     responsibilities = Column(ARRAY(String), nullable=True)
     requirements = Column(ARRAY(String), nullable=True)
     benefits = Column(ARRAY(String), nullable=True)
+    company_website = Column(String, nullable=True)
+    company_linkedin = Column(String, nullable=True)
     recruiter_id = Column(Integer, nullable=False)
     
     # Relationships
@@ -80,6 +82,7 @@ class JobApplication(Base):
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
     phone = Column(String, nullable=True)
     location = Column(String, nullable=True)
+    interview_at = Column(DateTime(timezone=True), nullable=True)
     
     # Analysis fields from migration
     score = Column(Integer, nullable=True)

@@ -182,30 +182,40 @@ const mockJobs: Record<string, Job> = {
   }
 };
 
+import axios from 'axios';
+
 // GET /api/jobs - Récupérer toutes les offres d'emploi
 export async function GET(request: NextRequest) {
-  // Nous pourrions utiliser la session pour filtrer les offres selon le rôle de l'utilisateur
-  // mais pour l'instant, nous récupérons toutes les offres sans vérification d'authentification
-  
-  // Convertir l'objet en tableau
-  const jobs = Object.values(mockJobs);
-  
-  // Filtrer ou trier les offres si nécessaire
-  const searchParams = request.nextUrl.searchParams;
-  const query = searchParams.get('query')?.toLowerCase();
-  
-  let filteredJobs = jobs;
-  
-  if (query) {
-    filteredJobs = jobs.filter(job => 
-      job.title.toLowerCase().includes(query) || 
-      job.company.toLowerCase().includes(query) || 
-      job.location.toLowerCase().includes(query) ||
-      job.description.toLowerCase().includes(query)
+  try {
+    // Authentication check removed as per instruction
+    const session = await getServerSession(authOptions);
+    
+    // Récupérer les paramètres de requête
+    const searchParams = request.nextUrl.searchParams;
+    const query = searchParams.get('query')?.toLowerCase();
+    
+    // Construire l'URL de l'API backend avec les paramètres de recherche
+    let backendUrl = `${process.env.BACKEND_URL || 'http://localhost:8000'}/api/jobs/`;
+    
+    // Ajouter les paramètres de requête si nécessaire
+    const params: Record<string, string> = {};
+    if (query) {
+      params.title = query;
+    }
+    
+    // Appeler l'API backend avec axios - Authentication header removed
+    const response = await axios.get(backendUrl, {
+      params
+    });
+    
+    return NextResponse.json(response.data);
+  } catch (error) {
+    console.error('Erreur lors de la récupération des offres:', error);
+    return NextResponse.json(
+      { error: "Une erreur est survenue lors de la récupération des offres d'emploi" },
+      { status: 500 }
     );
   }
-  
-  return NextResponse.json(filteredJobs);
 }
 
 // POST /api/jobs - Créer une nouvelle offre d'emploi

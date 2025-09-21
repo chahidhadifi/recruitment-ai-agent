@@ -66,10 +66,27 @@ export default function RegisterPage() {
     setIsLoading(true);
 
     try {
-      // Dans un environnement de production, vous devriez envoyer les données à votre API
-      // pour créer un nouvel utilisateur
-      // Simulation d'un délai d'API
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+      // Envoyer les données à l'API backend
+      const API_URL = 'http://localhost:8000';
+      
+      const response = await fetch(`${API_URL}/api/users`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          email: data.email,
+          name: data.name,
+          password: data.password,
+          image: `https://ui-avatars.com/api/?name=${encodeURIComponent(data.name)}&background=CD7F32&color=fff`,
+          role: "candidat"
+        })
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Erreur lors de l\'inscription');
+      }
 
       toast({
         title: "Compte créé",
@@ -78,9 +95,10 @@ export default function RegisterPage() {
 
       router.push("/auth/login");
     } catch (error) {
+      console.error('Registration error:', error);
       toast({
         title: "Erreur",
-        description: "Une erreur s&apos;est produite. Veuillez réessayer.",
+        description: error instanceof Error ? error.message : "Une erreur s'est produite. Veuillez réessayer.",
         variant: "destructive",
       });
     } finally {

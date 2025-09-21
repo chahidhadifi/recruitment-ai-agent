@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import Link from "next/link";
 import { Loader2, FileText, Building, MapPin, Calendar, CheckCircle, XCircle, Clock } from "lucide-react";
+import axios from "axios";
 
 import { MainLayout } from "@/components/main-layout";
 import { Button } from "@/components/ui/button";
@@ -16,10 +17,11 @@ import { JobApplication } from "@/types/job";
 
 export default function MyApplicationsPage() {
   const router = useRouter();
-  const { data: session } = useSession();
+  const { data: session, status } = useSession();
   const { toast } = useToast();
   
   const [applications, setApplications] = useState<JobApplication[]>([]);
+  const [filteredApplications, setFilteredApplications] = useState<JobApplication[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState("all");
@@ -37,39 +39,42 @@ export default function MyApplicationsPage() {
   // Charger les candidatures depuis l'API
   useEffect(() => {
     const fetchApplications = async () => {
-      if (!session) return;
+      if (status !== "authenticated") return;
       
       try {
         setLoading(true);
-        const response = await fetch('/api/jobs/applications?candidateOnly=true');
-        
-        if (!response.ok) {
-          throw new Error(`Erreur lors de la récupération des candidatures: ${response.status}`);
-        }
-        
-        const data = await response.json();
-        setApplications(data);
+        const response = await axios.get('http://localhost:8000/api/applications', {
+          headers: {
+            Authorization: `Bearer ${session.user.token || session.user.access_token}`
+          }
+        });
+        setApplications(response.data);
+        setFilteredApplications(response.data);
         setError(null);
       } catch (err) {
         console.error("Erreur lors du chargement des candidatures:", err);
         setError("Impossible de charger vos candidatures. Veuillez réessayer plus tard.");
         setApplications([]);
+        setFilteredApplications([]);
       } finally {
         setLoading(false);
       }
     };
 
     fetchApplications();
-  }, [session]);
+  }, [status]);
   
   // Filtrer les candidatures en fonction de l'onglet actif
-  const filteredApplications = applications.filter(app => {
-    if (activeTab === "all") return true;
-    if (activeTab === "pending") return app.status === "pending" || app.status === "reviewing";
-    if (activeTab === "accepted") return app.status === "accepted";
-    if (activeTab === "rejected") return app.status === "rejected";
-    return true;
-  });
+  useEffect(() => {
+    const filtered = applications.filter(app => {
+      if (activeTab === "all") return true;
+      if (activeTab === "pending") return app.status === "pending" || app.status === "reviewing";
+      if (activeTab === "accepted") return app.status === "accepted";
+      if (activeTab === "rejected") return app.status === "rejected";
+      return true;
+    });
+    setFilteredApplications(filtered);
+  }, [activeTab, applications]);
   
   // Formater la date pour l'affichage
   const formatDate = (dateString: string) => {

@@ -8,6 +8,18 @@ class UserRole(str, Enum):
     recruteur = "recruteur"
     candidat = "candidat"
 
+class UserLogin(BaseModel):
+    email: EmailStr
+    password: str
+
+class Token(BaseModel):
+    access_token: str
+    token_type: str
+    user: Dict[str, Any]
+    
+    class Config:
+        from_attributes = True
+
 class UserStatus(str, Enum):
     actif = "actif"
     inactif = "inactif"
@@ -122,6 +134,8 @@ class JobBase(BaseModel):
     responsibilities: Optional[List[str]] = None
     requirements: Optional[List[str]] = None
     benefits: Optional[List[str]] = None
+    company_website: Optional[str] = None
+    company_linkedin: Optional[str] = None
 
 
 class JobCreate(JobBase):
@@ -138,6 +152,8 @@ class JobUpdate(BaseModel):
     responsibilities: Optional[List[str]] = None
     requirements: Optional[List[str]] = None
     benefits: Optional[List[str]] = None
+    company_website: Optional[str] = None
+    company_linkedin: Optional[str] = None
 
 
 class Job(JobBase):
@@ -185,6 +201,7 @@ class JobApplicationUpdate(BaseModel):
     phone: Optional[str] = None
     location: Optional[str] = None
     status: Optional[ApplicationStatus] = None
+    interview_at: Optional[datetime] = None
     score: Optional[int] = None
     observations: Optional[str] = None
     qualified: Optional[bool] = None
@@ -199,6 +216,7 @@ class JobApplication(JobApplicationBase):
     status: ApplicationStatus
     applied_at: datetime
     updated_at: Optional[datetime] = None
+    interview_at: Optional[datetime] = None
     job_title: Optional[str] = None
     company: Optional[str] = None
     score: Optional[int] = None
@@ -208,6 +226,7 @@ class JobApplication(JobApplicationBase):
     weaknesses: Optional[str] = None
     keywords_match: Optional[str] = None
     analyzed_at: Optional[datetime] = None
+    interview_id: Optional[int] = None
 
     class Config:
         from_attributes = True

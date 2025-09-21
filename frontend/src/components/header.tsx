@@ -18,6 +18,7 @@ const publicLinks = [
   { name: "Aide", href: "/help" },
   { name: "Contact", href: "/contact" },
   { name: "À propos", href: "/about" },
+  { name: "Test Sync", href: "/test" },
 ];
 
 // Navigation dynamique basée sur le rôle de l'utilisateur
@@ -147,6 +148,19 @@ export function Header() {
                   aria-expanded={dropdownOpen}
                   aria-haspopup="true"
                 >
+                  {session.user.image ? (
+                    <div className="h-8 w-8 rounded-full overflow-hidden">
+                      <img 
+                        src={session.user.image} 
+                        alt={session.user.name || "Utilisateur"}
+                        className="h-full w-full object-cover"
+                      />
+                    </div>
+                  ) : (
+                    <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center">
+                      <User className="h-4 w-4 text-primary" />
+                    </div>
+                  )}
                   <span className="text-xs px-2 py-0.5 rounded-full bg-primary/10 text-primary">
                     {session.user.role === "admin" ? "Admin" : 
                      session.user.role === "recruteur" ? "Recruteur" : "Candidat"}
@@ -229,7 +243,20 @@ export function Header() {
                   <ThemeToggle />
                   {session && session.user ? (
                     <div className="flex flex-col gap-2">
-                      <div className="flex flex-col">
+                      <div className="flex items-center gap-3 mb-2">
+                        {session.user.image ? (
+                          <div className="h-10 w-10 rounded-full overflow-hidden">
+                            <img 
+                              src={session.user.image} 
+                              alt={session.user.name || "Utilisateur"}
+                              className="h-full w-full object-cover"
+                            />
+                          </div>
+                        ) : (
+                          <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
+                            <User className="h-5 w-5 text-primary" />
+                          </div>
+                        )}
                         <span className="text-xs px-2 py-0.5 rounded-full bg-primary/10 text-primary">
                           {session.user.role === "admin" ? "Admin" : 
                            session.user.role === "recruteur" ? "Recruteur" : "Candidat"}

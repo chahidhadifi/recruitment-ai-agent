@@ -67,56 +67,38 @@ const mockApplications: JobApplication[] = [
   }
 ];
 
-// GET - Récupérer toutes les candidatures (pour les recruteurs et administrateurs)
+import axios from 'axios';
+
+// GET - Récupérer toutes les candidatures
 export async function GET(request: NextRequest) {
   try {
-    // Vérifier l'authentification
-    const session = await getServerSession(authOptions);
-    
-    if (!session) {
-      return NextResponse.json(
-        { error: "Vous devez être connecté pour accéder à cette ressource" },
-        { status: 401 }
-      );
-    }
-    
-    // Vérifier les autorisations (seuls les administrateurs peuvent gérer les candidatures)
-    // Les recruteurs peuvent uniquement voir les candidatures liées à leurs offres
-    if (session.user.role !== "admin" && session.user.role !== "recruteur") {
-      return NextResponse.json(
-        { error: "Vous n'avez pas les autorisations nécessaires pour accéder à cette ressource" },
-        { status: 403 }
-      );
-    }
+    // Authentication check removed as per instruction
     
     // Récupérer les paramètres de requête
     const url = new URL(request.url);
     const jobId = url.searchParams.get("jobId");
     const status = url.searchParams.get("status");
     
-    // Filtrer les candidatures en fonction des paramètres
-    let applications = [...mockApplications];
+    // Construire l'URL de l'API backend
+    const backendUrl = `http://localhost:8000/api/applications/`;
     
-    if (jobId) {
-      applications = applications.filter(app => app.jobId === jobId);
-    }
+    // Préparer les paramètres pour axios
+    const params: Record<string, string> = {};
+    if (jobId) params.job_id = jobId;
+    if (status) params.status = status;
     
-    if (status) {
-      applications = applications.filter(app => app.status === status);
-    }
+    // Appeler l'API backend avec axios (without authentication header)
+    const response = await axios.get(backendUrl, {
+      params
+    });
     
-    // Si l'utilisateur est un recruteur (non admin), filtrer pour ne montrer que ses offres
-    // Dans une application réelle, vous utiliseriez une relation entre les offres et les recruteurs
-    if (session.user.role === "recruteur") {
-      // Simuler le filtrage par recruteur (dans une application réelle, vous utiliseriez une requête à la base de données)
-      // Pour cette démonstration, nous supposons que le recruteur ne peut voir que les candidatures pour les offres 1 et 2
-      applications = applications.filter(app => ["1", "2"].includes(app.jobId));
-    }
-    
-    return NextResponse.json(applications);
+    return NextResponse.json(response.data);
   } catch (error) {
     console.error("Erreur lors de la récupération des candidatures:", error);
-    return NextResponse.json({ error: "Erreur serveur" }, { status: 500 });
+    return NextResponse.json(
+      { error: "Une erreur est survenue lors de la récupération des candidatures" },
+      { status: 500 }
+    );
   }
 }
 

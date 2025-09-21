@@ -1,4 +1,4 @@
-from fastapi import FastAPI, Depends, HTTPException, Query, status, Path
+from fastapi import FastAPI, Depends, HTTPException, Query, status, Path, Header, File, UploadFile, Form
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
 from sqlalchemy import func, or_, text
@@ -8,6 +8,8 @@ from datetime import datetime
 import secrets
 import hashlib
 import logging
+import io
+from . import google_drive
 
 from . import models, schemas
 from .database import SessionLocal, engine
@@ -46,7 +48,7 @@ async def create_tables():
 # Add CORS middleware
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # In production, replace with specific origins
+    allow_origins=["*", "http://frontend:3000", "http://localhost:3000"],  # Include Docker service name
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -61,9 +63,89 @@ def get_db():
     finally:
         db.close()
         
+# Dependency to get current authenticated user
+def get_current_user(db: Session = Depends(get_db), authorization: str = Header(None)):
+    if authorization is None:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Not authenticated",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+    
+    # Extract token from Authorization header
+    scheme, token = authorization.split()
+    if scheme.lower() != "bearer":
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid authentication scheme",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+    
+    # Parse user ID from token (format: user_{id}_{random_hex})
+    try:
+        parts = token.split('_')
+        if len(parts) < 3 or parts[0] != "user":
+            raise ValueError("Invalid token format")
+        
+        user_id = int(parts[1])
+    except (ValueError, IndexError):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid token",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+    
+    # Get user from database
+    user = db.query(models.User).filter(models.User.id == user_id).first()
+    if user is None:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="User not found",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+    
+    return user
+        
 # Helper function to hash passwords
 def hash_password(password: str) -> str:
     return hashlib.sha256(password.encode()).hexdigest()
+
+# Authentication endpoint
+@app.post("/api/auth/login/", response_model=schemas.Token)
+def login(login_data: schemas.UserLogin, db: Session = Depends(get_db)):
+    user = db.query(models.User).filter(models.User.email == login_data.email).first()
+    if not user:
+        raise HTTPException(status_code=401, detail="Invalid email or password")
+    
+    # Verify password
+    hashed_password = hash_password(login_data.password)
+    if user.password != hashed_password:
+        raise HTTPException(status_code=401, detail="Invalid email or password")
+    
+    # Update last login time
+    user.last_login = datetime.now()
+    db.commit()
+    
+    # Convert user to dictionary for serialization
+    user_dict = {
+        "id": user.id,
+        "email": user.email,
+        "name": user.name,
+        "image": user.image,
+        "role": user.role.value,
+        "status": user.status.value,
+        "is_active": user.is_active,
+        "created_at": user.created_at.isoformat() if user.created_at else None,
+        "updated_at": user.updated_at.isoformat() if user.updated_at else None,
+        "last_login": user.last_login.isoformat() if user.last_login else None
+    }
+    
+    # Return user data with token
+    return {
+        "access_token": f"user_{user.id}_{secrets.token_hex(16)}",
+        "token_type": "bearer",
+        "user": user_dict
+    }
 
 @app.get("/")
 def read_root():
@@ -131,6 +213,7 @@ def read_users(
 
 @app.post("/api/users/", response_model=schemas.User, status_code=status.HTTP_201_CREATED)
 def create_user(user: schemas.UserCreate, db: Session = Depends(get_db)):
+    # No authentication required for user registration
     db_user = db.query(models.User).filter(models.User.email == user.email).first()
     if db_user:
         raise HTTPException(status_code=400, detail="Email already registered")
@@ -280,8 +363,10 @@ def read_jobs(
     recruiter_id: Optional[int] = None,
     skip: int = 0, 
     limit: int = 100, 
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    authorization: str = Header(None)
 ):
+    # Authentication requirement removed as per instruction
     query = db.query(models.Job)
     
     # Apply filters
@@ -306,10 +391,11 @@ def read_jobs(
 
 @app.post("/api/jobs/", response_model=schemas.Job, status_code=status.HTTP_201_CREATED)
 def create_job(job: schemas.JobCreate, db: Session = Depends(get_db)):
+    # Authentication requirement removed as per instruction
     # Verify recruiter exists
-    recruiter = db.query(models.RecruiterProfile).filter(models.RecruiterProfile.id == job.recruiter_id).first()
-    if not recruiter:
-        raise HTTPException(status_code=404, detail="Recruiter not found")
+    # recruiter = db.query(models.RecruiterProfile).filter(models.RecruiterProfile.id == job.recruiter_id).first()
+    # if not recruiter:
+    #     raise HTTPException(status_code=404, detail="Recruiter not found")
     
     # Create job
     db_job = models.Job(**job.model_dump())
@@ -321,6 +407,7 @@ def create_job(job: schemas.JobCreate, db: Session = Depends(get_db)):
 
 @app.get("/api/jobs/{job_id}", response_model=schemas.Job)
 def read_job(job_id: int = Path(..., title="The ID of the job to get"), db: Session = Depends(get_db)):
+    # Authentication requirement removed as per instruction
     db_job = db.query(models.Job).filter(models.Job.id == job_id).first()
     if db_job is None:
         raise HTTPException(status_code=404, detail="Job not found")
@@ -328,6 +415,7 @@ def read_job(job_id: int = Path(..., title="The ID of the job to get"), db: Sess
 
 @app.put("/api/jobs/{job_id}", response_model=schemas.Job)
 def update_job(job_id: int, job: schemas.JobUpdate, db: Session = Depends(get_db)):
+    # Authentication requirement removed as per instruction
     db_job = db.query(models.Job).filter(models.Job.id == job_id).first()
     if db_job is None:
         raise HTTPException(status_code=404, detail="Job not found")
@@ -343,6 +431,7 @@ def update_job(job_id: int, job: schemas.JobUpdate, db: Session = Depends(get_db
 
 @app.delete("/api/jobs/{job_id}", response_model=dict)
 def delete_job(job_id: int, db: Session = Depends(get_db)):
+    # Authentication requirement removed as per instruction
     db_job = db.query(models.Job).filter(models.Job.id == job_id).first()
     if db_job is None:
         raise HTTPException(status_code=404, detail="Job not found")
@@ -360,26 +449,48 @@ def read_applications(
     status: Optional[schemas.ApplicationStatus] = None,
     skip: int = 0, 
     limit: int = 100, 
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    authorization: str = Header(None)
 ):
     query = db.query(models.JobApplication)
     
-    # Apply filters
-    if job_id:
-        query = query.filter(models.JobApplication.job_id == job_id)
-    
+    # Apply candidate_id filter if provided
     if candidate_id:
         query = query.filter(models.JobApplication.candidate_id == candidate_id)
+    
+    # Apply other filters
+    if job_id:
+        query = query.filter(models.JobApplication.job_id == job_id)
     
     if status:
         query = query.filter(models.JobApplication.status == status)
     
     # Apply pagination
     applications = query.offset(skip).limit(limit).all()
+    
+    # Check for upcoming interviews for all applications
+    now = datetime.now()
+    for app in applications:
+        # If interview is scheduled and within 24 hours, add interview link
+        if app.interview_at and app.status == models.ApplicationStatus.interview:
+            time_diff = app.interview_at - now
+            # If interview is within 24 hours or already started but not more than 1 hour ago
+            if time_diff.total_seconds() < 86400 and time_diff.total_seconds() > -3600:
+                # Get interview details
+                interview = db.query(models.Interview).filter(
+                    models.Interview.candidate_id == app.candidate_id,
+                    models.Interview.date == app.interview_at
+                ).first()
+                
+                if interview:
+                    # Add interview ID to the application for frontend to create link
+                    app.interview_id = interview.id
+    
     return applications
 
 @app.post("/api/applications/", response_model=schemas.JobApplication, status_code=status.HTTP_201_CREATED)
 def create_application(application: schemas.JobApplicationCreate, db: Session = Depends(get_db)):
+    # Authentication requirement removed as per instruction
     # Verify job exists
     # job = db.query(models.Job).filter(models.Job.id == application.job_id).first()
     # if not job:
@@ -409,6 +520,7 @@ def create_application(application: schemas.JobApplicationCreate, db: Session = 
 
 @app.get("/api/applications/{application_id}", response_model=schemas.JobApplication)
 def read_application(application_id: int, db: Session = Depends(get_db)):
+    # Authentication requirement removed as per instruction
     db_application = db.query(models.JobApplication).filter(models.JobApplication.id == application_id).first()
     if db_application is None:
         raise HTTPException(status_code=404, detail="Application not found")
@@ -416,6 +528,7 @@ def read_application(application_id: int, db: Session = Depends(get_db)):
 
 @app.put("/api/applications/{application_id}", response_model=schemas.JobApplication)
 def update_application(application_id: int, application: schemas.JobApplicationUpdate, db: Session = Depends(get_db)):
+    # Authentication requirement removed as per instruction
     db_application = db.query(models.JobApplication).filter(models.JobApplication.id == application_id).first()
     if db_application is None:
         raise HTTPException(status_code=404, detail="Application not found")
@@ -431,6 +544,7 @@ def update_application(application_id: int, application: schemas.JobApplicationU
 
 @app.delete("/api/applications/{application_id}", response_model=dict)
 def delete_application(application_id: int, db: Session = Depends(get_db)):
+    # Authentication requirement removed as per instruction
     db_application = db.query(models.JobApplication).filter(models.JobApplication.id == application_id).first()
     if db_application is None:
         raise HTTPException(status_code=404, detail="Application not found")
@@ -439,6 +553,42 @@ def delete_application(application_id: int, db: Session = Depends(get_db)):
     db.commit()
     
     return {"success": True}
+
+# Google Drive upload endpoint
+@app.post("/api/upload-to-drive/", status_code=status.HTTP_201_CREATED)
+async def upload_to_drive(
+    file: UploadFile = File(...),
+    type: str = Form(...),
+    candidate_id: int = Form(...)
+):
+    # Validate file type
+    if not file.content_type.startswith('application/'):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="File must be a document (PDF, DOC, etc.)"
+        )
+    
+    # Read file content
+    file_content = await file.read()
+    
+    # Upload to Google Drive based on type
+    try:
+        if type == "cv":
+            url = google_drive.upload_cv(file_content, candidate_id, file.content_type)
+            return {"url": url, "message": "CV uploaded successfully"}
+        elif type == "cover_letter":
+            url = google_drive.upload_cover_letter(file_content, candidate_id, file.content_type)
+            return {"url": url, "message": "Cover letter uploaded successfully"}
+        else:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Invalid file type. Must be 'cv' or 'cover_letter'"
+            )
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to upload file: {str(e)}"
+        )
 
 # Interview endpoints
 @app.get("/api/interviews/", response_model=List[schemas.Interview])
@@ -449,6 +599,7 @@ def read_interviews(
     limit: int = 100, 
     db: Session = Depends(get_db)
 ):
+    # Authentication requirement removed as per instruction
     query = db.query(models.Interview)
     
     # Apply filters
@@ -464,6 +615,7 @@ def read_interviews(
 
 @app.post("/api/interviews/", response_model=schemas.Interview, status_code=status.HTTP_201_CREATED)
 def create_interview(interview: schemas.InterviewCreate, db: Session = Depends(get_db)):
+    # Authentication requirement removed as per instruction
     # Verify candidate exists
     # candidate = db.query(models.CandidateProfile).filter(models.CandidateProfile.id == interview.candidate_id).first()
     # if not candidate:
@@ -479,6 +631,7 @@ def create_interview(interview: schemas.InterviewCreate, db: Session = Depends(g
 
 @app.get("/api/interviews/{interview_id}", response_model=schemas.Interview)
 def read_interview(interview_id: int, db: Session = Depends(get_db)):
+    # Authentication requirement removed as per instruction
     db_interview = db.query(models.Interview).filter(models.Interview.id == interview_id).first()
     if db_interview is None:
         raise HTTPException(status_code=404, detail="Interview not found")
@@ -486,6 +639,7 @@ def read_interview(interview_id: int, db: Session = Depends(get_db)):
 
 @app.put("/api/interviews/{interview_id}", response_model=schemas.Interview)
 def update_interview(interview_id: int, interview: schemas.InterviewUpdate, db: Session = Depends(get_db)):
+    # Authentication requirement removed as per instruction
     db_interview = db.query(models.Interview).filter(models.Interview.id == interview_id).first()
     if db_interview is None:
         raise HTTPException(status_code=404, detail="Interview not found")
@@ -501,6 +655,7 @@ def update_interview(interview_id: int, interview: schemas.InterviewUpdate, db: 
 
 @app.patch("/api/interviews/{interview_id}", response_model=schemas.Interview)
 def patch_interview(interview_id: int, interview: schemas.InterviewPatch, db: Session = Depends(get_db)):
+    # Authentication requirement removed as per instruction
     db_interview = db.query(models.Interview).filter(models.Interview.id == interview_id).first()
     if db_interview is None:
         raise HTTPException(status_code=404, detail="Interview not found")
@@ -516,6 +671,7 @@ def patch_interview(interview_id: int, interview: schemas.InterviewPatch, db: Se
 
 @app.delete("/api/interviews/{interview_id}", response_model=dict)
 def delete_interview(interview_id: int, db: Session = Depends(get_db)):
+    # Authentication requirement removed as per instruction
     db_interview = db.query(models.Interview).filter(models.Interview.id == interview_id).first()
     if db_interview is None:
         raise HTTPException(status_code=404, detail="Interview not found")

@@ -126,17 +126,6 @@ export async function GET(req: NextRequest) {
 // POST /api/users - Créer un nouvel utilisateur
 export async function POST(req: NextRequest) {
   try {
-    // Vérifier l'authentification et les autorisations
-    const session = await getServerSession(authOptions);
-    
-    if (!session) {
-      return NextResponse.json({ error: "Non authentifié" }, { status: 401 });
-    }
-    
-    if (session.user.role !== "admin") {
-      return NextResponse.json({ error: "Accès non autorisé" }, { status: 403 });
-    }
-    
     // Récupérer les données de la requête
     const data = await req.json();
     
@@ -145,27 +134,25 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Données invalides" }, { status: 400 });
     }
     
-    // Vérifier si l'email existe déjà
-    const existingUser = mockUsers.find(user => user.email === data.email);
-    if (existingUser) {
-      return NextResponse.json({ error: "Cet email est déjà utilisé" }, { status: 409 });
-    }
+    // Définir l'URL de l'API backend
+    const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
     
-    // Créer un nouvel utilisateur
-    const newUser: UserWithRole = {
-      id: `user-${Date.now()}`,
-      name: data.name,
-      email: data.email,
-      image: `https://ui-avatars.com/api/?name=${encodeURIComponent(data.name)}&background=0D8ABC&color=fff`,
-      role: data.role
-    };
+    // Transférer la requête au backend
+    const response = await fetch(`${API_URL}/api/users`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(data)
+    });
     
-    // Ajouter l'utilisateur à la liste
-    mockUsers.push(newUser);
+    // Récupérer la réponse du backend
+    const responseData = await response.json();
     
-    return NextResponse.json(newUser, { status: 201 });
+    // Retourner la réponse avec le même statut
+    return NextResponse.json(responseData, { status: response.status });
   } catch (error) {
-    console.error("Erreur lors de la création de l&apos;utilisateur:", error);
+    console.error("Erreur lors de la création de l'utilisateur:", error);
     return NextResponse.json({ error: "Erreur serveur" }, { status: 500 });
   }
 }

@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
+import axios from "axios";
 import { ArrowLeft, Building, MapPin, Calendar, Clock, Briefcase, DollarSign, Users, FileText, Upload } from "lucide-react";
 
 import { MainLayout } from "@/components/main-layout";
@@ -204,7 +205,7 @@ export default function JobDetailPage({ params }: { params: { id: string } }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [coverLetter, setCoverLetter] = useState("");
+  const [coverLetterFile, setCoverLetterFile] = useState<File | null>(null);
   const [cvFile, setCvFile] = useState<File | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [phone, setPhone] = useState("");
@@ -213,24 +214,37 @@ export default function JobDetailPage({ params }: { params: { id: string } }) {
   // Vérifier si l'utilisateur est authentifié
   const isAuthenticated = status === "authenticated";
 
-  // Simuler le chargement des données
+  // Charger les données depuis l'API
   useEffect(() => {
     const fetchJob = async () => {
       try {
         setLoading(true);
-        // Simuler un délai réseau
-        await new Promise(resolve => setTimeout(resolve, 500));
         
-        const jobData = mockJobs[params.id];
-        if (!jobData) {
+        // Récupérer les données depuis l'API backend
+        const response = await axios.get(`http://localhost:8000/api/jobs/${params.id}`);
+        
+        if (!response.data) {
           setError("Offre d&apos;emploi non trouvée");
           return;
         }
         
+        // Adapter les noms de champs de l'API au format attendu par le frontend
+        const jobData = {
+          ...response.data,
+          postedDate: response.data.posted_date
+        };
+        
         setJob(jobData);
       } catch (err) {
-        setError("Une erreur est survenue lors du chargement de l&apos;offre d&apos;emploi");
-        console.error(err);
+        console.error("Erreur lors du chargement de l'offre d'emploi:", err);
+        // Fallback aux données mockées en cas d'erreur (pour le développement)
+        const jobData = mockJobs[params.id];
+        if (jobData) {
+          setJob(jobData);
+          console.log("Utilisation des données mockées comme fallback");
+        } else {
+          setError("Une erreur est survenue lors du chargement de l&apos;offre d&apos;emploi");
+        }
       } finally {
         setLoading(false);
       }
@@ -258,10 +272,10 @@ export default function JobDetailPage({ params }: { params: { id: string } }) {
       return;
     }
 
-    if (!coverLetter.trim()) {
+    if (!coverLetterFile) {
       toast({
         title: "Lettre de motivation requise",
-        description: "Veuillez rédiger une lettre de motivation",
+        description: "Veuillez télécharger votre lettre de motivation",
         variant: "destructive",
       });
       return;
@@ -288,45 +302,51 @@ export default function JobDetailPage({ params }: { params: { id: string } }) {
     try {
       setSubmitting(true);
       
-      // Télécharger le CV
-      const formData = new FormData();
-      formData.append('file', cvFile);
+      // Télécharger le CV vers Google Drive
+      const cvFormData = new FormData();
+      cvFormData.append('file', cvFile);
+      cvFormData.append('type', 'cv');
+      cvFormData.append('candidateId', session.user.id);
       
-      const uploadResponse = await fetch('/api/upload', {
-        method: 'POST',
-        body: formData,
-      });
-      
-      if (!uploadResponse.ok) {
-        const errorData = await uploadResponse.json();
-        throw new Error(errorData.error || 'Erreur lors du téléchargement du CV');
-      }
-      
-      const { url: cvUrl } = await uploadResponse.json();
-      
-      // Soumettre la candidature
-      const applyResponse = await fetch(`/api/jobs/${params.id}/apply`, {
-        method: 'POST',
+      // Utiliser axios pour télécharger le CV vers Google Drive
+      const cvUploadResponse = await axios.post('/api/google-drive-upload', cvFormData, {
         headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          coverLetter,
-          cvUrl,
-          phone,
-          location,
-          jobTitle: job.title,
-          company: job.company
-        }),
+          'Content-Type': 'multipart/form-data'
+        }
       });
       
-      if (!applyResponse.ok) {
-        const errorData = await applyResponse.json();
-        throw new Error(errorData.error || 'Erreur lors de la soumission de la candidature');
-      }
+      const cvUrl = cvUploadResponse.data.url;
+      
+      // Télécharger la lettre de motivation vers Google Drive
+      const coverLetterFormData = new FormData();
+      coverLetterFormData.append('file', coverLetterFile);
+      coverLetterFormData.append('type', 'cover_letter');
+      coverLetterFormData.append('candidateId', session.user.id);
+      
+      // Utiliser axios pour télécharger la lettre de motivation vers Google Drive
+      const coverLetterUploadResponse = await axios.post('/api/google-drive-upload', coverLetterFormData, {
+        headers: {
+          'Content-Type': 'multipart/form-data'
+        }
+      });
+      
+      const coverLetterUrl = coverLetterUploadResponse.data.url;
+      
+      // Soumettre la candidature à l'API
+      const applicationPayload = {
+        job_id: parseInt(params.id),
+        candidate_id: parseInt(session.user.id),
+        cover_letter: coverLetterUrl,
+        cv_url: cvUrl,
+        phone,
+        location
+      };
+      
+      // Soumettre la candidature avec axios
+      const applyResponse = await axios.post('http://localhost:8000/api/applications/', applicationPayload);
       
       // Récupérer les données de la candidature créée
-      const applicationData = await applyResponse.json();
+      const applicationData = applyResponse.data;
       
       toast({
         title: "Candidature envoyée",
@@ -334,7 +354,7 @@ export default function JobDetailPage({ params }: { params: { id: string } }) {
       });
       
       setIsDialogOpen(false);
-      setCoverLetter("");
+      setCoverLetterFile(null);
       setCvFile(null);
       setPhone("");
       setLocation("");
@@ -358,9 +378,13 @@ export default function JobDetailPage({ params }: { params: { id: string } }) {
     }
   };
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>, fileType: 'cv' | 'coverLetter') => {
     if (e.target.files && e.target.files.length > 0) {
-      setCvFile(e.target.files[0]);
+      if (fileType === 'cv') {
+        setCvFile(e.target.files[0]);
+      } else if (fileType === 'coverLetter') {
+        setCoverLetterFile(e.target.files[0]);
+      }
     }
   };
 
@@ -393,7 +417,13 @@ export default function JobDetailPage({ params }: { params: { id: string } }) {
   }
 
   const formatDate = (dateString: string) => {
+    if (!dateString) return "Non spécifié";
+    
     const date = new Date(dateString);
+    
+    // Vérifier si la date est valide
+    if (isNaN(date.getTime())) return "Non spécifié";
+    
     return new Intl.DateTimeFormat('fr-FR', { dateStyle: 'long' }).format(date);
   };
 
@@ -428,10 +458,14 @@ export default function JobDetailPage({ params }: { params: { id: string } }) {
                       <Clock className="h-3 w-3 mr-1" />
                       {job.type}
                     </Badge>
-                    <Badge variant="secondary" className="flex items-center">
+                    {
+                      job.salary != null ? (
+                      <Badge variant="secondary" className="flex items-center">
                       <DollarSign className="h-3 w-3 mr-1" />
                       {job.salary}
-                    </Badge>
+                      </Badge>
+                      ): ""
+                    }
                     <Badge variant="secondary" className="flex items-center">
                       <Briefcase className="h-3 w-3 mr-1" />
                       CDI
@@ -526,9 +560,6 @@ export default function JobDetailPage({ params }: { params: { id: string } }) {
                     <p className="text-sm text-muted-foreground">{job.location}</p>
                   </div>
                 </div>
-                <p className="text-sm text-muted-foreground mb-4">
-                  {job.company} est une entreprise innovante dans le secteur de la technologie, offrant un environnement de travail stimulant et des opportunités de développement professionnel.
-                </p>
                 <div className="flex space-x-2">
                   <Button variant="outline" size="sm" className="text-xs">
                     Site web
@@ -636,21 +667,27 @@ export default function JobDetailPage({ params }: { params: { id: string } }) {
                     type="file"
                     accept=".pdf,.doc,.docx"
                     className="hidden"
-                    onChange={handleFileChange}
+                    onChange={(e) => handleFileChange(e, 'cv')}
                   />
                 </div>
               </div>
               
               {/* Lettre de motivation */}
               <div className="grid gap-2 mt-4">
-                <Label htmlFor="coverLetter">Lettre de motivation</Label>
-                <Textarea
-                  id="coverLetter"
-                  placeholder="Présentez-vous et expliquez pourquoi vous êtes intéressé par ce poste..."
-                  rows={6}
-                  value={coverLetter}
-                  onChange={(e) => setCoverLetter(e.target.value)}
-                />
+                <Label htmlFor="coverLetter">Lettre de motivation (PDF, DOC, DOCX)</Label>
+                <div className="flex items-center gap-2">
+                  <Button type="button" variant="outline" onClick={() => document.getElementById("coverLetter")?.click()} className="w-full">
+                    <Upload className="mr-2 h-4 w-4" />
+                    {coverLetterFile ? coverLetterFile.name : "Télécharger votre lettre de motivation"}
+                  </Button>
+                  <input
+                    id="coverLetter"
+                    type="file"
+                    accept=".pdf,.doc,.docx"
+                    className="hidden"
+                    onChange={(e) => handleFileChange(e, 'coverLetter')}
+                  />
+                </div>
               </div>
             </div>
             <DialogFooter>
