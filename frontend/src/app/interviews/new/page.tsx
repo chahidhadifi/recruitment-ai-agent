@@ -213,7 +213,7 @@ function NewInterviewContent() {
     if (!candidate && !isCandidat) {
       toast({
         title: "Erreur",
-        description: "Veuillez sélectionner un candidat pour démarrer l&apos;entretien.",
+        description: "Veuillez sélectionner un candidat pour démarrer l'entretien.",
         variant: "destructive",
       });
       return;
@@ -489,7 +489,7 @@ function NewInterviewContent() {
               size="lg"
               disabled={interviewStarted}
             >
-              {interviewStarted ? "Entretien en cours..." : "Démarrer l&apos;entretien"}
+              {interviewStarted ? "Entretien en cours..." : "Démarrer l'entretien"}
             </Button>
             </div>
           </div>

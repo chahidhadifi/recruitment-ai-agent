@@ -3,7 +3,8 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import axios from 'axios';
 
-// POST /api/google-drive-upload - Upload a file to Google Drive
+// POST /api/google-drive-upload - Upload a file to PostgreSQL database
+// Note: We keep the same route name for backward compatibility
 export async function POST(request: NextRequest) {
   try {
     // Verify authentication
@@ -49,19 +50,43 @@ export async function POST(request: NextRequest) {
     backendFormData.append('type', type);
     backendFormData.append('candidate_id', candidateId);
 
-    // Envoyer le fichier au backend pour téléchargement vers Google Drive
-    const response = await axios.post('http://localhost:8000/api/upload-to-drive/', backendFormData, {
-      headers: {
-        'Content-Type': 'multipart/form-data',
-        'Authorization': `Bearer ${session.user.token || session.user.access_token}`
+    // Envoyer le fichier au backend pour stockage dans PostgreSQL
+    try {
+      // Utiliser la variable d'environnement pour l'URL du backend ou le nom du service Docker par défaut
+      const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://backend:8000';
+      const backendUrl = `${API_URL}/api/upload-file/`;
+      
+      console.log(`Tentative de connexion au backend à l'adresse: ${backendUrl}`);
+      
+      const response = await axios.post(backendUrl, backendFormData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+          'Authorization': `Bearer ${session.user.token || session.user.access_token}`
+        }
+      });
+      
+      return NextResponse.json({
+        success: true,
+        url: response.data.url,
+        message: response.data.message
+      });
+    } catch (uploadError) {
+      console.error('Erreur lors de la connexion au backend:', uploadError);
+      
+      // Gérer les erreurs spécifiques
+      if (uploadError.response?.status === 413) {
+        return NextResponse.json({
+          error: "Le fichier est trop volumineux. La taille maximale est de 5MB.",
+          errorType: "file_too_large"
+        }, { status: 413 });
       }
-    });
-
-    return NextResponse.json({
-      success: true,
-      url: response.data.url,
-      message: response.data.message
-    });
+      
+      // Fallback: En cas d'erreur, retourner un message d'erreur générique
+      return NextResponse.json({
+        error: uploadError.response?.data?.detail || "Erreur lors du téléchargement du fichier",
+        errorType: "upload_error"
+      }, { status: uploadError.response?.status || 500 });
+    }
   } catch (error) {
     console.error('Erreur lors du téléchargement du fichier:', error);
     const errorMessage = error.response?.data?.detail || 'Erreur lors du téléchargement du fichier';

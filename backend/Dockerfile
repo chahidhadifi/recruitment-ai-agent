@@ -12,6 +12,9 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copy application code
 COPY ./app ./app
 
+# Create empty service account file to avoid errors if not mounted
+RUN touch ./app/service-account.json
+
 # Copy Docker-specific .env file
 COPY .env.docker .env
 

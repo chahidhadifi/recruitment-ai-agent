@@ -9,7 +9,8 @@ import secrets
 import hashlib
 import logging
 import io
-from . import google_drive
+from fastapi.responses import StreamingResponse
+from . import google_drive, file_storage
 
 from . import models, schemas
 from .database import SessionLocal, engine
@@ -444,8 +445,8 @@ def delete_job(job_id: int, db: Session = Depends(get_db)):
 # Job Application endpoints
 @app.get("/api/applications/", response_model=List[schemas.JobApplication])
 def read_applications(
-    job_id: Optional[int] = None,
     candidate_id: Optional[int] = None,
+    job_id: Optional[int] = None,
     status: Optional[schemas.ApplicationStatus] = None,
     skip: int = 0, 
     limit: int = 100, 
@@ -467,6 +468,14 @@ def read_applications(
     
     # Apply pagination
     applications = query.offset(skip).limit(limit).all()
+    
+    # Enrichir les candidatures avec les informations des offres d'emploi
+    for app in applications:
+        # Récupérer les informations de l'offre d'emploi associée
+        job = db.query(models.Job).filter(models.Job.id == app.job_id).first()
+        if job:
+            app.job_title = job.title
+            app.company = job.company
     
     # Check for upcoming interviews for all applications
     now = datetime.now()
@@ -510,6 +519,13 @@ def create_application(application: schemas.JobApplicationCreate, db: Session = 
     if existing_application:
         raise HTTPException(status_code=400, detail="Application already exists")
     
+    # Vérifier que les URLs des fichiers sont valides
+    if not application.cv_url or not application.cv_url.startswith("/api/files/"):
+        raise HTTPException(status_code=400, detail="CV URL is invalid. Please upload your CV first.")
+    
+    if application.cover_letter and not application.cover_letter.startswith("/api/files/"):
+        raise HTTPException(status_code=400, detail="Cover letter URL is invalid. Please upload your cover letter first.")
+    
     # Create application
     db_application = models.JobApplication(**application.model_dump())
     db.add(db_application)
@@ -524,6 +540,13 @@ def read_application(application_id: int, db: Session = Depends(get_db)):
     db_application = db.query(models.JobApplication).filter(models.JobApplication.id == application_id).first()
     if db_application is None:
         raise HTTPException(status_code=404, detail="Application not found")
+    
+    # Enrichir la candidature avec les informations de l'offre d'emploi
+    job = db.query(models.Job).filter(models.Job.id == db_application.job_id).first()
+    if job:
+        db_application.job_title = job.title
+        db_application.company = job.company
+    
     return db_application
 
 @app.put("/api/applications/{application_id}", response_model=schemas.JobApplication)
@@ -554,12 +577,13 @@ def delete_application(application_id: int, db: Session = Depends(get_db)):
     
     return {"success": True}
 
-# Google Drive upload endpoint
-@app.post("/api/upload-to-drive/", status_code=status.HTTP_201_CREATED)
-async def upload_to_drive(
+# File upload endpoint (PostgreSQL storage)
+@app.post("/api/upload-file/", status_code=status.HTTP_201_CREATED)
+async def upload_file(
     file: UploadFile = File(...),
     type: str = Form(...),
-    candidate_id: int = Form(...)
+    candidate_id: int = Form(...),
+    db: Session = Depends(get_db)
 ):
     # Validate file type
     if not file.content_type.startswith('application/'):
@@ -568,27 +592,90 @@ async def upload_to_drive(
             detail="File must be a document (PDF, DOC, etc.)"
         )
     
-    # Read file content
-    file_content = await file.read()
+    # Validate file type
+    allowedTypes = ['application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document']
+    if not file.content_type in allowedTypes:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="File must be a PDF, DOC or DOCX document"
+        )
     
-    # Upload to Google Drive based on type
+    # Verify file size (max 5MB)
+    max_size = 5 * 1024 * 1024  # 5MB
+    file_size = 0
+    
+    # Store file in database
     try:
-        if type == "cv":
-            url = google_drive.upload_cv(file_content, candidate_id, file.content_type)
-            return {"url": url, "message": "CV uploaded successfully"}
-        elif type == "cover_letter":
-            url = google_drive.upload_cover_letter(file_content, candidate_id, file.content_type)
-            return {"url": url, "message": "Cover letter uploaded successfully"}
-        else:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Invalid file type. Must be 'cv' or 'cover_letter'"
-            )
+        # Store file in PostgreSQL
+        url = await file_storage.store_file(file, type, candidate_id, db)
+        file_type_display = "CV" if type == "cv" else "Lettre de motivation"
+        
+        return {
+            "success": True,
+            "url": url,
+            "message": f"{file_type_display} téléchargé avec succès"
+        }
+    except HTTPException as e:
+        # Re-raise HTTP exceptions
+        raise e
     except Exception as e:
+        logger.error(f"Unexpected error during file upload: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to upload file: {str(e)}"
         )
+
+# Get file endpoint
+@app.get("/api/files/{file_uuid}")
+async def get_file(
+    file_uuid: str,
+    db: Session = Depends(get_db)
+):
+    # Retrieve file from database
+    db_file = file_storage.get_file_by_uuid(file_uuid, db)
+    
+    if not db_file:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="File not found"
+        )
+    
+    # Return file as streaming response
+    return StreamingResponse(
+        io.BytesIO(db_file.file_data),
+        media_type=db_file.content_type,
+        headers={
+            "Content-Disposition": f"attachment; filename={db_file.filename}"
+        }
+    )
+
+# Delete file endpoint
+@app.delete("/api/files/{file_uuid}", response_model=dict)
+async def delete_file(
+    file_uuid: str,
+    db: Session = Depends(get_db)
+):
+    # Delete file from database
+    success = file_storage.delete_file(file_uuid, db)
+    
+    if not success:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="File not found"
+        )
+    
+    return {"success": True, "message": "File deleted successfully"}
+
+# Legacy Google Drive upload endpoint (kept for backward compatibility)
+@app.post("/api/upload-to-drive/", status_code=status.HTTP_201_CREATED)
+async def upload_to_drive(
+    file: UploadFile = File(...),
+    type: str = Form(...),
+    candidate_id: int = Form(...),
+    db: Session = Depends(get_db)
+):
+    # Redirect to new endpoint
+    return await upload_file(file, type, candidate_id, db)
 
 # Interview endpoints
 @app.get("/api/interviews/", response_model=List[schemas.Interview])

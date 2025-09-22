@@ -16,16 +16,16 @@ export interface Job {
 
 export interface JobApplication {
   id: string;
-  jobId: string;
-  candidateId: string;
+  job_id: string;
+  candidate_id: string;
   coverLetter: string;
   cvUrl: string;
   status: 'pending' | 'reviewed' | 'interview' | 'accepted' | 'rejected' | 'reviewing';
-  appliedAt: string;
-  updatedAt: string;
-  interviewId?: string; // ID de l'entretien associé à cette candidature
+  applied_at: string;
+  updated_at: string;
+  interview_id?: string; // ID de l'entretien associé à cette candidature
   phone?: string; // Numéro de téléphone du candidat
   location?: string; // Localisation du candidat
-  jobTitle?: string; // Titre du poste
+  job_title?: string; // Titre du poste
   company?: string; // Nom de l'entreprise
 }

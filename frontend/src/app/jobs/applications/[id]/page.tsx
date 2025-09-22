@@ -4,6 +4,8 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { ArrowLeft, Building, MapPin, Calendar, FileText, Phone, MapPin as LocationIcon, User } from "lucide-react";
+import axios from "axios";
+import React from "react";
 
 import { MainLayout } from "@/components/main-layout";
 import { Button } from "@/components/ui/button";
@@ -28,35 +30,22 @@ export default function ApplicationDetailsPage({ params }: { params: { id: strin
     }
   }, [session, router]);
   
-  // Charger les détails de la candidature
+  // Charger les détails de la candidature depuis l'API
   useEffect(() => {
     const fetchApplicationDetails = async () => {
       if (!session) return;
       
       try {
         setLoading(true);
-        // Dans une application réelle, vous feriez un appel API pour récupérer les détails
-        // Pour cette démonstration, nous simulons un délai et utilisons des données fictives
         
-        await new Promise(resolve => setTimeout(resolve, 1000)); // Simuler un délai
+        // Récupérer les détails de la candidature depuis l'API backend
+        const response = await axios.get(`http://localhost:8000/api/applications/${params.id}`, {
+          headers: {
+            Authorization: `Bearer ${session.user.token || session.user.access_token}`
+          }
+        });
         
-        // Données fictives pour la démonstration
-        const mockApplication: JobApplication = {
-          id: params.id,
-          jobId: "1",
-          candidateId: session.user.id,
-          coverLetter: "Je suis très intéressé par ce poste car il correspond parfaitement à mes compétences et aspirations professionnelles. Avec mon expérience en développement web et ma passion pour les nouvelles technologies, je suis convaincu de pouvoir apporter une contribution significative à votre équipe.",
-          cvUrl: "/uploads/cv-example.pdf",
-          status: "pending",
-          appliedAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString(),
-          jobTitle: "Développeur Frontend React",
-          company: "TechSolutions",
-          phone: "+33 6 12 34 56 78",
-          location: "Paris, France"
-        };
-        
-        setApplication(mockApplication);
+        setApplication(response.data);
         setError(null);
       } catch (err) {
         console.error("Erreur lors du chargement des détails de la candidature:", err);
@@ -148,7 +137,7 @@ export default function ApplicationDetailsPage({ params }: { params: { id: strin
               <CardHeader>
                 <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
                   <div>
-                    <CardTitle className="text-2xl font-bold">{application.jobTitle}</CardTitle>
+                    <CardTitle className="text-2xl font-bold">{application.job_title}</CardTitle>
                     <div className="flex items-center mt-2">
                       <Badge variant={getStatusBadgeVariant(application.status)} className="mr-2">
                         {getStatusLabel(application.status)}
@@ -157,7 +146,7 @@ export default function ApplicationDetailsPage({ params }: { params: { id: strin
                     </div>
                   </div>
                   <Button 
-                    onClick={() => router.push(`/jobs/${application.jobId}`)}
+                    onClick={() => router.push(`/jobs/${application.job_id}`)}
                     variant="outline"
                   >
                     Voir l&apos;offre
@@ -182,7 +171,7 @@ export default function ApplicationDetailsPage({ params }: { params: { id: strin
                         <Calendar className="h-5 w-5 mr-3 mt-0.5 text-muted-foreground" />
                         <div>
                           <p className="font-medium">Date de candidature</p>
-                          <p className="text-muted-foreground">{formatDate(application.appliedAt)}</p>
+                          <p className="text-muted-foreground">{formatDate(application.applied_at)}</p>
                         </div>
                       </div>
                       
@@ -211,7 +200,10 @@ export default function ApplicationDetailsPage({ params }: { params: { id: strin
                       <div>
                         <p className="font-medium mb-2">CV</p>
                         <Button variant="outline" asChild className="w-full justify-start">
-                          <a href={application.cvUrl} target="_blank" rel="noopener noreferrer">
+                          <a 
+                            href={`http://localhost:8000${application.cv_url}`} 
+                            download
+                          >
                             <FileText className="mr-2 h-4 w-4" /> Télécharger le CV
                           </a>
                         </Button>
@@ -219,9 +211,20 @@ export default function ApplicationDetailsPage({ params }: { params: { id: strin
                       
                       <div>
                         <p className="font-medium mb-2">Lettre de motivation</p>
-                        <div className="bg-muted p-4 rounded-md">
-                          <p className="whitespace-pre-line text-sm">{application.coverLetter}</p>
-                        </div>
+                        {application.cover_letter && application.cover_letter.startsWith('/api/files/') ? (
+                          <Button variant="outline" asChild className="w-full justify-start mb-2">
+                            <a 
+                              href={`http://localhost:8000${application.cover_letter}`} 
+                              download
+                            >
+                              <FileText className="mr-2 h-4 w-4" /> Télécharger la lettre de motivation
+                            </a>
+                          </Button>
+                        ) : (
+                          <div className="bg-muted p-4 rounded-md">
+                            <p className="whitespace-pre-line text-sm">{application.cover_letter}</p>
+                          </div>
+                        )}
                       </div>
                     </div>
                   </div>

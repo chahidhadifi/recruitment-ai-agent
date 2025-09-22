@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import axios from "axios";
 import { ArrowLeft, Building, MapPin, Calendar, Clock, Briefcase, DollarSign, Users, FileText, Upload } from "lucide-react";
+import GoogleDriveFileUploader from "./GoogleDriveFileUploader";
 
 import { MainLayout } from "@/components/main-layout";
 import { Button } from "@/components/ui/button";
@@ -205,12 +206,14 @@ export default function JobDetailPage({ params }: { params: { id: string } }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [coverLetterFile, setCoverLetterFile] = useState<File | null>(null);
-  const [cvFile, setCvFile] = useState<File | null>(null);
+  const [coverLetterUrl, setCoverLetterUrl] = useState<string>("");
+  const [cvUrl, setCvUrl] = useState<string>("");
   const [submitting, setSubmitting] = useState(false);
   const [phone, setPhone] = useState("");
   const [location, setLocation] = useState("");
-  
+  const [companyWebsite, setCompanyWebsite] = useState("");
+  const [companyLinkedIn, setCompanyLinkedIn] = useState("");
+
   // Vérifier si l'utilisateur est authentifié
   const isAuthenticated = status === "authenticated";
 
@@ -263,7 +266,7 @@ export default function JobDetailPage({ params }: { params: { id: string } }) {
       return;
     }
 
-    if (!cvFile) {
+    if (!cvUrl) {
       toast({
         title: "CV requis",
         description: "Veuillez télécharger votre CV",
@@ -272,7 +275,7 @@ export default function JobDetailPage({ params }: { params: { id: string } }) {
       return;
     }
 
-    if (!coverLetterFile) {
+    if (!coverLetterUrl) {
       toast({
         title: "Lettre de motivation requise",
         description: "Veuillez télécharger votre lettre de motivation",
@@ -302,36 +305,6 @@ export default function JobDetailPage({ params }: { params: { id: string } }) {
     try {
       setSubmitting(true);
       
-      // Télécharger le CV vers Google Drive
-      const cvFormData = new FormData();
-      cvFormData.append('file', cvFile);
-      cvFormData.append('type', 'cv');
-      cvFormData.append('candidateId', session.user.id);
-      
-      // Utiliser axios pour télécharger le CV vers Google Drive
-      const cvUploadResponse = await axios.post('/api/google-drive-upload', cvFormData, {
-        headers: {
-          'Content-Type': 'multipart/form-data'
-        }
-      });
-      
-      const cvUrl = cvUploadResponse.data.url;
-      
-      // Télécharger la lettre de motivation vers Google Drive
-      const coverLetterFormData = new FormData();
-      coverLetterFormData.append('file', coverLetterFile);
-      coverLetterFormData.append('type', 'cover_letter');
-      coverLetterFormData.append('candidateId', session.user.id);
-      
-      // Utiliser axios pour télécharger la lettre de motivation vers Google Drive
-      const coverLetterUploadResponse = await axios.post('/api/google-drive-upload', coverLetterFormData, {
-        headers: {
-          'Content-Type': 'multipart/form-data'
-        }
-      });
-      
-      const coverLetterUrl = coverLetterUploadResponse.data.url;
-      
       // Soumettre la candidature à l'API
       const applicationPayload = {
         job_id: parseInt(params.id),
@@ -354,8 +327,8 @@ export default function JobDetailPage({ params }: { params: { id: string } }) {
       });
       
       setIsDialogOpen(false);
-      setCoverLetterFile(null);
-      setCvFile(null);
+      setCoverLetterUrl("");
+      setCvUrl("");
       setPhone("");
       setLocation("");
       
@@ -378,14 +351,12 @@ export default function JobDetailPage({ params }: { params: { id: string } }) {
     }
   };
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>, fileType: 'cv' | 'coverLetter') => {
-    if (e.target.files && e.target.files.length > 0) {
-      if (fileType === 'cv') {
-        setCvFile(e.target.files[0]);
-      } else if (fileType === 'coverLetter') {
-        setCoverLetterFile(e.target.files[0]);
-      }
-    }
+  const handleCvUploaded = (url: string) => {
+    setCvUrl(url);
+  };
+
+  const handleCoverLetterUploaded = (url: string) => {
+    setCoverLetterUrl(url);
   };
 
   if (loading) {
@@ -562,29 +533,10 @@ export default function JobDetailPage({ params }: { params: { id: string } }) {
                 </div>
                 <div className="flex space-x-2">
                   <Button variant="outline" size="sm" className="text-xs">
-                    Site web
+                    <a href={job.company_website} target="_blank" rel="noopener noreferrer">Site web</a>
                   </Button>
                   <Button variant="outline" size="sm" className="text-xs">
-                    LinkedIn
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card className="mt-4">
-              <CardHeader>
-                <CardTitle>Partager cette offre</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="flex space-x-2">
-                  <Button variant="outline" size="sm">
-                    LinkedIn
-                  </Button>
-                  <Button variant="outline" size="sm">
-                    Twitter
-                  </Button>
-                  <Button variant="outline" size="sm">
-                    Email
+                    <a href={job.company_linkedin} target="_blank" rel="noopener noreferrer">LinkedIn</a>
                   </Button>
                 </div>
               </CardContent>
@@ -657,37 +609,23 @@ export default function JobDetailPage({ params }: { params: { id: string } }) {
               {/* CV */}
               <div className="grid gap-2 mt-4">
                 <Label htmlFor="cv">CV (PDF, DOC, DOCX)</Label>
-                <div className="flex items-center gap-2">
-                  <Button type="button" variant="outline" onClick={() => document.getElementById("cv")?.click()} className="w-full">
-                    <Upload className="mr-2 h-4 w-4" />
-                    {cvFile ? cvFile.name : "Télécharger votre CV"}
-                  </Button>
-                  <input
-                    id="cv"
-                    type="file"
-                    accept=".pdf,.doc,.docx"
-                    className="hidden"
-                    onChange={(e) => handleFileChange(e, 'cv')}
-                  />
-                </div>
+                <GoogleDriveFileUploader
+                  fileType="cv"
+                  candidateId={session?.user?.id || ""}
+                  onFileUploaded={handleCvUploaded}
+                  buttonText="Télécharger votre CV"
+                />
               </div>
               
               {/* Lettre de motivation */}
               <div className="grid gap-2 mt-4">
                 <Label htmlFor="coverLetter">Lettre de motivation (PDF, DOC, DOCX)</Label>
-                <div className="flex items-center gap-2">
-                  <Button type="button" variant="outline" onClick={() => document.getElementById("coverLetter")?.click()} className="w-full">
-                    <Upload className="mr-2 h-4 w-4" />
-                    {coverLetterFile ? coverLetterFile.name : "Télécharger votre lettre de motivation"}
-                  </Button>
-                  <input
-                    id="coverLetter"
-                    type="file"
-                    accept=".pdf,.doc,.docx"
-                    className="hidden"
-                    onChange={(e) => handleFileChange(e, 'coverLetter')}
-                  />
-                </div>
+                <GoogleDriveFileUploader
+                  fileType="cover_letter"
+                  candidateId={session?.user?.id || ""}
+                  onFileUploaded={handleCoverLetterUploaded}
+                  buttonText="Télécharger votre lettre de motivation"
+                />
               </div>
             </div>
             <DialogFooter>

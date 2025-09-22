@@ -227,6 +227,27 @@ class JobApplication(JobApplicationBase):
     keywords_match: Optional[str] = None
     analyzed_at: Optional[datetime] = None
     interview_id: Optional[int] = None
+    
+    # Alias pour la compatibilité avec le frontend
+    @property
+    def jobId(self) -> int:
+        return self.job_id
+        
+    @property
+    def jobTitle(self) -> Optional[str]:
+        return self.job_title
+        
+    @property
+    def candidateId(self) -> int:
+        return self.candidate_id
+        
+    @property
+    def appliedAt(self) -> datetime:
+        return self.applied_at
+        
+    @property
+    def updatedAt(self) -> Optional[datetime]:
+        return self.updated_at
 
     class Config:
         from_attributes = True

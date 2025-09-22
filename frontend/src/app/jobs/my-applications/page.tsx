@@ -49,6 +49,8 @@ export default function MyApplicationsPage() {
           }
         });
         setApplications(response.data);
+        console.log(response.data);
+        
         setFilteredApplications(response.data);
         setError(null);
       } catch (err) {
@@ -197,7 +199,7 @@ export default function MyApplicationsPage() {
                   <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
                     <div className="flex-1">
                       <div className="flex items-center gap-2 mb-2">
-                        <h2 className="text-xl font-semibold">{application.jobTitle}</h2>
+                        <h2 className="text-xl font-semibold">{application.job_title}</h2>
                         <Badge variant={getStatusBadgeVariant(application.status)} className="ml-2">
                           <span className="flex items-center gap-1">
                             {getStatusIcon(application.status)}
@@ -217,7 +219,7 @@ export default function MyApplicationsPage() {
                         </div>
                         <div className="flex items-center">
                           <Calendar className="h-4 w-4 mr-1" />
-                          <span>Postuler le {formatDate(application.appliedAt)}</span>
+                          <span>Postuler le {formatDate(application.applied_at)}</span>
                         </div>
                       </div>
                       
@@ -229,8 +231,8 @@ export default function MyApplicationsPage() {
                           
                           {application.status === "interview" && (
                             <Button asChild>
-                              <Link href={`/interviews/new?candidate=${session.user.id}&autostart=true`}>
-                                Passer l&apos;entretien
+                              <Link href={`/interviews/new?candidate=${session.user.id}`}>
+                                Passer l'entretien
                               </Link>
                             </Button>
                           )}
@@ -241,6 +243,13 @@ export default function MyApplicationsPage() {
                         <div className="mt-4 p-4 bg-green-50 rounded-md">
                           <p className="text-green-700 font-medium">Félicitations ! Votre candidature a été acceptée.</p>
                           <p className="text-green-600 mt-2">Le recruteur vous contactera prochainement pour la suite du processus.</p>
+                          <div className="mt-3">
+                            <Button asChild>
+                              <Link href={`/interviews/new?candidate=${session.user.id}`}>
+                                Passer à l'entretien
+                              </Link>
+                            </Button>
+                          </div>
                         </div>
                       )}
                       
@@ -254,7 +263,7 @@ export default function MyApplicationsPage() {
                     
                     <div>
                       <Button 
-                        onClick={() => router.push(`/jobs/${application.jobId}`)}
+                        onClick={() => router.push(`/jobs/${application.job_id}`)}
                         variant="outline"
                       >
                         Voir l&apos;offre

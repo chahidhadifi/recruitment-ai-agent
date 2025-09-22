@@ -261,7 +261,7 @@ export default function InterviewDetailPage({ params }: { params: { id: string }
                 className="w-full mt-4"
                 onClick={() => router.push(`/interviews/new?candidate=${interview.candidateId}`)}
               >
-                <MessageSquare className="mr-2 h-4 w-4" /> Démarrer l&apos;entretien
+                <MessageSquare className="mr-2 h-4 w-4" /> Démarrer l'entretien
               </Button>
             )}
           </div>
@@ -296,7 +296,7 @@ export default function InterviewDetailPage({ params }: { params: { id: string }
                 size="lg"
                 onClick={() => router.push(`/interviews/new?candidate=${interview.candidateId}`)}
               >
-                <MessageSquare className="mr-2 h-4 w-4" /> Démarrer l&apos;entretien maintenant
+                <MessageSquare className="mr-2 h-4 w-4" /> Démarrer l'entretien maintenant
               </Button>
             </div>
           </div>
