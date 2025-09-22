@@ -13,7 +13,7 @@ import os
 
 from . import models, schemas
 from .database import SessionLocal, engine
-from .routers import me
+from .routers import me, interviews
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -23,6 +23,7 @@ logger = logging.getLogger(__name__)
 app = FastAPI(title="Recruitment AI Platform API", version="1.0.0")
 # Inclure le router /me pour l’endpoint profil utilisateur
 app.include_router(me.router, prefix="/api/users", tags=["users"])
+app.include_router(interviews.router, prefix="/api", tags=["interviews"])
 
 # Initialize database tables on startup
 @app.on_event("startup")
@@ -73,7 +74,7 @@ def get_current_user(db: Session = Depends(get_db), authorization: str = Header(
             headers={"WWW-Authenticate": "Bearer"},
         )
     try:
-        SECRET_KEY = os.getenv("JWT_SECRET", "mysecret")
+        SECRET_KEY = os.getenv("JWT_SECRET_KEY", "your-secure-jwt-secret-key-for-production")
         payload = jwt.decode(token, SECRET_KEY, algorithms=["HS256"])
         user_id = payload.get("sub")
         if not user_id:
@@ -115,9 +116,8 @@ def login(login_data: schemas.UserLogin, db: Session = Depends(get_db)):
     if not user:
         raise HTTPException(status_code=401, detail="Invalid email or password")
     
-    # Verify password
-    hashed_password = hash_password(login_data.password)
-    if user.password != hashed_password:
+    # Verify password - compare the hashed version of the provided password
+    if user.password != hash_password(login_data.password):
         raise HTTPException(status_code=401, detail="Invalid email or password")
     
     # Update last login time
@@ -151,6 +151,82 @@ def login(login_data: schemas.UserLogin, db: Session = Depends(get_db)):
         "user": user_dict
     }
 
+@app.get("/api/auth/session")
+def get_session(authorization: str = Header(None), db: Session = Depends(get_db)):
+    """Endpoint pour NextAuth.js pour vérifier la session utilisateur"""
+    if not authorization:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Not authenticated",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+    
+    try:
+        # Extraire le token du header Authorization
+        scheme, token = authorization.split()
+        if scheme.lower() != "bearer":
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Invalid authentication scheme",
+                headers={"WWW-Authenticate": "Bearer"},
+            )
+        
+        # Décoder le token JWT
+        SECRET_KEY = os.getenv("JWT_SECRET_KEY", "your-secure-jwt-secret-key-for-production")
+        payload = jwt.decode(token, SECRET_KEY, algorithms=["HS256"])
+        
+        # Récupérer l'utilisateur depuis la base de données
+        user_id = payload.get("sub")
+        if not user_id:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Invalid token",
+                headers={"WWW-Authenticate": "Bearer"},
+            )
+        
+        user = db.query(models.User).filter(models.User.id == user_id).first()
+        if not user:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="User not found",
+                headers={"WWW-Authenticate": "Bearer"},
+            )
+        
+        # Retourner les informations de l'utilisateur
+        return {
+            "user": {
+                "id": user.id,
+                "email": user.email,
+                "name": user.name,
+                "image": user.image,
+                "role": user.role.value,
+                "status": user.status.value,
+                "is_active": user.is_active,
+                "created_at": user.created_at.isoformat() if user.created_at else None,
+                "updated_at": user.updated_at.isoformat() if user.updated_at else None,
+                "last_login": user.last_login.isoformat() if user.last_login else None
+            }
+        }
+        
+    except jwt.ExpiredSignatureError:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Token expired",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+    except jwt.InvalidTokenError:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid token",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail=f"Authentication error: {str(e)}",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
 @app.get("/")
 def read_root():
     return {"message": "Welcome to the Recruitment AI Platform API!"}
@@ -170,50 +246,57 @@ def read_users(
     status: Optional[schemas.UserStatus] = None,
     sortBy: Optional[str] = None,
     sortOrder: Optional[schemas.SortOrder] = schemas.SortOrder.asc,
-    skip: int = 0, 
-    limit: int = 100, 
+    skip: int = 0,
+    limit: int = 100,
     db: Session = Depends(get_db)
 ):
-    query = db.query(models.User)
-    
-    # Apply filters
-    if searchTerm:
-        query = query.filter(
-            or_(
-                models.User.name.ilike(f"%{searchTerm}%"),
-                models.User.email.ilike(f"%{searchTerm}%")
+    try:
+        logger.info(f"Fetching users with filters: searchTerm={searchTerm}, role={role}, status={status}, sortBy={sortBy}, sortOrder={sortOrder}, skip={skip}, limit={limit}")
+
+        query = db.query(models.User)
+
+        # Apply filters
+        if searchTerm:
+            query = query.filter(
+                or_(
+                    models.User.name.ilike(f"%{searchTerm}%"),
+                    models.User.email.ilike(f"%{searchTerm}%")
+                )
             )
-        )
-    
-    if role:
-        query = query.filter(models.User.role == role)
-    
-    if status:
-        query = query.filter(models.User.status == status)
-    
-    # Apply sorting
-    if sortBy:
-        if sortBy == "name":
-            order_column = models.User.name
-        elif sortBy == "email":
-            order_column = models.User.email
-        elif sortBy == "role":
-            order_column = models.User.role
-        elif sortBy == "dateCreated":
-            order_column = models.User.created_at
-        elif sortBy == "lastLogin":
-            order_column = models.User.last_login
-        else:
-            order_column = models.User.id
-            
-        if sortOrder == schemas.SortOrder.desc:
-            order_column = order_column.desc()
-            
-        query = query.order_by(order_column)
-    
-    # Apply pagination
-    users = query.offset(skip).limit(limit).all()
-    return users
+
+        if role:
+            query = query.filter(models.User.role == role)
+
+        if status:
+            query = query.filter(models.User.status == status)
+
+        # Apply sorting
+        if sortBy:
+            if sortBy == "name":
+                order_column = models.User.name
+            elif sortBy == "email":
+                order_column = models.User.email
+            elif sortBy == "role":
+                order_column = models.User.role
+            elif sortBy == "dateCreated":
+                order_column = models.User.created_at
+            elif sortBy == "lastLogin":
+                order_column = models.User.last_login
+            else:
+                order_column = models.User.id
+
+            if sortOrder == schemas.SortOrder.desc:
+                order_column = order_column.desc()
+
+            query = query.order_by(order_column)
+
+        # Apply pagination
+        users = query.offset(skip).limit(limit).all()
+        logger.info(f"Successfully fetched {len(users)} users")
+        return users
+    except Exception as e:
+        logger.error(f"Error fetching users: {str(e)}", exc_info=True)
+        raise HTTPException(status_code=500, detail=f"Failed to fetch users: {str(e)}")
 
 @app.post("/api/users/", response_model=schemas.User, status_code=status.HTTP_201_CREATED)
 def create_user(user: schemas.UserCreate, db: Session = Depends(get_db)):
@@ -275,6 +358,24 @@ def create_user(user: schemas.UserCreate, db: Session = Depends(get_db)):
         logger.error(f"Error creating user: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Failed to create user: {str(e)}")
 
+
+@app.get("/api/users/stats", response_model=schemas.UserStats)
+def get_user_stats(db: Session = Depends(get_db)):
+    total_users = db.query(func.count(models.User.id)).scalar()
+    admin_count = db.query(func.count(models.User.id)).filter(models.User.role == models.UserRole.admin).scalar()
+    recruiter_count = db.query(func.count(models.User.id)).filter(models.User.role == models.UserRole.recruteur).scalar()
+    candidate_count = db.query(func.count(models.User.id)).filter(models.User.role == models.UserRole.candidat).scalar()
+    active_users = db.query(func.count(models.User.id)).filter(models.User.status == models.UserStatus.actif).scalar()
+    inactive_users = db.query(func.count(models.User.id)).filter(models.User.status != models.UserStatus.actif).scalar()
+    
+    return schemas.UserStats(
+        totalUsers=total_users,
+        adminCount=admin_count,
+        recruiterCount=recruiter_count,
+        candidateCount=candidate_count,
+        activeUsers=active_users,
+        inactiveUsers=inactive_users
+    )
 
 @app.get("/api/users/{user_id}", response_model=schemas.UserWithDetails)
 def read_user(user_id: int, db: Session = Depends(get_db)):
@@ -346,24 +447,6 @@ def delete_user(user_id: int, db: Session = Depends(get_db)):
     
     return {"success": True}
 
-@app.get("/api/users/stats", response_model=schemas.UserStats)
-def get_user_stats(db: Session = Depends(get_db)):
-    total_users = db.query(func.count(models.User.id)).scalar()
-    admin_count = db.query(func.count(models.User.id)).filter(models.User.role == models.UserRole.admin).scalar()
-    recruiter_count = db.query(func.count(models.User.id)).filter(models.User.role == models.UserRole.recruteur).scalar()
-    candidate_count = db.query(func.count(models.User.id)).filter(models.User.role == models.UserRole.candidat).scalar()
-    active_users = db.query(func.count(models.User.id)).filter(models.User.status == models.UserStatus.actif).scalar()
-    inactive_users = db.query(func.count(models.User.id)).filter(models.User.status != models.UserStatus.actif).scalar()
-    
-    return schemas.UserStats(
-        totalUsers=total_users,
-        adminCount=admin_count,
-        recruiterCount=recruiter_count,
-        candidateCount=candidate_count,
-        activeUsers=active_users,
-        inactiveUsers=inactive_users
-    )
-
 # Job endpoints
 @app.get("/api/jobs/", response_model=List[schemas.Job])
 def read_jobs(
@@ -424,66 +507,29 @@ def read_job(job_id: int = Path(..., title="The ID of the job to get"), db: Sess
 def update_job(job_id: int, job: schemas.JobUpdate, db: Session = Depends(get_db)):
     db_job = db.query(models.Job).filter(models.Job.id == job_id).first()
     if db_job is None:
-        scheme, token = authorization.split()
-        if scheme.lower() != "bearer":
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Invalid authentication scheme",
-                headers={"WWW-Authenticate": "Bearer"},
-            )
-        # Vérifier et décoder le JWT
-        jwt_secret = os.environ.get("JWT_SECRET", "supersecretkey")
-        try:
-            payload = jwt.decode(token, jwt_secret, algorithms=["HS256"])
-            user_id = int(payload["sub"])
-        except Exception:
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Invalid or expired token",
-                headers={"WWW-Authenticate": "Bearer"},
-            )
-        # Récupérer l'utilisateur
-        user = db.query(models.User).filter(models.User.id == user_id).first()
-        if user is None:
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="User not found",
-                headers={"WWW-Authenticate": "Bearer"},
-            )
-        return user
-    if job_id:
-        query = query.filter(models.JobApplication.job_id == job_id)
+        raise HTTPException(status_code=404, detail="Job not found")
     
-    if candidate_id:
-        query = query.filter(models.JobApplication.candidate_id == candidate_id)
+    # Update job fields
+    update_data = job.model_dump(exclude_unset=True)
+    for key, value in update_data.items():
+        setattr(db_job, key, value)
     
-    if status:
-        query = query.filter(models.JobApplication.status == status)
-    
-    # Apply pagination
-    applications = query.offset(skip).limit(limit).all()
-    
-    # For candidate role, check if there are upcoming interviews
-    if current_user.role == "candidat":
-        now = datetime.now()
-        for app in applications:
-            # If interview is scheduled and within 24 hours, add interview link
-            if app.interview_at and app.status == models.ApplicationStatus.interview:
-                time_diff = app.interview_at - now
-                # If interview is within 24 hours or already started but not more than 1 hour ago
-                if time_diff.total_seconds() < 86400 and time_diff.total_seconds() > -3600:
-                    # Get interview details
-                    interview = db.query(models.Interview).filter(
-                        models.Interview.candidate_id == app.candidate_id,
-                        models.Interview.date == app.interview_at
-                    ).first()
-                    
-                    if interview:
-                        # Add interview ID to the application for frontend to create link
-                        app.interview_id = interview.id
-    
-    return applications
+    db.commit()
+    db.refresh(db_job)
+    return db_job
 
+@app.delete("/api/jobs/{job_id}", response_model=dict)
+def delete_job(job_id: int, db: Session = Depends(get_db)):
+    db_job = db.query(models.Job).filter(models.Job.id == job_id).first()
+    if db_job is None:
+        raise HTTPException(status_code=404, detail="Job not found")
+    
+    db.delete(db_job)
+    db.commit()
+    
+    return {"success": True}
+
+# Application endpoints
 @app.get("/api/applications/", response_model=List[schemas.JobApplication])
 def read_applications(
     candidate_id: Optional[int] = None,

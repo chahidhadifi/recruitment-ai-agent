@@ -3,15 +3,26 @@
 import React, { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
-import { Save, User, Mail, Building, Briefcase, Camera, Upload } from "lucide-react";
+import { Save, User, Mail, Building, Briefcase, Camera, Upload, Plus } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 
 import { MainLayout } from "@/components/main-layout";
 import { Button } from "@/components/ui/button";
 import { api } from "@/lib/api";
 
+// Interface pour les applications
+interface Application {
+  id: string;
+  jobId: string;
+  jobTitle: string;
+  company: string;
+  status: string;
+  appliedAt: string;
+  updatedAt: string;
+}
+
 export default function ProfilePage() {
-  const [applications, setApplications] = useState<any[]>([]);
+  const [applications, setApplications] = useState<Application[]>([]);
   // Utiliser uniquement la session réelle
   const { data: session, status, update } = useSession();
   const router = useRouter();
@@ -47,7 +58,7 @@ export default function ProfilePage() {
     if (!session?.user?.accessToken) return;
     const fetchUserData = async () => {
       try {
-        const response = await api.get('/api/users/me', {
+        const response = await api.get('/api/users/me/', {
           headers: {
             Authorization: `Bearer ${session.user.accessToken}`,
           },
@@ -112,7 +123,7 @@ export default function ProfilePage() {
       console.log('Données à envoyer:', userData);
       
       // Envoyer les données au backend
-      await api.put('/api/users/me', userData, {
+      await api.put('/api/users/me/', userData, {
         headers: {
           Authorization: `Bearer ${session?.user?.accessToken}`,
         },
@@ -249,6 +260,12 @@ export default function ProfilePage() {
                 <Button variant="outline" className="w-full" onClick={() => router.push("/settings")}>
                   Paramètres du compte
                 </Button>
+                {session?.user?.role === "admin" && (
+                  <Button className="w-full" onClick={() => router.push("/users/add")}>
+                    <Plus className="mr-2 h-4 w-4" />
+                    Créer un nouvel utilisateur
+                  </Button>
+                )}
               </div>
             </div>
           </div>
@@ -411,14 +428,21 @@ export default function ProfilePage() {
                   <label htmlFor="role" className="block text-sm font-medium mb-1">
                     Poste / Fonction
                   </label>
-                  <input
-                    type="text"
+                  <select
                     id="role"
                     name="role"
                     value={profileForm.role}
                     onChange={handleProfileChange}
                     className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary/50 bg-background"
-                  />
+                  >
+                    <option value="Administrateur">Administrateur</option>
+                    <option value="Responsable RH">Responsable RH</option>
+                    <option value="Recruteur">Recruteur</option>
+                    <option value="Gestionnaire de talents">Gestionnaire de talents</option>
+                    <option value="Coordinateur de recrutement">Coordinateur de recrutement</option>
+                    <option value="Chargé de recrutement">Chargé de recrutement</option>
+                    <option value="Spécialiste RH">Spécialiste RH</option>
+                  </select>
                 </div>
                 
                 <div>

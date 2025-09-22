@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
@@ -9,78 +9,92 @@ import { Search, Plus, FileText, MessageSquare, MoreVertical, BarChart } from "l
 import { MainLayout } from "@/components/main-layout";
 import { Button } from "@/components/ui/button";
 
-// Données fictives pour la démonstration
-const mockCandidates = [
-  {
-    id: "1",
-    name: "Jean Dupont",
-    email: "jean.dupont@example.com",
-    position: "Développeur Frontend",
-    status: "En attente d'entretien",
-    score: null,
-    accepted: false,
-    interviewDate: "2023-10-25",
-    interviewId: "3",
-  },
-  {
-    id: "2",
-    name: "Marie Martin",
-    email: "marie.martin@example.com",
-    position: "UX Designer",
-    status: "Entretien terminé",
-    score: 85,
-    accepted: true,
-    interviewDate: "2023-10-18",
-    interviewId: "1",
-  },
-  {
-    id: "3",
-    name: "Pierre Durand",
-    email: "pierre.durand@example.com",
-    position: "Développeur Backend",
-    status: "CV analysé",
-    score: null,
-    accepted: false,
-    interviewDate: "2023-10-22",
-    interviewId: "4",
-  },
-  {
-    id: "4",
-    name: "Sophie Lefebvre",
-    email: "sophie.lefebvre@example.com",
-    position: "Chef de Projet",
-    status: "Entretien terminé",
-    score: 92,
-    accepted: true,
-    interviewDate: "2023-10-15",
-    interviewId: "2",
-  },
-  {
-    id: "5",
-    name: "Thomas Bernard",
-    email: "thomas.bernard@example.com",
-    position: "DevOps Engineer",
-    status: "CV analysé",
-    score: null,
-    accepted: false,
-    interviewDate: null,
-    interviewId: null,
-  },
-];
+// Configuration de l'API backend
+const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:8000';
+
+// Interface pour les candidats
+interface Candidate {
+  id: string;
+  name: string;
+  email: string;
+  position: string;
+  status: string;
+  score: number | null;
+  accepted: boolean;
+  interviewDate: string | null;
+  interviewId: string | null;
+}
+
+// Fonction pour récupérer les candidats depuis le backend
+async function fetchCandidatesFromBackend(token: string): Promise<Candidate[]> {
+  try {
+    const response = await fetch(`${BACKEND_URL}/api/users?role=candidat`, {
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error(`Erreur backend: ${response.status}`);
+    }
+
+    const candidates = await response.json();
+    return candidates.map((candidate: any) => ({
+      id: candidate.id.toString(),
+      name: candidate.name || candidate.email,
+      email: candidate.email,
+      position: candidate.position || "Candidat",
+      status: candidate.status || "CV analysé",
+      score: candidate.score || null,
+      accepted: candidate.accepted || false,
+      interviewDate: candidate.interview_date || null,
+      interviewId: candidate.interview_id || null,
+    }));
+  } catch (error) {
+    console.error("Erreur lors de la récupération des candidats depuis le backend:", error);
+    throw new Error("Impossible de récupérer les candidats depuis le backend");
+  }
+}
 
 export default function CandidatesPage() {
   const router = useRouter();
   const { data: session, status } = useSession();
   const [searchTerm, setSearchTerm] = useState("");
-  const [candidates, setCandidates] = useState(mockCandidates);
+  const [candidates, setCandidates] = useState<Candidate[]>([]);
   const [filterAccepted, setFilterAccepted] = useState(false);
   const [filterStatus, setFilterStatus] = useState("all");
   const [sortBy, setSortBy] = useState("name");
   const [sortOrder, setSortOrder] = useState("asc");
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   
   // Vérifier si l'utilisateur est un administrateur
   const isAdmin = session?.user?.role === "admin";
   const isRecruiter = session?.user?.role === "recruteur";
+
+  // Charger les candidats depuis le backend
+  useEffect(() => {
+    const fetchCandidates = async () => {
+      if (session?.user?.accessToken) {
+        try {
+          setLoading(true);
+          const candidatesData = await fetchCandidatesFromBackend(session.user.accessToken);
+          setCandidates(candidatesData);
+          setError(null);
+        } catch (err) {
+          console.error("Erreur lors du chargement des candidats:", err);
+          setError("Impossible de charger les candidats depuis le serveur");
+        } finally {
+          setLoading(false);
+        }
+      }
+    };
+
+    if (status === "authenticated") {
+      fetchCandidates();
+    }
+  }, [session, status]);
   
   // Rediriger si l'utilisateur n'est pas authentifié ou n'est pas un administrateur/recruteur
   if (status === "loading") {
@@ -159,8 +173,8 @@ export default function CandidatesPage() {
       if (!b.interviewDate) return sortOrder === "asc" ? -1 : 1;
       
       return sortOrder === "asc" 
-        ? new Date(a.interviewDate) - new Date(b.interviewDate) 
-        : new Date(b.interviewDate) - new Date(a.interviewDate);
+  ? new Date(a.interviewDate).getTime() - new Date(b.interviewDate).getTime()
+  : new Date(b.interviewDate).getTime() - new Date(a.interviewDate).getTime();
     }
     
     return 0;

@@ -2,8 +2,18 @@
  * Service API central pour gérer toutes les requêtes vers le backend
  */
 
-// URL de base de l'API, configurée en dur pour éviter les problèmes de résolution DNS
-const API_URL = 'http://localhost:8000';
+// URL de base de l'API, configurée dynamiquement selon l'environnement
+function getApiUrl(): string {
+  // Si nous sommes dans le navigateur, utiliser localhost
+  if (typeof window !== 'undefined') {
+    return 'http://localhost:8000';
+  }
+  
+  // Si nous sommes côté serveur (SSR), utiliser l'URL configurée
+  return process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+}
+
+const API_URL = getApiUrl();
 
 /**
  * Options par défaut pour les requêtes fetch

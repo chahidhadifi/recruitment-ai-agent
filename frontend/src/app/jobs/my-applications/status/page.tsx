@@ -103,13 +103,21 @@ export default function ApplicationStatusPage() {
   );
 }
 
+// Interface pour les applications enrichies avec les informations de l'offre
+type EnrichedApplication = JobApplication & {
+  jobTitle: string;
+  company: string;
+  location: string;
+  jobType: string;
+};
+
 // Component that uses searchParams
 function ApplicationStatusContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const applicationId = searchParams.get("id");
   const { data: session, status } = useSession();
-  const [applications, setApplications] = useState<any[]>([]);
+  const [applications, setApplications] = useState<EnrichedApplication[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState("all");

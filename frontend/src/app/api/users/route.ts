@@ -3,15 +3,15 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { UserWithRole } from "@/types/user-roles";
 
-// Configuration de l'API backend
-const BACKEND_URL = process.env.BACKEND_URL || "http://localhost:8000";
+// Déterminer l'URL du backend en fonction de l'environnement
+const isDocker = process.env.BACKEND_URL && process.env.BACKEND_URL.includes("backend:8000");
+const BACKEND_URL = isDocker ? "http://localhost:8000" : (process.env.BACKEND_URL || "http://localhost:8000");
 
 // Fonction pour récupérer les utilisateurs depuis le backend
-async function fetchUsersFromBackend(token: string): Promise<UserWithRole[]> {
+async function fetchUsersFromBackend(): Promise<UserWithRole[]> {
   try {
     const response = await fetch(`${BACKEND_URL}/api/users/`, {
       headers: {
-        'Authorization': `Bearer ${token}`,
         'Content-Type': 'application/json',
       },
     });
@@ -55,8 +55,11 @@ export async function GET(req: NextRequest) {
     const sortBy = url.searchParams.get("sortBy");
     const sortOrder = url.searchParams.get("sortOrder");
     
+    // Récupérer les utilisateurs depuis le backend
+    const users = await fetchUsersFromBackend();
+    
     // Filtrer les utilisateurs
-    let filteredUsers = [...mockUsers];
+    let filteredUsers = [...users];
     
     if (searchTerm) {
       const term = searchTerm.toLowerCase();
@@ -104,7 +107,17 @@ export async function GET(req: NextRequest) {
     return NextResponse.json(filteredUsers);
   } catch (error) {
     console.error("Erreur lors de la récupération des utilisateurs:", error);
-    return NextResponse.json({ error: "Erreur serveur" }, { status: 500 });
+    
+    // Fournir un message d'erreur plus spécifique
+    if (error instanceof Error && error.message.includes("backend")) {
+      return NextResponse.json({ 
+        error: "Impossible de se connecter au serveur backend. Vérifiez que le serveur backend est démarré et accessible." 
+      }, { status: 502 });
+    }
+    
+    return NextResponse.json({ 
+      error: "Erreur serveur interne" 
+    }, { status: 500 });
   }
 }
 
@@ -130,25 +143,42 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Données invalides" }, { status: 400 });
     }
     
-    // Vérifier si l'email existe déjà
-    const existingUser = mockUsers.find(user => user.email === data.email);
-    if (existingUser) {
-      return NextResponse.json({ error: "Cet email est déjà utilisé" }, { status: 409 });
+    // Créer l'utilisateur dans le backend
+    try {
+      const response = await fetch(`${BACKEND_URL}/api/users/`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${session.user.accessToken}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          name: data.name,
+          email: data.email,
+          password: data.password,
+          role: data.role
+        }),
+      });
+
+      if (!response.ok) {
+        if (response.status === 409) {
+          return NextResponse.json({ error: "Cet email est déjà utilisé" }, { status: 409 });
+        }
+        throw new Error(`Erreur backend: ${response.status}`);
+      }
+
+      const newUser = await response.json();
+      
+      return NextResponse.json({
+        id: newUser.id.toString(),
+        name: newUser.name || newUser.email,
+        email: newUser.email,
+        image: newUser.image || `https://ui-avatars.com/api/?name=${encodeURIComponent(newUser.name || newUser.email)}&background=0D8ABC&color=fff`,
+        role: newUser.role
+      }, { status: 201 });
+    } catch (error) {
+      console.error("Erreur lors de la création de l'utilisateur dans le backend:", error);
+      return NextResponse.json({ error: "Erreur lors de la création de l'utilisateur" }, { status: 500 });
     }
-    
-    // Créer un nouvel utilisateur
-    const newUser: UserWithRole = {
-      id: `user-${Date.now()}`,
-      name: data.name,
-      email: data.email,
-      image: `https://ui-avatars.com/api/?name=${encodeURIComponent(data.name)}&background=0D8ABC&color=fff`,
-      role: data.role
-    };
-    
-    // Ajouter l'utilisateur à la liste
-    mockUsers.push(newUser);
-    
-    return NextResponse.json(newUser, { status: 201 });
   } catch (error) {
     console.error("Erreur lors de la création de l&apos;utilisateur:", error);
     return NextResponse.json({ error: "Erreur serveur" }, { status: 500 });

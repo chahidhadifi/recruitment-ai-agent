@@ -3,6 +3,17 @@ import CredentialsProvider from "next-auth/providers/credentials";
 import { DEFAULT_ADMIN_USER, DEFAULT_RECRUTEUR_USER, DEFAULT_CANDIDAT_USER, UserRole } from "@/types/user-roles";
 import { randomBytes } from "crypto";
 
+// Fonction utilitaire pour obtenir l'URL du backend selon l'environnement
+function getBackendUrl(): string {
+  // Si nous sommes dans le navigateur, utiliser localhost
+  if (typeof window !== 'undefined') {
+    return 'http://localhost:8000';
+  }
+  
+  // Si nous sommes côté serveur (SSR), utiliser l'URL configurée
+  return process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+}
+
 // Générer un secret aléatoire si NEXTAUTH_SECRET n'est pas défini
 const secret = process.env.NEXTAUTH_SECRET || randomBytes(32).toString('hex');
 
@@ -27,8 +38,8 @@ export const authOptions: NextAuthOptions = {
         // Vérification du mot de passe avec le backend
         try {
           console.log('Tentative de connexion avec les identifiants:', { email: credentials.email });
-          // Utiliser l'URL du backend définie dans l'API_URL
-          const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+          // Utiliser l'URL du backend déterminée dynamiquement
+          const apiUrl = getBackendUrl();
           const response = await fetch(`${apiUrl}/api/auth/login`, {
             method: 'POST',
             headers: {

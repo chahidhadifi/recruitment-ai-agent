@@ -47,13 +47,26 @@ const mockUsers: UserWithRole[] = [
   },
 ];
 
+// Fonction utilitaire pour obtenir l'URL du backend selon l'environnement
+function getBackendUrl(): string {
+  // Si nous sommes dans le navigateur, utiliser localhost
+  if (typeof window !== 'undefined') {
+    return 'http://localhost:8000';
+  }
+  
+  // Si nous sommes côté serveur (SSR), utiliser l'URL configurée
+  return process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+}
+
 /**
  * Récupère tous les utilisateurs avec filtrage et tri optionnels
  */
 export async function getUsers(filters?: UserFilters): Promise<UserWithRole[]> {
   try {
     // Construire l'URL avec les paramètres de requête
-    let url = "/api/users";
+    // Utiliser directement l'URL du backend puisque l'endpoint /api/users/ est public
+    const BACKEND_URL = getBackendUrl();
+    let url = `${BACKEND_URL}/api/users/`;
     const params = new URLSearchParams();
     
     if (filters) {
@@ -77,8 +90,11 @@ export async function getUsers(filters?: UserFilters): Promise<UserWithRole[]> {
       url += `?${params.toString()}`;
     }
     
-    // Envoyer la requête à l'API
-    const response = await fetch(url);
+    const response = await fetch(url, {
+      headers: {
+        'Content-Type': 'application/json',
+      }
+    });
     
     if (!response.ok) {
       throw new Error(`Erreur lors de la récupération des utilisateurs: ${response.status}`);
@@ -96,7 +112,12 @@ export async function getUsers(filters?: UserFilters): Promise<UserWithRole[]> {
  */
 export async function getUserById(id: string): Promise<UserWithRole | null> {
   try {
-    const response = await fetch(`/api/users/${id}`);
+    const BACKEND_URL = getBackendUrl();
+    const response = await fetch(`${BACKEND_URL}/api/users/${id}`, {
+      headers: {
+        'Content-Type': 'application/json',
+      }
+    });
     
     if (!response.ok) {
       if (response.status === 404) {
@@ -117,7 +138,8 @@ export async function getUserById(id: string): Promise<UserWithRole | null> {
  */
 export async function createUser(userData: CreateUserData): Promise<UserWithRole | null> {
   try {
-    const response = await fetch("/api/users", {
+    const BACKEND_URL = getBackendUrl();
+    const response = await fetch(`${BACKEND_URL}/api/users`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json"
@@ -142,7 +164,8 @@ export async function createUser(userData: CreateUserData): Promise<UserWithRole
  */
 export async function updateUser(id: string, userData: UpdateUserData): Promise<UserWithRole | null> {
   try {
-    const response = await fetch(`/api/users/${id}`, {
+    const BACKEND_URL = getBackendUrl();
+    const response = await fetch(`${BACKEND_URL}/api/users/${id}`, {
       method: "PUT",
       headers: {
         "Content-Type": "application/json"
@@ -167,8 +190,12 @@ export async function updateUser(id: string, userData: UpdateUserData): Promise<
  */
 export async function deleteUser(id: string): Promise<boolean> {
   try {
-    const response = await fetch(`/api/users/${id}`, {
-      method: "DELETE"
+    const BACKEND_URL = getBackendUrl();
+    const response = await fetch(`${BACKEND_URL}/api/users/${id}`, {
+      method: "DELETE",
+      headers: {
+        "Content-Type": "application/json"
+      }
     });
     
     if (!response.ok) {
@@ -189,7 +216,12 @@ export async function deleteUser(id: string): Promise<boolean> {
  */
 export async function getUserStats(): Promise<UserStats> {
   try {
-    const response = await fetch("/api/users/stats");
+    const BACKEND_URL = getBackendUrl();
+    const response = await fetch(`${BACKEND_URL}/api/users/stats`, {
+      headers: {
+        'Content-Type': 'application/json',
+      }
+    });
     
     if (!response.ok) {
       throw new Error(`Erreur lors de la récupération des statistiques: ${response.status}`);

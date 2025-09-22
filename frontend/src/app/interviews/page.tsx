@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { Search, Plus, Calendar, Clock, BarChart, MoreVertical, PlusCircle, Edit, Trash2, Eye, FileText } from "lucide-react";
+import axios from "axios";
 
 import { MainLayout } from "@/components/main-layout";
 import { Button } from "@/components/ui/button";
@@ -15,50 +16,6 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { DEFAULT_RECRUTEUR_USER, DEFAULT_ADMIN_USER } from "@/types/user-roles";
 
-// Données fictives pour la démonstration
-const mockInterviews = [
-  {
-    id: "1",
-    candidateId: "2",
-    candidateName: "Marie Martin",
-    position: "UX Designer",
-    date: "2023-10-18",
-    duration: "25 minutes",
-    status: "Terminé",
-    score: 85,
-  },
-  {
-    id: "2",
-    candidateId: "4",
-    candidateName: "Sophie Lefebvre",
-    position: "Chef de Projet",
-    date: "2023-10-15",
-    duration: "32 minutes",
-    status: "Terminé",
-    score: 92,
-  },
-  {
-    id: "3",
-    candidateId: "1",
-    candidateName: "Jean Dupont",
-    position: "Développeur Frontend",
-    date: "2023-10-25",
-    duration: "-",
-    status: "Planifié",
-    score: null,
-  },
-  {
-    id: "4",
-    candidateId: "3",
-    candidateName: "Pierre Durand",
-    position: "Développeur Backend",
-    date: "2023-10-22",
-    duration: "-",
-    status: "Planifié",
-    score: null,
-  },
-];
-
 // Données fictives pour les questions d'entretien
 const sampleQuestions = [
   { id: "1", text: "Expliquez le concept de hooks dans React" },
@@ -68,22 +25,53 @@ const sampleQuestions = [
   { id: "5", text: "Comment aborderiez-vous un problème de classification de texte?" },
 ];
 
+// Types pour les entretiens et questions
+interface Question {
+  id: string;
+  text: string;
+}
+
+interface Interview {
+  id: string;
+  candidateId: string;
+  candidateName: string;
+  position: string;
+  date: string;
+  duration: string;
+  status: string;
+  score: number | null;
+  description?: string;
+  questions?: Question[];
+}
+
 export default function InterviewsPage() {
   const router = useRouter();
   const { data: realSession } = useSession();
   const session = realSession || { user: { ...DEFAULT_RECRUTEUR_USER, role: "recruteur" } };
   
   const [searchTerm, setSearchTerm] = useState("");
-  const [interviews, setInterviews] = useState(mockInterviews);
+  const [interviews, setInterviews] = useState<Interview[]>([]);
   const [activeTab, setActiveTab] = useState("list");
-  const [selectedInterview, setSelectedInterview] = useState<any>(null);
+  const [selectedInterview, setSelectedInterview] = useState<Interview | null>(null);
   const [newInterview, setNewInterview] = useState({ title: "", description: "", position: "" });
-  const [selectedQuestions, setSelectedQuestions] = useState<any[]>([]);
-  const [availableQuestions, setAvailableQuestions] = useState<any[]>(sampleQuestions);
+  const [selectedQuestions, setSelectedQuestions] = useState<Question[]>([]);
+  const [availableQuestions, setAvailableQuestions] = useState<Question[]>(sampleQuestions);
   const [newQuestion, setNewQuestion] = useState("");
   const [filterStatus, setFilterStatus] = useState("all");
   const [sortBy, setSortBy] = useState("date");
   const [sortOrder, setSortOrder] = useState("desc");
+
+  useEffect(() => {
+    async function fetchInterviews() {
+      try {
+        const response = await axios.get("http://localhost:8000/api/interviews");
+        setInterviews(response.data);
+      } catch (error) {
+        console.error("Erreur lors du chargement des entretiens:", error);
+      }
+    }
+    fetchInterviews();
+  }, []);
 
   // Filtrer les entretiens selon les critères
   let filteredInterviews = interviews.filter(
@@ -142,7 +130,7 @@ export default function InterviewsPage() {
   const isRecruiter = session?.user?.role === "recruteur" || session?.user?.role === "admin";
   
   // Gérer la sélection d'un entretien
-  const handleSelectInterview = (interview: any) => {
+  const handleSelectInterview = (interview: Interview) => {
     setSelectedInterview(interview);
     setActiveTab("details");
   };
@@ -188,29 +176,12 @@ export default function InterviewsPage() {
       <div className="container py-10">
         <div className="flex justify-between items-center mb-6">
           <h1 className="text-3xl font-bold">Entretiens</h1>
-          {isRecruiter && (
-            <div className="flex gap-2">
-              <Button onClick={() => setActiveTab("create")}>
-                <Plus className="mr-2 h-4 w-4" /> Nouvel entretien
-              </Button>
-              <Button variant="outline" onClick={() => setActiveTab("list")}>
-                Voir tous
-              </Button>
-              <Button variant="outline" asChild>
-                <Link href="/candidates">
-                  <FileText className="mr-2 h-4 w-4" /> Gérer les candidats
-                </Link>
-              </Button>
-            </div>
-          )}
         </div>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
           <TabsList className="grid w-full grid-cols-3">
             <TabsTrigger value="list">Liste des entretiens</TabsTrigger>
-            {isRecruiter && (
-              <TabsTrigger value="create">Créer un entretien</TabsTrigger>
-            )}
+            <TabsTrigger value="create">Créer un entretien</TabsTrigger>
             <TabsTrigger value="details" disabled={!selectedInterview}>
               Détails
             </TabsTrigger>
@@ -415,119 +386,111 @@ export default function InterviewsPage() {
         </div>
           </TabsContent>
 
-          {isRecruiter && (
-            <TabsContent value="create">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Créer un nouvel entretien</CardTitle>
-                  <CardDescription>Définissez les détails et les questions pour cet entretien</CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="title">Titre de l&apos;entretien</Label>
-                    <Input
-                      id="title"
-                      value={newInterview.title}
-                      onChange={(e) => setNewInterview({ ...newInterview, title: e.target.value })}
-                      placeholder="Ex: Entretien pour développeur frontend"
-                    />
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <Label htmlFor="position">Poste</Label>
-                    <Input
-                      id="position"
-                      value={newInterview.position}
-                      onChange={(e) => setNewInterview({ ...newInterview, position: e.target.value })}
-                      placeholder="Ex: Développeur Frontend React"
-                    />
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <Label htmlFor="description">Description</Label>
-                    <Textarea
-                      id="description"
-                      value={newInterview.description}
-                      onChange={(e) => setNewInterview({ ...newInterview, description: e.target.value })}
-                      placeholder="Description du poste et des compétences requises"
-                    />
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <Label>Questions sélectionnées</Label>
-                    <div className="space-y-2">
-                      {selectedQuestions.map((question) => (
-                        <div key={question.id} className="flex items-center justify-between p-3 bg-muted rounded-lg">
-                          <span>{question.text}</span>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => setSelectedQuestions(selectedQuestions.filter(q => q.id !== question.id))}
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      ))}
-                      
-                      {selectedQuestions.length === 0 && (
-                        <div className="p-3 bg-muted/50 rounded-lg text-center text-muted-foreground">
-                          Aucune question sélectionnée
-                        </div>
-                      )}
+        <TabsContent value="create">
+          <Card>
+            <CardHeader>
+              <CardTitle>Créer un nouvel entretien</CardTitle>
+              <CardDescription>Définissez les détails et les questions pour cet entretien</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="title">Titre de l&apos;entretien</Label>
+                <Input
+                  id="title"
+                  value={newInterview.title}
+                  onChange={(e) => setNewInterview({ ...newInterview, title: e.target.value })}
+                  placeholder="Ex: Entretien pour développeur frontend"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="position">Poste</Label>
+                <Input
+                  id="position"
+                  value={newInterview.position}
+                  onChange={(e) => setNewInterview({ ...newInterview, position: e.target.value })}
+                  placeholder="Ex: Développeur Frontend React"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="description">Description</Label>
+                <Textarea
+                  id="description"
+                  value={newInterview.description}
+                  onChange={(e) => setNewInterview({ ...newInterview, description: e.target.value })}
+                  placeholder="Description du poste et des compétences requises"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Questions sélectionnées</Label>
+                <div className="space-y-2">
+                  {selectedQuestions.map((question) => (
+                    <div key={question.id} className="flex items-center justify-between p-3 bg-muted rounded-lg">
+                      <span>{question.text}</span>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => setSelectedQuestions(selectedQuestions.filter(q => q.id !== question.id))}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
                     </div>
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <Label htmlFor="new-question">Ajouter une question</Label>
-                    <div className="flex gap-2">
-                      <Textarea
-                        id="new-question"
-                        value={newQuestion}
-                        onChange={(e) => setNewQuestion(e.target.value)}
-                        placeholder="Saisissez une nouvelle question"
-                        className="flex-1"
-                      />
-                      <Button onClick={handleAddQuestion} className="self-end">
+                  ))}
+                  {selectedQuestions.length === 0 && (
+                    <div className="p-3 bg-muted/50 rounded-lg text-center text-muted-foreground">
+                      Aucune question sélectionnée
+                    </div>
+                  )}
+                </div>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="new-question">Ajouter une question</Label>
+                <div className="flex gap-2">
+                  <Textarea
+                    id="new-question"
+                    value={newQuestion}
+                    onChange={(e) => setNewQuestion(e.target.value)}
+                    placeholder="Saisissez une nouvelle question"
+                    className="flex-1"
+                  />
+                  <Button onClick={handleAddQuestion} className="self-end">
+                    <PlusCircle className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
+              <div className="space-y-2">
+                <Label>Questions prédéfinies</Label>
+                <div className="space-y-2 max-h-60 overflow-y-auto">
+                  {availableQuestions.map((question) => (
+                    <div key={question.id} className="flex items-center justify-between p-3 bg-muted rounded-lg">
+                      <span>{question.text}</span>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => {
+                          if (!selectedQuestions.some(q => q.id === question.id)) {
+                            setSelectedQuestions([...selectedQuestions, question]);
+                          }
+                        }}
+                      >
                         <PlusCircle className="h-4 w-4" />
                       </Button>
                     </div>
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <Label>Questions prédéfinies</Label>
-                    <div className="space-y-2 max-h-60 overflow-y-auto">
-                      {availableQuestions.map((question) => (
-                        <div key={question.id} className="flex items-center justify-between p-3 bg-muted rounded-lg">
-                          <span>{question.text}</span>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => {
-                              if (!selectedQuestions.some(q => q.id === question.id)) {
-                                setSelectedQuestions([...selectedQuestions, question]);
-                              }
-                            }}
-                          >
-                            <PlusCircle className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                </CardContent>
-                <CardFooter>
-                  <div className="flex gap-2">
-                    <Button onClick={handleCreateInterview}>
-                      Créer l&apos;entretien
-                    </Button>
-                    <Button variant="outline" onClick={() => setActiveTab("list")}>
-                      Annuler
-                    </Button>
-                  </div>
-                </CardFooter>
-              </Card>
-            </TabsContent>
-          )}
+                  ))}
+                </div>
+              </div>
+            </CardContent>
+            <CardFooter>
+              <div className="flex gap-2">
+                <Button onClick={handleCreateInterview}>
+                  Créer l&apos;entretien
+                </Button>
+                <Button variant="outline" onClick={() => setActiveTab("list")}> 
+                  Annuler
+                </Button>
+              </div>
+            </CardFooter>
+          </Card>
+        </TabsContent>
           
           <TabsContent value="details">
             {selectedInterview && (
