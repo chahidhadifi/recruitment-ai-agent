@@ -64,7 +64,11 @@ export default function InterviewsPage() {
   useEffect(() => {
     async function fetchInterviews() {
       try {
-        const response = await axios.get("http://localhost:8000/api/interviews");
+        // Utilise l'URL appropriée selon l'environnement
+        const baseURL = process.env.NODE_ENV === 'production' 
+          ? "http://backend:8000" 
+          : "http://localhost:8000";
+        const response = await axios.get(`${baseURL}/api/interviews`);
         setInterviews(response.data);
       } catch (error) {
         console.error("Erreur lors du chargement des entretiens:", error);

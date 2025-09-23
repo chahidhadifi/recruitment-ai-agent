@@ -13,7 +13,7 @@ import os
 
 from . import models, schemas
 from .database import SessionLocal, engine
-from .routers import me, interviews
+from .routers import me, interviews, candidatures
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -24,6 +24,7 @@ app = FastAPI(title="Recruitment AI Platform API", version="1.0.0")
 # Inclure le router /me pour l’endpoint profil utilisateur
 app.include_router(me.router, prefix="/api/users", tags=["users"])
 app.include_router(interviews.router, prefix="/api", tags=["interviews"])
+app.include_router(candidatures.router, prefix="/api", tags=["candidatures"])
 
 # Initialize database tables on startup
 @app.on_event("startup")

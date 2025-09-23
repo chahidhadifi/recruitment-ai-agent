@@ -33,6 +33,7 @@ const navigationItems = {
   recruteur: [
     { name: "Accueil", href: "/" },
     { name: "Tableau de bord", href: "/dashboard" },
+    { name: "Candidature", href: "/candidature" },
     { name: "Entretiens", href: "/interviews" },
     { name: "Offres d'emploi", href: "/jobs" },
     { name: "Aide", href: "/help" },

@@ -5,6 +5,9 @@ import { ROLE_BASED_ROUTES, UserRole } from "./types/user-roles";
 
 export async function middleware(req: NextRequest) {
   const path = req.nextUrl.pathname;
+  // DEBUG LOG: Afficher le rôle et la route à chaque requête
+  // eslint-disable-next-line no-console
+  console.log('[MIDDLEWARE] PATH:', path);
   
   // Définir les chemins qui sont considérés comme publics (authentification)
   const publicPaths = [
@@ -29,6 +32,8 @@ export async function middleware(req: NextRequest) {
     req,
     secret: process.env.NEXTAUTH_SECRET,
   });
+  // eslint-disable-next-line no-console
+  console.log('[MIDDLEWARE] TOKEN:', token);
 
   // Définir les chemins qui sont accessibles sans authentification
   const publicAccessPaths = [
@@ -57,13 +62,14 @@ export async function middleware(req: NextRequest) {
   
   // Définir explicitement toutes les routes protégées qui nécessitent une authentification
   const protectedPaths = [
-    "/dashboard",
-    "/interviews",
-    "/applications",
-    "/profile",
-    "/settings",
-    "/reports",
-    "/users"
+  "/dashboard",
+  "/interviews",
+  "/candidature",
+  "/applications",
+  "/profile",
+  "/settings",
+  "/reports",
+  "/users"
   ];
   
   // Vérifier si le chemin est une route protégée
@@ -114,18 +120,20 @@ export async function middleware(req: NextRequest) {
     
     // Vérifier les autorisations générales basées sur le rôle
     const allowedRoutes = ROLE_BASED_ROUTES[userRole] || [];
-    const hasAccess = allowedRoutes.some(route => path === route || path.startsWith(`${route}/`));
+  // Autoriser aussi les chemins avec ou sans slash final
+  const normalize = (p: string) => p.endsWith('/') ? p.slice(0, -1) : p;
+  const normalizedPath = normalize(path);
+  const hasAccess = allowedRoutes.some(route => normalizedPath === normalize(route) || normalizedPath.startsWith(normalize(route) + '/'));
     
     if (!hasAccess) {
-      // Rediriger vers la page d'accueil si l'utilisateur n'a pas accès à cette route
-      return NextResponse.redirect(new URL("/", req.url));
+      // Rediriger vers une page de debug si l'utilisateur n'a pas accès à cette route
+      return NextResponse.redirect(new URL("/auth/login?debug=middleware&role=" + (token?.role || "none") + "&path=" + encodeURIComponent(path), req.url));
     }
   }
 
   return NextResponse.next();
 }
 
-// Configurer les chemins sur lesquels le middleware doit s'exécuter
 export const config = {
   matcher: [
     /*
@@ -140,6 +148,7 @@ export const config = {
     // Assurer que ces routes spécifiques sont toujours protégées
     "/dashboard/:path*",
     "/interviews/:path*",
+    "/candidature/:path*",
     "/applications/:path*",
     "/profile/:path*",
     "/settings/:path*",

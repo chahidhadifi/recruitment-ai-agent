@@ -110,14 +110,42 @@ export function UserForm({ user, onSubmit, onCancel }: UserFormProps) {
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="role">Poste / Fonction</Label>
-          <Input
-            id="role"
-            name="role"
-            value={formData.role || "candidat"}
-            readOnly
-            className="bg-gray-100 cursor-not-allowed"
-          />
+          <Label>Poste / Fonction</Label>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            {[
+              { value: "candidat", label: "Candidat", description: "Cherche un emploi" },
+              { value: "recruteur", label: "Recruteur", description: "Gère les candidatures" },
+              { value: "admin", label: "Administrateur", description: "Gère le système" }
+            ].map((roleOption) => (
+              <div
+                key={roleOption.value}
+                className={`p-4 border-2 rounded-lg cursor-pointer transition-all ${
+                  formData.role === roleOption.value
+                    ? "border-primary bg-primary/10"
+                    : "border-border hover:border-primary/50"
+                } ${errors.role ? "border-red-500" : ""}`}
+                onClick={() => {
+                  setFormData((prev) => ({
+                    ...prev,
+                    role: roleOption.value,
+                  }));
+                  if (errors.role) {
+                    setErrors((prev) => {
+                      const newErrors = { ...prev };
+                      delete newErrors.role;
+                      return newErrors;
+                    });
+                  }
+                }}
+              >
+                <div className="font-medium">{roleOption.label}</div>
+                <div className="text-sm text-muted-foreground">
+                  {roleOption.description}
+                </div>
+              </div>
+            ))}
+          </div>
+          {errors.role && <p className="text-sm text-red-500">{errors.role}</p>}
         </div>
 
         {!user && (

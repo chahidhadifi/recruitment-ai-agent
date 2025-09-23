@@ -3,12 +3,15 @@
 import React, { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
-import { Save, User, Mail, Building, Briefcase, Camera, Upload, Plus } from "lucide-react";
+import { Save, User, Mail, Building, Briefcase, Camera, Upload, Plus, Edit, Trash2, Search } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 
 import { MainLayout } from "@/components/main-layout";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { api } from "@/lib/api";
+import { UserWithRole, UserRole } from "@/types/user-roles";
+import { getUsers, updateUser, deleteUser } from "@/lib/api/users";
 
 // Interface pour les applications
 interface Application {
@@ -54,6 +57,14 @@ export default function ProfilePage() {
     cv_url: "",
     cover_letter_url: "",
   });
+  
+  // États pour la gestion des utilisateurs
+  const [users, setUsers] = useState<UserWithRole[]>([]);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [filterRole, setFilterRole] = useState<UserRole | "all">("all");
+  const [isLoadingUsers, setIsLoadingUsers] = useState(false);
+  const [editingUser, setEditingUser] = useState<UserWithRole | null>(null);
+  const [userToDelete, setUserToDelete] = useState<UserWithRole | null>(null);
   useEffect(() => {
     if (!session?.user?.accessToken) return;
     const fetchUserData = async () => {
@@ -93,7 +104,83 @@ export default function ProfilePage() {
       }
     };
     fetchUserData();
+    
+    // Charger les utilisateurs si l'utilisateur est admin ou recruteur
+    if (session?.user?.role === "admin" || session?.user?.role === "recruteur") {
+      loadUsers();
+    }
   }, [session]);
+  
+  // Fonction pour charger les utilisateurs
+  const loadUsers = async () => {
+    if (session?.user?.role !== "admin" && session?.user?.role !== "recruteur") return;
+    
+    setIsLoadingUsers(true);
+    try {
+      const usersData = await getUsers({ searchTerm, role: filterRole !== "all" ? filterRole : undefined });
+      setUsers(usersData);
+    } catch (error) {
+      console.error("Erreur lors du chargement des utilisateurs:", error);
+      toast({
+        title: "Erreur",
+        description: "Impossible de charger la liste des utilisateurs",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoadingUsers(false);
+    }
+  };
+  
+  // Fonction pour mettre à jour le rôle d'un utilisateur
+  const handleUpdateUserRole = async (userId: string, newRole: UserRole) => {
+    try {
+      await updateUser(userId, { role: newRole });
+      
+      // Mettre à jour la liste locale
+      setUsers(users.map(user => 
+        user.id === userId ? { ...user, role: newRole } : user
+      ));
+      
+      toast({
+        title: "Rôle mis à jour",
+        description: "Le rôle de l'utilisateur a été modifié avec succès",
+      });
+    } catch (error) {
+      console.error("Erreur lors de la mise à jour du rôle:", error);
+      toast({
+        title: "Erreur",
+        description: "Impossible de modifier le rôle de l'utilisateur",
+        variant: "destructive",
+      });
+    }
+  };
+  
+  // Fonction pour supprimer un utilisateur
+  const handleDeleteUser = async () => {
+    if (!userToDelete) return;
+    
+    try {
+      const success = await deleteUser(userToDelete.id);
+      
+      if (success) {
+        // Mettre à jour la liste des utilisateurs
+        setUsers(users.filter(user => user.id !== userToDelete.id));
+        toast({
+          title: "Utilisateur supprimé",
+          description: "L'utilisateur a été supprimé avec succès",
+        });
+      }
+    } catch (error) {
+      console.error("Erreur lors de la suppression de l'utilisateur:", error);
+      toast({
+        title: "Erreur",
+        description: "Impossible de supprimer l'utilisateur",
+        variant: "destructive",
+      });
+    } finally {
+      setUserToDelete(null);
+    }
+  };
 
   const handleProfileChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -442,6 +529,7 @@ export default function ProfilePage() {
                     <option value="Coordinateur de recrutement">Coordinateur de recrutement</option>
                     <option value="Chargé de recrutement">Chargé de recrutement</option>
                     <option value="Spécialiste RH">Spécialiste RH</option>
+                    <option value="Candidat">Candidat</option>
                   </select>
                 </div>
                 
@@ -580,6 +668,162 @@ export default function ProfilePage() {
                 ))}
               </tbody>
             </table>
+          </div>
+        </div>
+      )}
+      
+      {/* Section Gestion des utilisateurs pour les admins et recruteurs */}
+      {(session?.user?.role === "admin" || session?.user?.role === "recruteur") && (
+        <div className="mt-12">
+          <div className="flex justify-between items-center mb-6">
+            <h2 className="text-2xl font-bold">Gestion des utilisateurs</h2>
+            <Button onClick={() => router.push("/users/add")}>
+              <Plus className="mr-2 h-4 w-4" />
+              Créer un nouvel utilisateur
+            </Button>
+          </div>
+          
+          {/* Filtres de recherche */}
+          <div className="bg-card rounded-lg shadow-sm p-6 mb-6">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div>
+                <label htmlFor="search" className="block text-sm font-medium mb-1">
+                  Rechercher
+                </label>
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    id="search"
+                    placeholder="Rechercher un utilisateur..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="pl-10"
+                  />
+                </div>
+              </div>
+              
+              <div>
+                <label htmlFor="role-filter" className="block text-sm font-medium mb-1">
+                  Filtrer par rôle
+                </label>
+                <select
+                  id="role-filter"
+                  value={filterRole}
+                  onChange={(e) => setFilterRole(e.target.value as UserRole | "all")}
+                  className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary/50 bg-background"
+                >
+                  <option value="all">Tous les rôles</option>
+                  <option value="admin">Administrateurs</option>
+                  <option value="recruteur">Recruteurs</option>
+                  <option value="candidat">Candidats</option>
+                </select>
+              </div>
+              
+              <div className="flex items-end">
+                <Button onClick={loadUsers} className="w-full">
+                  Appliquer les filtres
+                </Button>
+              </div>
+            </div>
+          </div>
+          
+          {/* Liste des utilisateurs */}
+          <div className="bg-card rounded-lg shadow-sm p-6">
+            {isLoadingUsers ? (
+              <div className="text-center py-8">
+                <p>Chargement des utilisateurs...</p>
+              </div>
+            ) : users.length === 0 ? (
+              <div className="text-center py-8">
+                <p>Aucun utilisateur trouvé</p>
+              </div>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead>
+                    <tr className="bg-muted/50">
+                      <th className="px-4 py-3 text-left text-sm font-medium">Utilisateur</th>
+                      <th className="px-4 py-3 text-left text-sm font-medium">Email</th>
+                      <th className="px-4 py-3 text-left text-sm font-medium">Rôle</th>
+                      <th className="px-4 py-3 text-right text-sm font-medium">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-border">
+                    {users.map((user) => (
+                      <tr key={user.id} className="hover:bg-muted/50">
+                        <td className="px-4 py-4 whitespace-nowrap">
+                          <div className="flex items-center">
+                            <div className="h-10 w-10 flex-shrink-0">
+                              <img className="h-10 w-10 rounded-full" src={user.image} alt="" />
+                            </div>
+                            <div className="ml-4">
+                              <div className="text-sm font-medium">
+                                {user.name}
+                              </div>
+                            </div>
+                          </div>
+                        </td>
+                        <td className="px-4 py-4 whitespace-nowrap text-sm">
+                          {user.email}
+                        </td>
+                        <td className="px-4 py-4 whitespace-nowrap text-sm">
+                          <select
+                            value={user.role}
+                            onChange={(e) => handleUpdateUserRole(user.id, e.target.value as UserRole)}
+                            className="px-2 py-1 border rounded text-xs bg-background"
+                            disabled={session?.user?.role !== "admin" && user.role === "admin"}
+                          >
+                            <option value="admin">Administrateur</option>
+                            <option value="recruteur">Recruteur</option>
+                            <option value="candidat">Candidat</option>
+                          </select>
+                        </td>
+                        <td className="px-4 py-4 whitespace-nowrap text-right text-sm">
+                          <div className="flex justify-end space-x-2">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => router.push(`/users/${user.id}/edit`)}
+                            >
+                              <Edit className="h-4 w-4" />
+                            </Button>
+                            {session?.user?.role === "admin" && (
+                              <Button
+                                variant="destructive"
+                                size="sm"
+                                onClick={() => setUserToDelete(user)}
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            )}
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+      
+      {/* Dialogue de confirmation de suppression */}
+      {userToDelete && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-card rounded-lg p-6 max-w-md w-full mx-4">
+            <h3 className="text-lg font-bold mb-4">Confirmer la suppression</h3>
+            <p className="mb-4">
+              Êtes-vous sûr de vouloir supprimer l'utilisateur <strong>{userToDelete.name}</strong> ?
+            </p>
+            <div className="flex justify-end space-x-3">
+              <Button variant="outline" onClick={() => setUserToDelete(null)}>
+                Annuler
+              </Button>
+              <Button variant="destructive" onClick={handleDeleteUser}>
+                Supprimer
+              </Button>
+            </div>
           </div>
         </div>
       )}

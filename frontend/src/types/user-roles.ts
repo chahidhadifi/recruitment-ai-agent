@@ -34,7 +34,7 @@ export const DEFAULT_CANDIDAT_USER: UserWithRole = {
 
 // Définir les pages accessibles par rôle
 export const ROLE_BASED_ROUTES: Record<UserRole, string[]> = {
-  admin: ["/", "/dashboard", "/candidates", "/jobs", "/applications", "/settings", "/profile", "/help", "/about", "/users"],
-  recruteur: ["/", "/dashboard", "/candidates", "/interviews", "/jobs", "/applications", "/reports", "/profile", "/settings", "/help", "/about"],
+  admin: ["/", "/dashboard", "/candidates", "/candidature", "/jobs", "/applications", "/settings", "/profile", "/help", "/about", "/users"],
+  recruteur: ["/", "/dashboard", "/candidates", "/candidature", "/interviews", "/jobs", "/applications", "/reports", "/profile", "/settings", "/help", "/about"],
   candidat: ["/", "/profile", "/interviews/candidat", "/interviews/candidat/ai-interview", "/jobs", "/help", "/about"]
 };

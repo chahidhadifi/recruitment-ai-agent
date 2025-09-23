@@ -4,13 +4,14 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { Search, Plus, Edit, Trash2, UserPlus, UserCheck, UserX, Filter } from "lucide-react";
+import { useToast } from "@/components/ui/use-toast";
 
 import { MainLayout } from "@/components/main-layout";
 import { Button } from "@/components/ui/button";
-import { UserWithRole } from "@/types/user-roles";
+import { UserWithRole, UserRole } from "@/types/user-roles";
 import { DeleteUserDialog } from "@/components/delete-user-dialog";
 import { UserStats } from "@/components/user-stats";
-import { getUsers, deleteUser } from "@/lib/api/users";
+import { getUsers, deleteUser, updateUser } from "@/lib/api/users";
 import { UserFilters } from "@/types/user";
 
 // Données fictives pour la démonstration
@@ -67,6 +68,7 @@ export default function UsersPage() {
   const [filterRole, setFilterRole] = useState("all");
   const [userToDelete, setUserToDelete] = useState<UserWithRole | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const { toast } = useToast();
   
   // Vérifier si l&apos;utilisateur est un administrateur
   const isAdmin = session?.user?.role === "admin";
@@ -142,11 +144,39 @@ export default function UsersPage() {
     }
   };
 
+  // Fonction pour mettre à jour le rôle d'un utilisateur
+  const handleUpdateUserRole = async (userId: string, newRole: UserRole) => {
+    try {
+      await updateUser(userId, { role: newRole });
+      
+      // Mettre à jour la liste locale
+      setUsers(users.map(user => 
+        user.id === userId ? { ...user, role: newRole } : user
+      ));
+      
+      toast({
+        title: "Rôle mis à jour",
+        description: "Le rôle de l'utilisateur a été modifié avec succès",
+      });
+    } catch (error) {
+      console.error("Erreur lors de la mise à jour du rôle:", error);
+      toast({
+        title: "Erreur",
+        description: "Impossible de modifier le rôle de l'utilisateur",
+        variant: "destructive",
+      });
+    }
+  };
+
   return (
     <MainLayout>
       <div className="container py-10">
         <div className="flex justify-between items-center mb-6">
           <h1 className="text-3xl font-bold">Gestion des utilisateurs</h1>
+          <Button onClick={() => router.push("/users/add")}>
+            <Plus className="mr-2 h-4 w-4" />
+            Créer un nouvel utilisateur
+          </Button>
         </div>
         
         {/* Statistiques des utilisateurs */}
@@ -230,17 +260,16 @@ export default function UsersPage() {
                           {user.email}
                         </td>
                         <td className="px-4 py-4 whitespace-nowrap text-sm">
-                          <span
-                            className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                              user.role === "admin"
-                                ? "bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-300"
-                                : user.role === "recruteur"
-                                ? "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300"
-                                : "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300"
-                            }`}
+                          <select
+                            value={user.role}
+                            onChange={(e) => handleUpdateUserRole(user.id, e.target.value as UserRole)}
+                            className="px-2 py-1 border rounded text-xs bg-background"
+                            disabled={session?.user?.role !== "admin" && user.role === "admin"}
                           >
-                            {user.role === "admin" ? "Administrateur" : user.role === "recruteur" ? "Recruteur" : "Candidat"}
-                          </span>
+                            <option value="admin">Administrateur</option>
+                            <option value="recruteur">Recruteur</option>
+                            <option value="candidat">Candidat</option>
+                          </select>
                         </td>
                         <td className="px-4 py-4 whitespace-nowrap text-sm text-right">
                           <div className="inline-flex items-center space-x-2">

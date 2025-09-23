@@ -15,6 +15,7 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
   const protectedPaths = [
     "/dashboard",
     "/interviews",
+    "/candidature",
     "/applications",
     "/profile",
     "/settings",

@@ -1,3 +1,6 @@
+
+# Alias pour compatibilité avec le router 'candidatures'
+# (à placer après la définition de JobApplication et JobApplicationUpdate)
 from pydantic import BaseModel, EmailStr, Field
 from datetime import datetime
 from typing import Optional, List, Union, Any, Dict
@@ -250,6 +253,13 @@ class JobApplication(JobApplicationBase):
 
     class Config:
         from_attributes = True
+
+# Alias pour compatibilité avec le router 'candidatures'
+class Candidature(JobApplication):
+    pass
+
+class CandidatureUpdate(JobApplicationUpdate):
+    pass
 
 
 # Interview schemas

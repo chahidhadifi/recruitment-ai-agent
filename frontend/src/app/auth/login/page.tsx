@@ -53,10 +53,15 @@ export default function LoginPage() {
       console.log('Résultat de la connexion:', result);
 
       if (result?.error) {
-        console.error('Erreur de connexion détaillée:', result.error);
+        let message = result.error;
+        // Personnalise le message si c'est une erreur d'identifiants
+        if (result.error === "CredentialsSignin") {
+          message = "Email ou mot de passe incorrect.";
+        }
+        console.error('Erreur de connexion détaillée:', message);
         toast({
           title: "Erreur de connexion",
-          description: `Erreur: ${result.error}`,
+          description: message,
           variant: "destructive",
         });
       } else {
