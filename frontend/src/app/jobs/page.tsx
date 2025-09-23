@@ -38,7 +38,18 @@ export default function JobsPage() {
           ...job,
           postedDate: job.posted_date
         }));
-        setJobs(jobsData);
+        
+        // Si l'utilisateur est un recruteur, filtrer pour n'afficher que ses offres
+        if (session?.user?.role === "recruteur") {
+          const filteredJobs = jobsData.filter((job: any) => 
+            job.recruiter_id && job.recruiter_id.toString() === session.user.id
+          );
+          setJobs(filteredJobs);
+        } else {
+          // Pour les autres utilisateurs, afficher toutes les offres
+          setJobs(jobsData);
+        }
+        
         setError(null);
       } catch (err) {
         console.error("Erreur lors du chargement des offres d'emploi:", err);
@@ -50,7 +61,7 @@ export default function JobsPage() {
     };
 
     fetchJobs();
-  }, [status]);
+  }, [status, session?.user?.id, session?.user?.role]);
 
   // Filtrer les offres d'emploi en fonction du terme de recherche
   const filteredJobs = jobs.filter(job => {
@@ -105,11 +116,6 @@ export default function JobsPage() {
           <h1 className="text-3xl font-bold">Offres d'emploi</h1>
           {isRecruiter && (
             <div className="flex gap-3">
-              <Button variant="outline" asChild>
-                <Link href="/applications">
-                  <Briefcase className="mr-2 h-4 w-4" /> Gérer les candidatures
-                </Link>
-              </Button>
               <Button asChild>
                 <Link href="/jobs/new">
                   <Plus className="mr-2 h-4 w-4" /> Publier une offre
@@ -198,11 +204,47 @@ export default function JobsPage() {
                           )}
                         </div>
                       </div>
-                      <div className="mt-4 md:mt-0">
+                      <div className="mt-4 md:mt-0 flex flex-col gap-2">
                         {isAuthenticated ? (
-                          <Button asChild>
-                            <Link href={`/jobs/${job.id}`}>Voir l'offre</Link>
-                          </Button>
+                          <>
+                            <Button asChild>
+                              <Link href={`/jobs/${job.id}`}>Voir l'offre</Link>
+                            </Button>
+                            {isRecruiter && job.recruiter_id && job.recruiter_id.toString() === session?.user?.id && (
+                              <div className="flex gap-2 mt-2">
+                                <Button variant="outline" size="sm" asChild>
+                                  <Link href={`/jobs/${job.id}/edit`}>Modifier</Link>
+                                </Button>
+                                <Button 
+                                  variant="destructive" 
+                                  size="sm"
+                                  onClick={async () => {
+                                    if (window.confirm("Êtes-vous sûr de vouloir supprimer cette offre d'emploi ?")) {
+                                      try {
+                                        const response = await fetch(`http://localhost:8000/api/jobs/${job.id}`, {
+                                          method: 'DELETE',
+                                        });
+                                        
+                                        if (!response.ok) {
+                                          throw new Error("Erreur lors de la suppression de l'offre");
+                                        }
+                                        
+                                        // Mettre à jour la liste des offres après suppression
+                                        setJobs(jobs.filter(j => j.id !== job.id));
+                                        
+                                        alert("L'offre d'emploi a été supprimée avec succès.");
+                                      } catch (error) {
+                                        console.error("Erreur lors de la suppression:", error);
+                                        alert("Impossible de supprimer l'offre d'emploi. Veuillez réessayer.");
+                                      }
+                                    }
+                                  }}
+                                >
+                                  Supprimer
+                                </Button>
+                              </div>
+                            )}
+                          </>
                         ) : (
                           <Button onClick={() => router.push("/auth/login")}>
                             Se connecter pour voir

@@ -1,101 +1,454 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { BarChart, Users, Calendar, ArrowUpRight, FileText, MessageSquare, ChevronRight, LineChart, PieChart, Download, Filter } from "lucide-react";
+import axios from "axios";
 
 import { MainLayout } from "@/components/main-layout";
 import { Button } from "@/components/ui/button";
 
-// Données fictives pour la démonstration
-const mockStats = {
-  totalCandidates: 156,
-  newCandidatesThisWeek: 5,
-  totalInterviews: 87,
-  completedInterviews: 42,
-  averageScore: 72,
-  pendingReviews: 3,
-  hiringRate: 18,
-};
+// Types pour les données du dashboard
+interface DashboardStats {
+  totalCandidates: number;
+  newCandidatesThisWeek: number;
+  totalInterviews: number;
+  completedInterviews: number;
+  averageScore: number;
+  pendingReviews: number;
+  hiringRate: number;
+}
 
-// Données mensuelles pour les graphiques
-const mockMonthlyData = [
-  { month: "Jan", candidates: 12, interviews: 8, hired: 2 },
-  { month: "Fév", candidates: 15, interviews: 10, hired: 3 },
-  { month: "Mar", candidates: 18, interviews: 12, hired: 2 },
-  { month: "Avr", candidates: 22, interviews: 15, hired: 4 },
-  { month: "Mai", candidates: 20, interviews: 14, hired: 3 },
-  { month: "Juin", candidates: 25, interviews: 18, hired: 5 },
-];
+interface MonthlyData {
+  month: string;
+  candidates: number;
+  interviews: number;
+  hired: number;
+}
 
-// Données par poste
-const mockPositionData = [
-  { position: "Développeur Frontend", candidates: 45, averageScore: 76 },
-  { position: "Développeur Backend", candidates: 38, averageScore: 74 },
-  { position: "UX Designer", candidates: 22, averageScore: 82 },
-  { position: "Chef de Projet", candidates: 18, averageScore: 68 },
-  { position: "DevOps", candidates: 15, averageScore: 79 },
-  { position: "Data Scientist", candidates: 12, averageScore: 85 },
-];
+interface PositionData {
+  position: string;
+  candidates: number;
+  averageScore: number;
+}
 
-// Données de compétences
-const mockSkillsData = [
-  { skill: "JavaScript", score: 78 },
-  { skill: "React", score: 82 },
-  { skill: "Node.js", score: 75 },
-  { skill: "Python", score: 80 },
-  { skill: "SQL", score: 72 },
-  { skill: "AWS", score: 68 },
-];
+interface SkillsData {
+  skill: string;
+  score: number;
+}
 
-const mockRecentCandidates = [
-  {
-    id: "1",
-    name: "Jean Dupont",
-    position: "Développeur Frontend",
-    date: "2023-10-20",
-    status: "En attente d'entretien",
-  },
-  {
-    id: "2",
-    name: "Marie Martin",
-    position: "UX Designer",
-    date: "2023-10-18",
-    status: "Entretien terminé",
-  },
-  {
-    id: "3",
-    name: "Pierre Durand",
-    position: "Développeur Backend",
-    date: "2023-10-15",
-    status: "CV analysé",
-  },
-];
+interface RecentCandidate {
+  id: string;
+  name: string;
+  position: string;
+  date: string;
+  status: string;
+}
 
-const mockUpcomingInterviews = [
-  {
-    id: "3",
-    candidateId: "1",
-    candidateName: "Jean Dupont",
-    position: "Développeur Frontend",
-    date: "2023-10-25",
-    time: "11:00",
-  },
-  {
-    id: "4",
-    candidateId: "3",
-    candidateName: "Pierre Durand",
-    position: "Développeur Backend",
-    date: "2023-10-22",
-    time: "15:30",
-  },
-];
+interface UpcomingInterview {
+  id: string;
+  candidateId: string;
+  candidateName: string;
+  position: string;
+  date: string;
+  time: string;
+}
 
 export default function DashboardPage() {
-  const router = useRouter();
   const { data: session } = useSession();
+  const router = useRouter();
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  
+  // États pour stocker les données du dashboard
+  const [stats, setStats] = useState<DashboardStats>({
+    totalCandidates: 0,
+    newCandidatesThisWeek: 0,
+    totalInterviews: 0,
+    completedInterviews: 0,
+    averageScore: 0,
+    pendingReviews: 0,
+    hiringRate: 0,
+  });
+  
+  const [monthlyData, setMonthlyData] = useState<MonthlyData[]>([]);
+  const [positionData, setPositionData] = useState<PositionData[]>([]);
+  const [skillsData, setSkillsData] = useState<SkillsData[]>([]);
+  const [recentCandidates, setRecentCandidates] = useState<RecentCandidate[]>([]);
+  const [upcomingInterviews, setUpcomingInterviews] = useState<UpcomingInterview[]>([]);
+  
+  // Fonction pour charger les données du dashboard
+  useEffect(() => {
+    const fetchDashboardData = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        
+        // Récupérer les statistiques des utilisateurs
+        const userStatsResponse = await axios.get('http://localhost:8000/api/users/stats')
+          .catch(error => {
+            console.error('Erreur lors de la récupération des statistiques:', error);
+            throw new Error('Impossible de récupérer les statistiques des utilisateurs');
+          });
+        
+        // Récupérer les candidatures
+        const applicationsResponse = await axios.get('http://localhost:8000/api/applications/')
+          .catch(error => {
+            console.error('Erreur lors de la récupération des candidatures:', error);
+            throw new Error('Impossible de récupérer les candidatures');
+          });
+        
+        // Récupérer les entretiens
+        const interviewsResponse = await axios.get('http://localhost:8000/api/interviews/')
+          .catch(error => {
+            console.error('Erreur lors de la récupération des entretiens:', error);
+            throw new Error('Impossible de récupérer les entretiens');
+          });
+        
+        // Récupérer les offres d'emploi
+        const jobsResponse = await axios.get('http://localhost:8000/api/jobs/')
+          .catch(error => {
+            console.error('Erreur lors de la récupération des offres d\'emploi:', error);
+            throw new Error('Impossible de récupérer les offres d\'emploi');
+          });
+        
+        // Extraire les données des réponses API
+        const applications = applicationsResponse.data || [];
+        const interviews = interviewsResponse.data || [];
+        const jobs = jobsResponse.data || [];
+        const userStats = userStatsResponse.data || { candidateCount: 0 };
+        
+        console.log('API Data:', { userStats, applications, interviews, jobs });
+        
+        // Calculer les statistiques générales
+        const totalCandidates = userStats.candidateCount || 0;
+        const totalInterviews = interviews.length;
+        const completedInterviews = interviews.filter(i => i.status === 'completed').length;
+        
+        // Calculer le score moyen des entretiens
+        const interviewScores = interviews
+          .filter(i => i.score !== null && i.score !== undefined)
+          .map(i => parseFloat(i.score));
+        const averageScore = interviewScores.length > 0 
+          ? parseFloat((interviewScores.reduce((a, b) => a + b, 0) / interviewScores.length).toFixed(1)) 
+          : 0;
+        
+        // Calculer le taux d'embauche (candidatures acceptées / total)
+        const acceptedApplications = applications.filter(a => a.status === 'accepted').length;
+        const hiringRate = applications.length > 0 
+          ? parseFloat(((acceptedApplications / applications.length) * 100).toFixed(1)) 
+          : 0;
+        
+        // Calculer les candidats de la semaine dernière
+        const oneWeekAgo = new Date();
+        oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
+        const newCandidatesThisWeek = applications.filter(a => {
+          const appliedDate = new Date(a.applied_at || a.created_at);
+          return appliedDate >= oneWeekAgo;
+        }).length;
+        
+        // Mettre à jour les statistiques
+        setStats({
+          totalCandidates,
+          newCandidatesThisWeek,
+          totalInterviews,
+          completedInterviews,
+          averageScore,
+          pendingReviews: applications.filter(a => a.status === 'pending').length,
+          hiringRate,
+        });
+        
+        // Préparer les données mensuelles
+        const months = ['Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Juin', 'Juil', 'Août', 'Sep', 'Oct', 'Nov', 'Déc'];
+        const currentMonth = new Date().getMonth();
+        
+        // Fonction pour vérifier si une date est valide
+        const isValidDate = (dateStr: string | null | undefined): boolean => {
+          if (!dateStr) return false;
+          const date = new Date(dateStr);
+          return !isNaN(date.getTime());
+        };
+        
+        const monthlyDataCalculated = months.slice(0, currentMonth + 1).map(month => {
+          const monthIndex = months.indexOf(month);
+          
+          // Filtrer les candidatures par mois
+          const monthCandidates = applications.filter(a => {
+            if (!isValidDate(a.applied_at) && !isValidDate(a.created_at)) return false;
+            const date = new Date(a.applied_at || a.created_at);
+            return date.getMonth() === monthIndex;
+          }).length;
+          
+          // Filtrer les entretiens par mois
+          const monthInterviews = interviews.filter(i => {
+            if (!isValidDate(i.date)) return false;
+            const date = new Date(i.date);
+            return date.getMonth() === monthIndex;
+          }).length;
+          
+          // Filtrer les embauches par mois
+          const monthHired = applications.filter(a => {
+            if (!isValidDate(a.updated_at) && !isValidDate(a.applied_at) && !isValidDate(a.created_at)) return false;
+            const date = new Date(a.updated_at || a.applied_at || a.created_at);
+            return date.getMonth() === monthIndex && a.status === 'accepted';
+          }).length;
+          
+          return {
+            month,
+            candidates: monthCandidates,
+            interviews: monthInterviews,
+            hired: monthHired
+          };
+        });
+        
+        setMonthlyData(monthlyDataCalculated);
+        
+        // Préparer les données par poste
+        const positionMap = new Map();
+        
+        // Regrouper les candidatures par poste
+        applications.forEach(app => {
+          // Trouver le job correspondant à la candidature
+          const job = jobs.find(j => j.id === app.job_id);
+          const position = job ? job.title : (app.position || 'Poste non spécifié');
+          
+          if (!positionMap.has(position)) {
+            positionMap.set(position, { candidates: 0, scores: [] });
+          }
+          positionMap.get(position).candidates += 1;
+          
+          // Ajouter le score s'il existe
+          if (app.score !== null && app.score !== undefined) {
+            const score = parseFloat(app.score);
+            if (!isNaN(score)) {
+              positionMap.get(position).scores.push(score);
+            }
+          }
+        });
+        
+        // Calculer le score moyen par poste
+        const positionDataCalculated = Array.from(positionMap.entries())
+          .map(([position, data]) => {
+            const averageScore = data.scores.length > 0 
+              ? parseFloat((data.scores.reduce((a, b) => a + b, 0) / data.scores.length).toFixed(1)) 
+              : 0;
+            
+            return {
+              position,
+              candidates: data.candidates,
+              averageScore
+            };
+          })
+          // Trier par nombre de candidats (décroissant)
+          .sort((a, b) => b.candidates - a.candidates);
+        
+        setPositionData(positionDataCalculated);
+        
+        // Préparer les données de compétences (basées sur les exigences des offres d'emploi)
+        const skillsMap = new Map();
+        
+        // Extraire les compétences des exigences des offres d'emploi
+        jobs.forEach(job => {
+          if (job && job.requirements) {
+            // Gérer à la fois les tableaux et les chaînes de caractères
+            const requirementsArray = Array.isArray(job.requirements) 
+              ? job.requirements 
+              : [job.requirements];
+              
+            requirementsArray.forEach(req => {
+              if (req) {
+                // Extraire les compétences techniques des exigences
+                const skills = extractSkills(String(req));
+                skills.forEach(skill => {
+                  if (!skillsMap.has(skill)) {
+                    skillsMap.set(skill, { count: 0, score: 0 });
+                  }
+                  skillsMap.get(skill).count += 1;
+                  
+                  // Attribuer un score basé sur la fréquence avec un plafond
+                  skillsMap.get(skill).score = Math.min(100, 50 + (skillsMap.get(skill).count * 5));
+                });
+              }
+            });
+          }
+        });
+        
+        // Convertir la map en tableau et trier par score puis par nom en cas d'égalité
+        const skillsDataCalculated = Array.from(skillsMap.entries())
+          .map(([skill, data]) => ({
+            skill,
+            score: data.score
+          }))
+          .sort((a, b) => b.score - a.score || a.skill.localeCompare(b.skill))
+          .slice(0, 6); // Prendre les 6 compétences les plus demandées
+        
+        setSkillsData(skillsDataCalculated);
+        
+        // Préparer les données des candidats récents
+        const recentCandidatesData = applications
+          .filter(app => isValidDate(app.applied_at) || isValidDate(app.created_at))
+          .sort((a, b) => {
+            try {
+              const dateA = new Date(a.applied_at || a.created_at);
+              const dateB = new Date(b.applied_at || b.created_at);
+              return dateB.getTime() - dateA.getTime();
+            } catch (e) {
+              return 0; // En cas d'erreur, ne pas modifier l'ordre
+            }
+          })
+          .slice(0, 3)
+          .map(app => {
+            const job = jobs.find(j => j.id === app.job_id);
+            let formattedDate = 'Date inconnue';
+            try {
+              const appliedDate = new Date(app.applied_at || app.created_at);
+              if (!isNaN(appliedDate.getTime())) {
+                formattedDate = appliedDate.toISOString().split('T')[0];
+              }
+            } catch (e) {
+              console.error('Erreur de formatage de date:', e);
+            }
+            return {
+              id: app.id.toString(),
+              name: app.candidate_name || 'Candidat ' + app.candidate_id,
+              position: job ? job.title : (app.position || 'Poste inconnu'),
+              date: formattedDate,
+              status: getStatusLabel(app.status)
+            };
+          });
+        
+        setRecentCandidates(recentCandidatesData);
+        
+        // Préparer les données des entretiens à venir
+        const now = new Date();
+        const upcomingInterviewsData = interviews
+          .filter(interview => {
+            // Vérifier si la date est valide
+            if (!interview.date) return false;
+            
+            try {
+              const interviewDate = new Date(interview.date);
+              // Vérifier si la date est valide et future
+              return !isNaN(interviewDate.getTime()) && 
+                     interviewDate > now && 
+                     interview.status !== 'cancelled';
+            } catch (e) {
+              console.error('Date invalide pour entretien:', interview.id);
+              return false;
+            }
+          })
+          .sort((a, b) => {
+            try {
+              return new Date(a.date).getTime() - new Date(b.date).getTime();
+            } catch (e) {
+              return 0; // En cas d'erreur, ne pas modifier l'ordre
+            }
+          })
+          .slice(0, 2)
+          .map(interview => {
+            try {
+              const interviewDate = new Date(interview.date);
+              if (isNaN(interviewDate.getTime())) throw new Error('Date invalide');
+              
+              return {
+                id: interview.id.toString(),
+                candidateId: interview.candidate_id ? interview.candidate_id.toString() : '',
+                candidateName: interview.candidate_name || (interview.candidate_id ? 'Candidat ' + interview.candidate_id : 'Candidat inconnu'),
+                position: interview.position || 'Poste non spécifié',
+                date: interviewDate.toISOString().split('T')[0],
+                time: interviewDate.toTimeString().split(' ')[0].substring(0, 5)
+              };
+            } catch (e) {
+              console.error('Erreur lors du traitement de l\'entretien:', e);
+              return {
+                id: interview.id ? interview.id.toString() : 'unknown',
+                candidateId: interview.candidate_id ? interview.candidate_id.toString() : '',
+                candidateName: interview.candidate_name || 'Candidat inconnu',
+                position: interview.position || 'Poste non spécifié',
+                date: 'Date invalide',
+                time: '--:--'
+              };
+            }
+          });
+        
+        setUpcomingInterviews(upcomingInterviewsData);
+        
+      } catch (err) {
+        console.error("Erreur lors du chargement des données du dashboard:", err);
+        setError("Une erreur est survenue lors du chargement des données. Veuillez réessayer.");
+        
+        // Initialiser avec des données vides en cas d'erreur
+        setStats({
+          totalCandidates: 0,
+          newCandidatesThisWeek: 0,
+          totalInterviews: 0,
+          completedInterviews: 0,
+          averageScore: 0,
+          pendingReviews: 0,
+          hiringRate: 0,
+        });
+        
+        setMonthlyData([
+          { month: "Jan", candidates: 0, interviews: 0, hired: 0 },
+          { month: "Fév", candidates: 0, interviews: 0, hired: 0 },
+          { month: "Mar", candidates: 0, interviews: 0, hired: 0 },
+          { month: "Avr", candidates: 0, interviews: 0, hired: 0 },
+          { month: "Mai", candidates: 0, interviews: 0, hired: 0 },
+          { month: "Juin", candidates: 0, interviews: 0, hired: 0 },
+        ]);
+        
+        setPositionData([
+          { position: "Développeur Frontend", candidates: 0, averageScore: 0 },
+          { position: "Développeur Backend", candidates: 0, averageScore: 0 },
+          { position: "UX Designer", candidates: 0, averageScore: 0 },
+        ]);
+        
+        setSkillsData([
+          { skill: "JavaScript", score: 0 },
+          { skill: "React", score: 0 },
+          { skill: "Node.js", score: 0 },
+        ]);
+        
+        setRecentCandidates([]);
+        setUpcomingInterviews([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    fetchDashboardData();
+  }, []);
+  
+  // Fonction pour extraire les compétences techniques des exigences
+  const extractSkills = (requirement: string): string[] => {
+    const commonSkills = [
+      "JavaScript", "React", "Angular", "Vue", "Node.js", "Python", "Java", "C#", 
+      "PHP", "Ruby", "Go", "Rust", "SQL", "NoSQL", "MongoDB", "PostgreSQL", 
+      "MySQL", "AWS", "Azure", "GCP", "Docker", "Kubernetes", "DevOps", "CI/CD",
+      "Git", "TypeScript", "HTML", "CSS", "SASS", "LESS", "Redux", "GraphQL",
+      "REST", "API", "Microservices", "Agile", "Scrum", "Kanban", "TDD", "BDD"
+    ];
+    
+    return commonSkills.filter(skill => 
+      requirement.toLowerCase().includes(skill.toLowerCase())
+    );
+  };
+  
+  // Fonction pour obtenir le libellé du statut en français
+  const getStatusLabel = (status: string): string => {
+    const statusMap: Record<string, string> = {
+      'pending': 'En attente',
+      'reviewed': 'CV analysé',
+      'interview': 'En attente d\'entretien',
+      'accepted': 'Accepté',
+      'rejected': 'Refusé',
+      'analyzed': 'Analysé'
+    };
+    
+    return statusMap[status] || status;
+  };
 
   return (
     <MainLayout>
@@ -139,14 +492,14 @@ export default function DashboardPage() {
             <div className="flex justify-between items-start mb-4">
               <div>
                 <h2 className="text-lg font-semibold text-muted-foreground">Candidats</h2>
-                <p className="text-3xl font-bold">{mockStats.totalCandidates}</p>
+                <p className="text-3xl font-bold">{stats.totalCandidates}</p>
               </div>
               <div className="p-3 rounded-full bg-primary/10">
                 <Users className="h-6 w-6 text-primary" />
               </div>
             </div>
             <div className="flex items-center text-sm">
-              <span className="text-green-500 dark:text-green-400 font-medium">+{mockStats.newCandidatesThisWeek} </span>
+              <span className="text-green-500 dark:text-green-400 font-medium">+{stats.newCandidatesThisWeek} </span>
               <span className="text-muted-foreground ml-1">cette semaine</span>
             </div>
           </div>
@@ -155,14 +508,14 @@ export default function DashboardPage() {
             <div className="flex justify-between items-start mb-4">
               <div>
                 <h2 className="text-lg font-semibold text-muted-foreground">Entretiens</h2>
-                <p className="text-3xl font-bold">{mockStats.totalInterviews}</p>
+                <p className="text-3xl font-bold">{stats.totalInterviews}</p>
               </div>
               <div className="p-3 rounded-full bg-primary/10">
                 <MessageSquare className="h-6 w-6 text-primary" />
               </div>
             </div>
             <div className="flex items-center text-sm">
-              <span className="text-green-500 dark:text-green-400 font-medium">{mockStats.completedInterviews} </span>
+              <span className="text-green-500 dark:text-green-400 font-medium">{stats.completedInterviews} </span>
               <span className="text-muted-foreground ml-1">terminés</span>
             </div>
           </div>
@@ -171,14 +524,14 @@ export default function DashboardPage() {
             <div className="flex justify-between items-start mb-4">
               <div>
                 <h2 className="text-lg font-semibold text-muted-foreground">Score moyen</h2>
-                <p className="text-3xl font-bold">{mockStats.averageScore}<span className="text-lg font-normal">/100</span></p>
+                <p className="text-3xl font-bold">{stats.averageScore}<span className="text-lg font-normal">/100</span></p>
               </div>
               <div className="p-3 rounded-full bg-primary/10">
                 <BarChart className="h-6 w-6 text-primary" />
               </div>
             </div>
             <div className="flex items-center text-sm">
-              <span className="text-yellow-500 dark:text-yellow-400 font-medium">{mockStats.pendingReviews} </span>
+              <span className="text-yellow-500 dark:text-yellow-400 font-medium">{stats.pendingReviews} </span>
               <span className="text-muted-foreground ml-1">évaluations en attente</span>
             </div>
           </div>
@@ -187,7 +540,7 @@ export default function DashboardPage() {
             <div className="flex justify-between items-start mb-4">
               <div>
                 <h2 className="text-lg font-semibold text-muted-foreground">Taux d&apos;embauche</h2>
-                <p className="text-3xl font-bold">{mockStats.hiringRate}<span className="text-lg font-normal">%</span></p>
+                <p className="text-3xl font-bold">{stats.hiringRate}<span className="text-lg font-normal">%</span></p>
               </div>
               <div className="p-3 rounded-full bg-primary/10">
                 <Users className="h-6 w-6 text-primary" />
@@ -224,7 +577,7 @@ export default function DashboardPage() {
               </div>
               
               <div className="h-64 flex items-end justify-between">
-                {mockMonthlyData.map((data, index) => (
+                {monthlyData.map((data, index) => (
                   <div key={index} className="flex flex-col items-center">
                     <div className="flex items-end h-48 mb-2">
                       <div 
@@ -251,7 +604,7 @@ export default function DashboardPage() {
               <h2 className="text-xl font-bold mb-6">Répartition par poste</h2>
               
               <div className="space-y-4">
-                {mockPositionData.map((data, index) => (
+                {positionData.map((data, index) => (
                   <div key={index}>
                     <div className="flex justify-between items-center mb-1">
                       <span className="text-sm">{data.position}</span>
@@ -260,7 +613,7 @@ export default function DashboardPage() {
                     <div className="w-full bg-muted rounded-full h-2.5">
                       <div 
                         className="bg-primary h-2.5 rounded-full" 
-                        style={{ width: `${(data.candidates / mockStats.totalCandidates) * 100}%` }}
+                        style={{ width: `${(data.candidates / stats.totalCandidates) * 100}%` }}
                       ></div>
                     </div>
                     <div className="flex justify-end mt-1">
@@ -281,7 +634,7 @@ export default function DashboardPage() {
               <h2 className="text-xl font-bold mb-6">Compétences les plus demandées</h2>
               
               <div className="space-y-4">
-                {mockSkillsData.map((data, index) => (
+                {skillsData.map((data, index) => (
                   <div key={index}>
                     <div className="flex justify-between items-center mb-1">
                       <span className="text-sm">{data.skill}</span>
@@ -351,7 +704,7 @@ export default function DashboardPage() {
               </Button>
             </div>
             <div className="divide-y divide-border">
-              {mockRecentCandidates.map((candidate) => (
+              {recentCandidates.map((candidate) => (
                 <div 
                   key={candidate.id} 
                   className="p-4 hover:bg-muted/50 cursor-pointer flex justify-between items-center"
@@ -405,9 +758,9 @@ export default function DashboardPage() {
                 </Link>
               </Button>
             </div>
-            {mockUpcomingInterviews.length > 0 ? (
+            {upcomingInterviews.length > 0 ? (
               <div className="divide-y divide-border">
-                {mockUpcomingInterviews.map((interview) => (
+                {upcomingInterviews.map((interview) => (
                   <div 
                     key={interview.id} 
                     className="p-4 hover:bg-muted/50 cursor-pointer flex justify-between items-center"

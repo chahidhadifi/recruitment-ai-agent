@@ -254,7 +254,7 @@ export default function RegisterPage() {
                       Inscription en cours...
                     </>
                   ) : (
-                    "S&apos;inscrire"
+                    "S'inscrire"
                   )}
                 </Button>
               </div>

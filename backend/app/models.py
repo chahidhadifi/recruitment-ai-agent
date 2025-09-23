@@ -54,6 +54,7 @@ class Job(Base):
     company_website = Column(String, nullable=True)
     company_linkedin = Column(String, nullable=True)
     recruiter_id = Column(Integer, nullable=False)
+    desired_candidates = Column(Integer, nullable=True)
     
     # Relationships
     # recruiter = relationship("RecruiterProfile", back_populates="jobs", primaryjoin="Job.recruiter_id == RecruiterProfile.id")

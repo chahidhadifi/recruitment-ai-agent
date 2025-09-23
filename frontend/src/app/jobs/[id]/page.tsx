@@ -321,6 +321,27 @@ export default function JobDetailPage({ params }: { params: { id: string } }) {
       // Récupérer les données de la candidature créée
       const applicationData = applyResponse.data;
       
+      // Envoyer les données au webhook n8n pour analyse du candidat
+      try {
+        const webhookPayload = {
+          applicationId: applicationData.id.toString(),
+          candidateId: session.user.id.toString(),
+          name: session.user.name,
+          email: session.user.email,
+          phone: phone,
+          jobId: params.id,
+          jobDescription: job?.description,
+          jobRequirements: job?.requirements.join('\n'),
+          desiredCandidates: job?.desired_candidates
+        };
+        
+        await axios.post('http://localhost:5555/webhook/analyze-candidate', webhookPayload);
+        console.log('Webhook notification sent successfully');
+      } catch (webhookError) {
+        console.error('Failed to send webhook notification:', webhookError);
+        // Continue with the application process even if webhook fails
+      }
+      
       toast({
         title: "Candidature envoyée",
         description: "Votre candidature a été envoyée avec succès. Vous allez être redirigé vers la page de vos candidatures.",
@@ -342,7 +363,7 @@ export default function JobDetailPage({ params }: { params: { id: string } }) {
     } catch (err) {
       toast({
         title: "Erreur",
-        description: err instanceof Error ? err.message : "Une erreur est survenue lors de l&apos;envoi de votre candidature",
+        description: err instanceof Error ? err.message : "Une erreur est survenue lors de l'envoi de votre candidature",
         variant: "destructive",
       });
       console.error(err);
@@ -425,17 +446,15 @@ export default function JobDetailPage({ params }: { params: { id: string } }) {
                     </div>
                   </div>
                   <div className="flex flex-wrap gap-2">
-                    <Badge variant="secondary" className="flex items-center">
-                      <Clock className="h-3 w-3 mr-1" />
-                      {job.type}
-                    </Badge>
                     {
-                      job.salary != null ? (
-                      <Badge variant="secondary" className="flex items-center">
-                      <DollarSign className="h-3 w-3 mr-1" />
-                      {job.salary}
-                      </Badge>
-                      ): ""
+                      job.salary == null || job.salary == "" ? (
+                      ""
+                      ): (
+                        <Badge variant="secondary" className="flex items-center">
+                        <DollarSign className="h-3 w-3 mr-1" />
+                        {job.salary}
+                        </Badge>
+                      )
                     }
                     <Badge variant="secondary" className="flex items-center">
                       <Briefcase className="h-3 w-3 mr-1" />
@@ -443,7 +462,7 @@ export default function JobDetailPage({ params }: { params: { id: string } }) {
                     </Badge>
                     <Badge variant="outline" className="flex items-center">
                       <Users className="h-3 w-3 mr-1" />
-                      {job.applications} candidat{job.applications > 1 ? "s" : ""}
+                      {job.desired_candidates} candidat{job.desired_candidates > 1 ? "s" : ""}
                     </Badge>
                   </div>
                 </div>

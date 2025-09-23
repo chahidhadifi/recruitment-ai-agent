@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from "react";
 import { UserStats as UserStatsType } from "@/types/user";
-import { getUserStats } from "@/lib/api/users";
 import { Users, UserCheck, UserCog } from "lucide-react";
 
 interface UserStatsProps {}
@@ -12,15 +11,24 @@ export function UserStats({}: UserStatsProps) {
     totalUsers: 0,
     adminCount: 0,
     recruiterCount: 0,
-    candidateCount: 0
+    candidateCount: 0,
+    activeUsers: 0,
+    inactiveUsers: 0
   });
   const [isLoading, setIsLoading] = useState(true);
   
   useEffect(() => {
     const fetchStats = async () => {
       try {
-        const userStats = await getUserStats();
-        setStats(userStats);
+        setIsLoading(true);
+        // Utilisation de l'API route Next.js
+        const response = await fetch('http://localhost:8000/api/users-stats');
+        if (response.ok) {
+          const userStats = await response.json();
+          setStats(userStats);
+        } else {
+          console.error(`Erreur API: ${response.status}`);
+        }
       } catch (error) {
         console.error("Erreur lors de la récupération des statistiques:", error);
       } finally {
@@ -55,6 +63,18 @@ export function UserStats({}: UserStatsProps) {
       value: stats.candidateCount,
       icon: Users,
       color: "bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-300",
+    },
+    {
+      title: "Utilisateurs actifs",
+      value: stats.activeUsers,
+      icon: UserCheck,
+      color: "bg-emerald-100 text-emerald-800 dark:bg-emerald-900 dark:text-emerald-300",
+    },
+    {
+      title: "Utilisateurs inactifs",
+      value: stats.inactiveUsers,
+      icon: Users,
+      color: "bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300",
     },
   ];
 

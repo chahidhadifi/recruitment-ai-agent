@@ -7,7 +7,7 @@ import { randomBytes } from "crypto";
 const secret = process.env.NEXTAUTH_SECRET || randomBytes(32).toString('hex');
 
 // API URL
-const API_URL = 'http://localhost:8000';
+const API_URL = 'http://backend:8000';
 
 export const authOptions: NextAuthOptions = {
   providers: [

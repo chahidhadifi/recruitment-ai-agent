@@ -107,9 +107,12 @@ def get_current_user(db: Session = Depends(get_db), authorization: str = Header(
     
     return user
         
-# Helper function to hash passwords
-def hash_password(password: str) -> str:
+# Helper functions for password hashing and verification
+def get_password_hash(password: str) -> str:
     return hashlib.sha256(password.encode()).hexdigest()
+
+def verify_password(plain_password: str, hashed_password: str) -> bool:
+    return get_password_hash(plain_password) == hashed_password
 
 # Authentication endpoint
 @app.post("/api/auth/login/", response_model=schemas.Token)
@@ -119,8 +122,7 @@ def login(login_data: schemas.UserLogin, db: Session = Depends(get_db)):
         raise HTTPException(status_code=401, detail="Invalid email or password")
     
     # Verify password
-    hashed_password = hash_password(login_data.password)
-    if user.password != hashed_password:
+    if not verify_password(login_data.password, user.password):
         raise HTTPException(status_code=401, detail="Invalid email or password")
     
     # Update last login time
@@ -220,7 +222,7 @@ def create_user(user: schemas.UserCreate, db: Session = Depends(get_db)):
         raise HTTPException(status_code=400, detail="Email already registered")
     
     # Hash the password
-    hashed_password = hash_password(user.password)
+    hashed_password = get_password_hash(user.password)
     
     try:
         # Ensure role is properly converted to enum if it's a string
@@ -336,7 +338,23 @@ def delete_user(user_id: int, db: Session = Depends(get_db)):
     
     return {"success": True}
 
-@app.get("/api/users/stats", response_model=schemas.UserStats)
+@app.put("/api/users/{user_id}/change-password", response_model=dict)
+def change_password(user_id: int, password_data: schemas.PasswordChange, db: Session = Depends(get_db)):
+    db_user = db.query(models.User).filter(models.User.id == user_id).first()
+    if db_user is None:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    # Verify current password
+    if not verify_password(password_data.current_password, db_user.password):
+        raise HTTPException(status_code=400, detail="Mot de passe actuel incorrect")
+    
+    # Update password
+    db_user.password = get_password_hash(password_data.new_password)
+    db.commit()
+    
+    return {"success": True, "message": "Mot de passe modifié avec succès"}
+
+@app.get("/api/users-stats", response_model=schemas.UserStats)
 def get_user_stats(db: Session = Depends(get_db)):
     total_users = db.query(func.count(models.User.id)).scalar()
     admin_count = db.query(func.count(models.User.id)).filter(models.User.role == models.UserRole.admin).scalar()

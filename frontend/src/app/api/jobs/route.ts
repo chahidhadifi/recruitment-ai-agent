@@ -195,7 +195,7 @@ export async function GET(request: NextRequest) {
     const query = searchParams.get('query')?.toLowerCase();
     
     // Construire l'URL de l'API backend avec les paramètres de recherche
-    let backendUrl = `${process.env.BACKEND_URL || 'http://localhost:8000'}/api/jobs/`;
+    let backendUrl = `http://localhost:8000/api/jobs/`;
     
     // Ajouter les paramètres de requête si nécessaire
     const params: Record<string, string> = {};
@@ -235,31 +235,32 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Données incomplètes' }, { status: 400 });
     }
     
-    // Dans un environnement de production, vous enregistreriez les données dans une base de données
-    // Pour cette démonstration, nous simulons la création d'une nouvelle offre
-    const newJobId = (Math.max(...Object.keys(mockJobs).map(Number)) + 1).toString();
-    
-    const newJob: Job = {
-      id: newJobId,
+    // Préparer les données pour l'API backend
+    const backendJobData = {
       title: jobData.title,
       company: jobData.company,
       location: jobData.location || 'Non spécifié',
       type: jobData.type || 'CDI',
       salary: jobData.salary || 'Non spécifié',
-      postedDate: new Date().toISOString().split('T')[0],
       description: jobData.description,
       responsibilities: jobData.responsibilities || [],
       requirements: jobData.requirements || [],
       benefits: jobData.benefits || [],
-      recruiter: session.user.id,
-      applications: 0
+      recruiter_id: parseInt(session.user.id),
+      desired_candidates: jobData.desired_candidates ? parseInt(jobData.desired_candidates) : null,
+      company_website: jobData.company_website || null,
+      company_linkedin: jobData.company_linkedin || null
     };
     
-    // Dans un environnement réel, vous enregistreriez newJob dans votre base de données
-    // Pour cette démonstration, nous le retournons simplement
-    return NextResponse.json(newJob, { status: 201 });
+    // Envoyer les données à l'API backend
+    const backendUrl = `http://localhost:8000/api/jobs/`;
+    const response = await axios.post(backendUrl, backendJobData);
+    
+    return NextResponse.json(response.data, { status: 201 });
   } catch (error) {
-    console.error('Erreur lors de la création de l&apos;offre d&apos;emploi:', error);
-    return NextResponse.json({ error: 'Erreur serveur' }, { status: 500 });
+    console.error('Erreur lors de la création de l\'offre d\'emploi:', error);
+    return NextResponse.json({ 
+      error: error.response?.data?.detail || 'Erreur serveur lors de la création de l\'offre' 
+    }, { status: error.response?.status || 500 });
   }
 }

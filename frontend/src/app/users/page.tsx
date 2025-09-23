@@ -1,63 +1,24 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
-import { Search, Plus, Edit, Trash2, UserPlus, UserCheck, UserX, Filter } from "lucide-react";
+import { Search, Filter, Edit, Trash2, UserPlus } from "lucide-react";
 
-import { MainLayout } from "@/components/main-layout";
+import {MainLayout} from "@/components/main-layout";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+// import { Skeleton } from "@/components/ui/skeleton";
 import { UserWithRole } from "@/types/user-roles";
-import { DeleteUserDialog } from "@/components/delete-user-dialog";
-import { UserStats } from "@/components/user-stats";
 import { getUsers, deleteUser } from "@/lib/api/users";
 import { UserFilters } from "@/types/user";
+import { toast } from "sonner";
+import AddUserDialog from "@/components/users/AddUserDialog";
+import EditUserDialog from "@/components/users/EditUserDialog";
+import DeleteUserDialog from "@/components/users/DeleteUserDialog";
+import { UserStats } from "@/components/user-stats";
 
-// Données fictives pour la démonstration
-const mockUsers: UserWithRole[] = [
-  {
-    id: "admin-1",
-    name: "Administrateur Principal",
-    email: "admin@example.com",
-    image: "https://ui-avatars.com/api/?name=Administrateur&background=0D8ABC&color=fff",
-    role: "admin"
-  },
-  {
-    id: "recruteur-1",
-    name: "Sophie Martin",
-    email: "sophie.martin@example.com",
-    image: "https://ui-avatars.com/api/?name=Sophie+Martin&background=2E8B57&color=fff",
-    role: "recruteur"
-  },
-  {
-    id: "recruteur-2",
-    name: "Thomas Dubois",
-    email: "thomas.dubois@example.com",
-    image: "https://ui-avatars.com/api/?name=Thomas+Dubois&background=2E8B57&color=fff",
-    role: "recruteur"
-  },
-  {
-    id: "candidat-1",
-    name: "Jean Dupont",
-    email: "jean.dupont@example.com",
-    image: "https://ui-avatars.com/api/?name=Jean+Dupont&background=CD7F32&color=fff",
-    role: "candidat"
-  },
-  {
-    id: "candidat-2",
-    name: "Marie Lefebvre",
-    email: "marie.lefebvre@example.com",
-    image: "https://ui-avatars.com/api/?name=Marie+Lefebvre&background=CD7F32&color=fff",
-    role: "candidat"
-  },
-  {
-    id: "candidat-3",
-    name: "Pierre Bernard",
-    email: "pierre.bernard@example.com",
-    image: "https://ui-avatars.com/api/?name=Pierre+Bernard&background=CD7F32&color=fff",
-    role: "candidat"
-  },
-];
 
 export default function UsersPage() {
   const router = useRouter();
@@ -67,9 +28,101 @@ export default function UsersPage() {
   const [filterRole, setFilterRole] = useState("all");
   const [userToDelete, setUserToDelete] = useState<UserWithRole | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isDeleteLoading, setIsDeleteLoading] = useState(false);
+  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [userToEdit, setUserToEdit] = useState<UserWithRole | null>(null);
   
   // Vérifier si l&apos;utilisateur est un administrateur
   const isAdmin = session?.user?.role === "admin";
+  
+  // Fonction pour charger les utilisateurs (mémorisée avec useCallback)
+  const loadUsers = useCallback(async () => {
+    setIsLoading(true);
+    try {
+      const filters: UserFilters = {};
+      if (searchTerm) filters.searchTerm = searchTerm;
+      if (filterRole !== "all") filters.role = filterRole as any;
+      
+      // Récupérer les données directement depuis l'API backend
+      const data = await getUsers(filters);
+      
+      // Convertir les IDs numériques en chaînes de caractères si nécessaire
+      const formattedUsers = data.map(user => ({
+        ...user,
+        id: user.id.toString()
+      }));
+      
+      setUsers(formattedUsers);
+    } catch (error) {
+      console.error("Erreur lors du chargement des utilisateurs:", error);
+      toast.error("Erreur lors du chargement des utilisateurs");
+    } finally {
+      setIsLoading(false);
+    }
+  }, [searchTerm, filterRole]);
+  
+  // Charger les utilisateurs quand les filtres changent ou quand loadUsers change
+  useEffect(() => {
+    loadUsers();
+  }, [loadUsers]);
+  
+  // Fonction pour ouvrir le dialogue de confirmation de suppression
+  const openDeleteDialog = (user: UserWithRole) => {
+    setUserToDelete(user);
+  };
+
+  // Fonction pour fermer le dialogue de confirmation de suppression
+  const closeDeleteDialog = () => {
+    setUserToDelete(null);
+  };
+
+  // Fonction pour ouvrir le dialogue d'édition
+  const openEditDialog = (user: UserWithRole) => {
+    setUserToEdit(user);
+    setIsEditDialogOpen(true);
+  };
+
+  // Fonction pour fermer le dialogue d'édition
+  const closeEditDialog = () => {
+    setUserToEdit(null);
+    setIsEditDialogOpen(false);
+  };
+
+  // Fonction pour ouvrir le dialogue d'ajout
+  const openAddDialog = () => {
+    setIsAddDialogOpen(true);
+  };
+
+  // Fonction pour fermer le dialogue d'ajout
+  const closeAddDialog = () => {
+    setIsAddDialogOpen(false);
+  };
+
+  // Fonction pour supprimer un utilisateur
+  const handleDeleteUser = async () => {
+    if (!userToDelete) return;
+    
+    setIsDeleteLoading(true);
+    try {
+      // Convertir l'ID en nombre si c'est une chaîne
+      const userId = typeof userToDelete.id === 'string' ? parseInt(userToDelete.id) : userToDelete.id;
+      
+      const success = await deleteUser(userId);
+      
+      if (success) {
+        // Mettre à jour la liste des utilisateurs
+        setUsers(users.filter(user => user.id !== userToDelete.id));
+        toast.success(`L'utilisateur ${userToDelete.name} a été supprimé`);
+        closeDeleteDialog();
+      }
+    } catch (error) {
+      console.error("Erreur lors de la suppression de l'utilisateur:", error);
+      toast.error("Erreur lors de la suppression de l'utilisateur");
+    } finally {
+      setIsDeleteLoading(false);
+    }
+  };
   
   // Rediriger si l&apos;utilisateur n&apos;est pas authentifié ou n&apos;est pas un administrateur
   if (status === "loading") {
@@ -91,62 +144,19 @@ export default function UsersPage() {
     router.push("/");
     return null;
   }
-
-  // Charger les utilisateurs
-  useEffect(() => {
-    const loadUsers = async () => {
-      setIsLoading(true);
-      try {
-        const filters: UserFilters = {};
-        if (searchTerm) filters.searchTerm = searchTerm;
-        if (filterRole !== "all") filters.role = filterRole as any;
-        
-        const data = await getUsers(filters);
-        setUsers(data);
-      } catch (error) {
-        console.error("Erreur lors du chargement des utilisateurs:", error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-    
-    loadUsers();
-  }, [searchTerm, filterRole]);
   
   // Utilisateurs filtrés (déjà filtrés par l&apos;API)
   const filteredUsers = users;
-
-  // Fonction pour ouvrir le dialogue de confirmation de suppression
-  const openDeleteDialog = (user: UserWithRole) => {
-    setUserToDelete(user);
-  };
-
-  // Fonction pour fermer le dialogue de confirmation de suppression
-  const closeDeleteDialog = () => {
-    setUserToDelete(null);
-  };
-
-  // Fonction pour supprimer un utilisateur
-  const handleDeleteUser = async () => {
-    if (!userToDelete) return;
-    
-    try {
-      const success = await deleteUser(userToDelete.id);
-      
-      if (success) {
-        // Mettre à jour la liste des utilisateurs
-        setUsers(users.filter(user => user.id !== userToDelete.id));
-      }
-    } catch (error) {
-      console.error("Erreur lors de la suppression de l&apos;utilisateur:", error);
-    }
-  };
 
   return (
     <MainLayout>
       <div className="container py-10">
         <div className="flex justify-between items-center mb-6">
           <h1 className="text-3xl font-bold">Gestion des utilisateurs</h1>
+          <Button onClick={openAddDialog}>
+            <UserPlus className="mr-2 h-4 w-4" />
+            Ajouter un utilisateur
+          </Button>
         </div>
         
         {/* Statistiques des utilisateurs */}
@@ -247,7 +257,7 @@ export default function UsersPage() {
                             <Button
                               variant="ghost"
                               size="icon"
-                              onClick={() => router.push(`/users/${user.id}/edit`)}
+                              onClick={() => openEditDialog(user)}
                             >
                               <Edit className="h-4 w-4" />
                               <span className="sr-only">Modifier</span>
@@ -289,6 +299,24 @@ export default function UsersPage() {
             userName={userToDelete.name}
             onClose={closeDeleteDialog}
             onConfirm={handleDeleteUser}
+            isDeleting={isDeleteLoading}
+          />
+        )}
+        
+        {/* Dialogue d'ajout d'utilisateur */}
+        <AddUserDialog
+          isOpen={isAddDialogOpen}
+          onClose={closeAddDialog}
+          onUserAdded={loadUsers}
+        />
+        
+        {/* Dialogue d'édition d'utilisateur */}
+        {userToEdit && (
+          <EditUserDialog
+            isOpen={isEditDialogOpen}
+            user={userToEdit}
+            onClose={closeEditDialog}
+            onUserUpdated={loadUsers}
           />
         )}
       </div>

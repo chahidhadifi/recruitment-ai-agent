@@ -49,16 +49,17 @@ const mockUsers: UserWithRole[] = [
 
 /**
  * Récupère tous les utilisateurs avec filtrage et tri optionnels
+ * Utilise directement l'API backend au lieu de passer par l'API route Next.js
  */
 export async function getUsers(filters?: UserFilters): Promise<UserWithRole[]> {
   try {
     // Construire l'URL avec les paramètres de requête
-    let url = "/api/users";
+    let url = "http://localhost:8000/api/users/";
     const params = new URLSearchParams();
     
     if (filters) {
       if (filters.searchTerm) {
-        params.append("searchTerm", filters.searchTerm);
+        params.append("search", filters.searchTerm); // Adapter le nom du paramètre pour le backend
       }
       
       if (filters.role) {
@@ -66,9 +67,9 @@ export async function getUsers(filters?: UserFilters): Promise<UserWithRole[]> {
       }
       
       if (filters.sortBy) {
-        params.append("sortBy", filters.sortBy);
+        params.append("sort_by", filters.sortBy); // Adapter le nom du paramètre pour le backend
         if (filters.sortOrder) {
-          params.append("sortOrder", filters.sortOrder);
+          params.append("sort_order", filters.sortOrder);
         }
       }
     }
@@ -77,7 +78,7 @@ export async function getUsers(filters?: UserFilters): Promise<UserWithRole[]> {
       url += `?${params.toString()}`;
     }
     
-    // Envoyer la requête à l'API
+    // Envoyer la requête à l'API backend
     const response = await fetch(url);
     
     if (!response.ok) {
@@ -93,10 +94,11 @@ export async function getUsers(filters?: UserFilters): Promise<UserWithRole[]> {
 
 /**
  * Récupère un utilisateur par son ID
+ * Utilise directement l'API backend au lieu de passer par l'API route Next.js
  */
 export async function getUserById(id: string): Promise<UserWithRole | null> {
   try {
-    const response = await fetch(`/api/users/${id}`);
+    const response = await fetch(`http://localhost:8000/api/users/${id}`);
     
     if (!response.ok) {
       if (response.status === 404) {
@@ -114,10 +116,11 @@ export async function getUserById(id: string): Promise<UserWithRole | null> {
 
 /**
  * Crée un nouvel utilisateur
+ * Utilise directement l'API backend au lieu de passer par l'API route Next.js
  */
 export async function createUser(userData: CreateUserData): Promise<UserWithRole | null> {
   try {
-    const response = await fetch("/api/users", {
+    const response = await fetch("http://localhost:8000/api/users/", {
       method: "POST",
       headers: {
         "Content-Type": "application/json"
@@ -139,10 +142,11 @@ export async function createUser(userData: CreateUserData): Promise<UserWithRole
 
 /**
  * Met à jour un utilisateur existant
+ * Utilise directement l'API backend au lieu de passer par l'API route Next.js
  */
 export async function updateUser(id: string, userData: UpdateUserData): Promise<UserWithRole | null> {
   try {
-    const response = await fetch(`/api/users/${id}`, {
+    const response = await fetch(`http://localhost:8000/api/users/${id}`, {
       method: "PUT",
       headers: {
         "Content-Type": "application/json"
@@ -164,10 +168,11 @@ export async function updateUser(id: string, userData: UpdateUserData): Promise<
 
 /**
  * Supprime un utilisateur
+ * Utilise directement l'API backend au lieu de passer par l'API route Next.js
  */
 export async function deleteUser(id: string): Promise<boolean> {
   try {
-    const response = await fetch(`/api/users/${id}`, {
+    const response = await fetch(`http://localhost:8000/api/users/${id}`, {
       method: "DELETE"
     });
     
@@ -186,10 +191,11 @@ export async function deleteUser(id: string): Promise<boolean> {
 
 /**
  * Récupère les statistiques des utilisateurs
+ * Utilise directement l'API backend au lieu de passer par l'API route Next.js
  */
 export async function getUserStats(): Promise<UserStats> {
   try {
-    const response = await fetch("/api/users/stats");
+    const response = await fetch("http://localhost:8000/api/users-stats");
     
     if (!response.ok) {
       throw new Error(`Erreur lors de la récupération des statistiques: ${response.status}`);
@@ -203,7 +209,9 @@ export async function getUserStats(): Promise<UserStats> {
       totalUsers: 0,
       adminCount: 0,
       recruiterCount: 0,
-      candidateCount: 0
+      candidateCount: 0,
+      activeUsers: 0,
+      inactiveUsers: 0
     };
   }
 }

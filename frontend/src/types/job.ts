@@ -10,8 +10,11 @@ export interface Job {
   responsibilities: string[];
   requirements: string[];
   benefits: string[];
-  recruiter: string; // ID du recruteur
+  recruiter_id: number; // ID du recruteur
   applications: number; // Nombre de candidatures
+  desired_candidates?: number; // Nombre de candidats souhaités
+  company_website?: string; // Site web de l'entreprise
+  company_linkedin?: string; // LinkedIn de l'entreprise
 }
 
 export interface JobApplication {

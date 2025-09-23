@@ -52,7 +52,7 @@ export default function ApplicationsPage() {
           setError(null);
           
           // Appel à l'API pour récupérer les candidatures
-          const response = await fetch('/api/applications');
+          const response = await fetch('http://localhost:8000/api/applications');
           
           if (!response.ok) {
             const errorData = await response.json();
@@ -98,7 +98,7 @@ export default function ApplicationsPage() {
       );
       
       // Appel à l'API pour mettre à jour le statut
-      const response = await fetch(`/api/applications/${applicationId}`, {
+      const response = await fetch(`http://localhost:8000/api/applications/${applicationId}`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',

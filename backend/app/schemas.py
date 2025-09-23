@@ -46,6 +46,10 @@ class UserUpdate(BaseModel):
     department: Optional[str] = None
     specialization: Optional[str] = None
 
+class PasswordChange(BaseModel):
+    current_password: str
+    new_password: str
+
 class RecruiterProfileBase(BaseModel):
     department: Optional[str] = None
     specialization: Optional[str] = None
@@ -136,6 +140,7 @@ class JobBase(BaseModel):
     benefits: Optional[List[str]] = None
     company_website: Optional[str] = None
     company_linkedin: Optional[str] = None
+    desired_candidates: Optional[int] = None
 
 
 class JobCreate(JobBase):
@@ -154,6 +159,7 @@ class JobUpdate(BaseModel):
     benefits: Optional[List[str]] = None
     company_website: Optional[str] = None
     company_linkedin: Optional[str] = None
+    desired_candidates: Optional[int] = None
 
 
 class Job(JobBase):

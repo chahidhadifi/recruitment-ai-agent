@@ -1,9 +1,10 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useState, useEffect } from "react";
+import { useRouter, useParams } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { ArrowLeft } from "lucide-react";
+import axios from "axios";
 
 import { MainLayout } from "@/components/main-layout";
 import { Button } from "@/components/ui/button";
@@ -14,12 +15,14 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/components/ui/use-toast";
 
-export default function NewJobPage() {
+export default function EditJobPage() {
   const router = useRouter();
+  const params = useParams();
+  const jobId = params.id;
   const { data: session, status } = useSession();
   const { toast } = useToast();
   
-  // Déclarer les états avant les conditions
+  const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formData, setFormData] = useState({
     title: "",
@@ -39,8 +42,60 @@ export default function NewJobPage() {
   // Vérifier si l'utilisateur est un recruteur
   const isRecruiter = session?.user?.role === "recruteur" || session?.user?.role === "admin";
   
+  // Charger les données de l'offre
+  useEffect(() => {
+    const fetchJobData = async () => {
+      if (status !== "authenticated" || !isRecruiter) return;
+      
+      try {
+        setIsLoading(true);
+        const response = await axios.get(`http://localhost:8000/api/jobs/${jobId}`);
+        const jobData = response.data;
+        
+        // Vérifier que l'utilisateur est bien le créateur de l'offre
+        if (jobData.recruiter_id && jobData.recruiter_id.toString() !== session.user.id) {
+          toast({
+            title: "Accès refusé",
+            description: "Vous n'êtes pas autorisé à modifier cette offre d'emploi.",
+            variant: "destructive",
+          });
+          router.push("/jobs");
+          return;
+        }
+        
+        // Convertir les tableaux en chaînes de caractères pour l'affichage dans les champs
+        setFormData({
+          title: jobData.title || "",
+          company: jobData.company || "",
+          location: jobData.location || "",
+          type: jobData.type || "CDI",
+          salary: jobData.salary || "",
+          description: jobData.description || "",
+          responsibilities: Array.isArray(jobData.responsibilities) ? jobData.responsibilities.join('\n') : jobData.responsibilities || "",
+          requirements: Array.isArray(jobData.requirements) ? jobData.requirements.join('\n') : jobData.requirements || "",
+          benefits: Array.isArray(jobData.benefits) ? jobData.benefits.join('\n') : jobData.benefits || "",
+          desired_candidates: jobData.desired_candidates ? jobData.desired_candidates.toString() : "",
+          company_website: jobData.company_website || "",
+          company_linkedin: jobData.company_linkedin || ""
+        });
+      } catch (error) {
+        console.error("Erreur lors du chargement de l'offre:", error);
+        toast({
+          title: "Erreur",
+          description: "Impossible de charger les détails de l'offre d'emploi.",
+          variant: "destructive",
+        });
+        router.push("/jobs");
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchJobData();
+  }, [jobId, status, session, router, toast, isRecruiter]);
+  
   // Rediriger si l'utilisateur n'est pas authentifié ou n'est pas un recruteur
-  if (status === "loading") {
+  if (status === "loading" || isLoading) {
     return (
       <MainLayout>
         <div className="container py-10 flex justify-center items-center">
@@ -94,15 +149,13 @@ export default function NewJobPage() {
         benefits: formData.benefits.split('\n').filter(item => item.trim() !== ''),
         // Convertir desired_candidates en nombre si présent
         desired_candidates: formData.desired_candidates ? parseInt(formData.desired_candidates) : null,
-        // Ajouter les champs manquants
-        postedDate: new Date().toISOString(),
-        applications: 0,
+        // Conserver l'ID du recruteur
         recruiter_id: parseInt(session?.user?.id) || 0
       };
       
       // Envoyer les données à l'API
-      const response = await fetch('http://localhost:8000/api/jobs/', {
-        method: 'POST',
+      const response = await fetch(`http://localhost:8000/api/jobs/${jobId}`, {
+        method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
         },
@@ -111,21 +164,21 @@ export default function NewJobPage() {
       
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.detail || errorData.message || "Erreur lors de la création de l'offre");
+        throw new Error(errorData.detail || errorData.message || "Erreur lors de la modification de l'offre");
       }
       
       toast({
-        title: "Offre publiée",
-        description: "Votre offre d'emploi a été publiée avec succès.",
+        title: "Offre mise à jour",
+        description: "Votre offre d'emploi a été modifiée avec succès.",
       });
       
       // Rediriger vers la liste des offres
       router.push("/jobs");
     } catch (error) {
-      console.error("Erreur lors de la création de l'offre:", error);
+      console.error("Erreur lors de la modification de l'offre:", error);
       toast({
         title: "Erreur",
-        description: error instanceof Error ? error.message : "Une erreur s&apos;est produite lors de la publication de l&apos;offre. Veuillez réessayer.",
+        description: error instanceof Error ? error.message : "Une erreur s'est produite lors de la modification de l'offre. Veuillez réessayer.",
         variant: "destructive",
       });
     } finally {
@@ -142,7 +195,7 @@ export default function NewJobPage() {
         
         <Card>
           <CardHeader>
-            <CardTitle className="text-2xl">Publier une nouvelle offre d&apos;emploi</CardTitle>
+            <CardTitle className="text-2xl">Modifier l&apos;offre d&apos;emploi</CardTitle>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-6">
@@ -207,26 +260,75 @@ export default function NewJobPage() {
                   <Input
                     id="salary"
                     name="salary"
-                    placeholder="ex: 45 000€ - 60 000€"
+                    placeholder="ex: 45 000 € - 55 000 € par an"
                     value={formData.salary}
                     onChange={handleChange}
                   />
                 </div>
                 
                 <div className="space-y-2">
-                  <Label htmlFor="desired_candidates">Nombre de candidats souhaités</Label>
+                  <Label htmlFor="desired_candidates">Nombre de candidats recherchés</Label>
                   <Input
                     id="desired_candidates"
                     name="desired_candidates"
                     type="number"
-                    placeholder="ex: 5"
+                    placeholder="ex: 1"
                     value={formData.desired_candidates}
                     onChange={handleChange}
                   />
                 </div>
               </div>
               
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
+              <div className="space-y-2">
+                <Label htmlFor="description">Description du poste <span className="text-destructive">*</span></Label>
+                <Textarea
+                  id="description"
+                  name="description"
+                  placeholder="Décrivez le poste en détail..."
+                  value={formData.description}
+                  onChange={handleChange}
+                  rows={5}
+                  required
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="responsibilities">Responsabilités (une par ligne)</Label>
+                <Textarea
+                  id="responsibilities"
+                  name="responsibilities"
+                  placeholder="- Développer des fonctionnalités frontend&#10;- Collaborer avec l'équipe design&#10;- Optimiser les performances"
+                  value={formData.responsibilities}
+                  onChange={handleChange}
+                  rows={4}
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="requirements">Prérequis (un par ligne)</Label>
+                <Textarea
+                  id="requirements"
+                  name="requirements"
+                  placeholder="- 3+ ans d'expérience en React&#10;- Connaissance de TypeScript&#10;- Expérience avec les API REST"
+                  value={formData.requirements}
+                  onChange={handleChange}
+                  rows={4}
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="benefits">Avantages (un par ligne)</Label>
+                <Textarea
+                  id="benefits"
+                  name="benefits"
+                  placeholder="- Télétravail partiel&#10;- Tickets restaurant&#10;- Mutuelle d'entreprise"
+                  value={formData.benefits}
+                  onChange={handleChange}
+                  rows={4}
+                />
+              </div>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-2">
                   <Label htmlFor="company_website">Site web de l'entreprise</Label>
                   <Input
@@ -250,61 +352,12 @@ export default function NewJobPage() {
                 </div>
               </div>
               
-              <div className="space-y-2">
-                <Label htmlFor="description">Description du poste <span className="text-destructive">*</span></Label>
-                <Textarea
-                  id="description"
-                  name="description"
-                  placeholder="Décrivez le poste, les missions principales et le contexte..."
-                  rows={5}
-                  value={formData.description}
-                  onChange={handleChange}
-                  required
-                />
-              </div>
-              
-              <div className="space-y-2">
-                <Label htmlFor="responsibilities">Responsabilités</Label>
-                <Textarea
-                  id="responsibilities"
-                  name="responsibilities"
-                  placeholder="Listez les responsabilités principales (une par ligne)"
-                  rows={4}
-                  value={formData.responsibilities}
-                  onChange={handleChange}
-                />
-              </div>
-              
-              <div className="space-y-2">
-                <Label htmlFor="requirements">Prérequis et compétences</Label>
-                <Textarea
-                  id="requirements"
-                  name="requirements"
-                  placeholder="Listez les compétences et qualifications requises (une par ligne)"
-                  rows={4}
-                  value={formData.requirements}
-                  onChange={handleChange}
-                />
-              </div>
-              
-              <div className="space-y-2">
-                <Label htmlFor="benefits">Avantages et bénéfices</Label>
-                <Textarea
-                  id="benefits"
-                  name="benefits"
-                  placeholder="Listez les avantages proposés (une par ligne)"
-                  rows={4}
-                  value={formData.benefits}
-                  onChange={handleChange}
-                />
-              </div>
-              
               <div className="flex justify-end space-x-4">
-                <Button variant="outline" type="button" onClick={() => router.push("/jobs")}>
+                <Button type="button" variant="outline" onClick={() => router.back()} disabled={isSubmitting}>
                   Annuler
                 </Button>
                 <Button type="submit" disabled={isSubmitting}>
-                  {isSubmitting ? "Publication en cours..." : "Publier l'offre"}
+                  {isSubmitting ? "Enregistrement..." : "Enregistrer les modifications"}
                 </Button>
               </div>
             </form>

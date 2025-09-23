@@ -25,15 +25,15 @@ const publicLinks = [
 const navigationItems = {
   admin: [
     { name: "Accueil", href: "/" },
-    { name: "Tableau de bord", href: "/dashboard" },
-    { name: "Candidats", href: "/candidates" },
+    // { name: "Tableau de bord", href: "/dashboard" },
+    // { name: "Candidats", href: "/candidates" },
     { name: "Offres d'emploi", href: "/jobs" },
     { name: "Utilisateurs", href: "/users" },
     { name: "Aide", href: "/help" },
   ],
   recruteur: [
     { name: "Accueil", href: "/" },
-    { name: "Tableau de bord", href: "/dashboard" },
+    // { name: "Tableau de bord", href: "/dashboard" },
     { name: "Entretiens", href: "/interviews" },
     { name: "Offres d'emploi", href: "/jobs" },
     { name: "Aide", href: "/help" },
@@ -161,10 +161,10 @@ export function Header() {
                       <User className="h-4 w-4 text-primary" />
                     </div>
                   )}
-                  <span className="text-xs px-2 py-0.5 rounded-full bg-primary/10 text-primary">
+                  {/* <span className="text-xs px-2 py-0.5 rounded-full bg-primary/10 text-primary">
                     {session.user.role === "admin" ? "Admin" : 
                      session.user.role === "recruteur" ? "Recruteur" : "Candidat"}
-                  </span>
+                  </span> */}
                 </button>
                 {dropdownOpen && (
                   <div className="absolute right-0 mt-2 w-48 bg-card rounded-md shadow-lg overflow-hidden z-10 transition-all duration-100 origin-top-right">
@@ -172,9 +172,9 @@ export function Header() {
                       <Link href="/profile" className="block px-4 py-2 text-sm hover:bg-muted">
                         Mon profil
                       </Link>
-                      <Link href="/settings" className="block px-4 py-2 text-sm hover:bg-muted">
+                      {/* <Link href="/settings" className="block px-4 py-2 text-sm hover:bg-muted">
                         Paramètres
-                      </Link>
+                      </Link> */}
                       <button
                         onClick={() => signOut({ callbackUrl: "/auth/login" })}
                         className="block w-full text-left px-4 py-2 text-sm hover:bg-muted"

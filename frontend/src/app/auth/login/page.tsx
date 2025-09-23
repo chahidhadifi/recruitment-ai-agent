@@ -61,7 +61,7 @@ export default function LoginPage() {
     } catch (error) {
       toast({
         title: "Erreur",
-        description: "Une erreur s&apos;est produite. Veuillez réessayer.",
+        description: "Une erreur s'est produite. Veuillez réessayer.",
         variant: "destructive",
       });
     } finally {
@@ -213,7 +213,7 @@ export default function LoginPage() {
                     }
                   }}
                 >
-                  Connexion en tant qu&apos;Administrateur
+                  Connexion en tant qu'Administrateur
                 </Button>
                 
                 <Button
@@ -298,7 +298,7 @@ export default function LoginPage() {
                 href="/auth/register"
                 className="font-semibold leading-6 text-primary hover:text-primary/80 transition-colors underline-offset-2 hover:underline"
               >
-                S&apos;inscrire
+                S'inscrire
               </Link>
             </p>
           </div>
