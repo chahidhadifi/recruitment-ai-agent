@@ -36,6 +36,29 @@ async def create_tables():
             # Try a simple query to verify database is working
             db.execute("SELECT 1")
             logger.info("Database connection verified after table creation")
+            
+            # Add default admin user if it doesn't exist
+            admin_email = "admin@admin.com"
+            admin_user = db.query(models.User).filter(models.User.email == admin_email).first()
+            if not admin_user:
+                logger.info("Creating default admin user")
+                # Hash the password
+                hashed_password = get_password_hash("admin123")
+                
+                # Create admin user
+                admin_user = models.User(
+                    email=admin_email,
+                    name="Admin",
+                    role=models.UserRole.admin,
+                    status=models.UserStatus.actif,
+                    password=hashed_password
+                )
+                db.add(admin_user)
+                db.commit()
+                logger.info("Default admin user created successfully")
+            else:
+                logger.info("Default admin user already exists")
+                
         except Exception as e:
             logger.error(f"Error verifying database connection: {str(e)}")
             raise

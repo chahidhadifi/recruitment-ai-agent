@@ -33,7 +33,8 @@ export default function NewJobPage() {
     benefits: "",
     desired_candidates: "",
     company_website: "",
-    company_linkedin: ""
+    company_linkedin: "",
+    duration: ""
   });
   
   // Vérifier si l'utilisateur est un recruteur
@@ -221,6 +222,18 @@ export default function NewJobPage() {
                     type="number"
                     placeholder="ex: 5"
                     value={formData.desired_candidates}
+                    onChange={handleChange}
+                  />
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="duration">Durée (en minutes)</Label>
+                  <Input
+                    id="duration"
+                    name="duration"
+                    type="number"
+                    placeholder="ex: 60"
+                    value={formData.duration}
                     onChange={handleChange}
                   />
                 </div>

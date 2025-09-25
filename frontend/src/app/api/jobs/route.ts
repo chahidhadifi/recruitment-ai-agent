@@ -249,7 +249,8 @@ export async function POST(request: NextRequest) {
       recruiter_id: parseInt(session.user.id),
       desired_candidates: jobData.desired_candidates ? parseInt(jobData.desired_candidates) : null,
       company_website: jobData.company_website || null,
-      company_linkedin: jobData.company_linkedin || null
+      company_linkedin: jobData.company_linkedin || null,
+      duration: jobData.duration ? parseInt(jobData.duration) : null
     };
     
     // Envoyer les données à l'API backend

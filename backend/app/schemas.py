@@ -141,6 +141,7 @@ class JobBase(BaseModel):
     company_website: Optional[str] = None
     company_linkedin: Optional[str] = None
     desired_candidates: Optional[int] = None
+    duration: Optional[int] = None  # Durée en minutes
 
 
 class JobCreate(JobBase):
@@ -160,6 +161,7 @@ class JobUpdate(BaseModel):
     company_website: Optional[str] = None
     company_linkedin: Optional[str] = None
     desired_candidates: Optional[int] = None
+    duration: Optional[int] = None
 
 
 class Job(JobBase):
@@ -184,6 +186,8 @@ class ApplicationStatus(str, Enum):
     accepted = "accepted"
     rejected = "rejected"
     analyzed = "analyzed"
+    accepted_after_interview = "accepted_after_interview"
+    rejected_after_interview = "rejected_after_interview"
 
 
 class JobApplicationBase(BaseModel):

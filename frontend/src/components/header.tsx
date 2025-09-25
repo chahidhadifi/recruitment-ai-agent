@@ -17,9 +17,7 @@ const publicLinks = [
   { name: "Offres d'emploi", href: "/jobs" },
   { name: "Aide", href: "/help" },
   { name: "Contact", href: "/contact" },
-  { name: "À propos", href: "/about" },
-  { name: "Test Sync", href: "/test" },
-];
+  { name: "À propos", href: "/about" },];
 
 // Navigation dynamique basée sur le rôle de l'utilisateur
 const navigationItems = {
@@ -35,6 +33,7 @@ const navigationItems = {
     { name: "Accueil", href: "/" },
     // { name: "Tableau de bord", href: "/dashboard" },
     { name: "Entretiens", href: "/interviews" },
+    { name: "Résultats", href: "/recruiter/results" },
     { name: "Offres d'emploi", href: "/jobs" },
     { name: "Aide", href: "/help" },
   ],
