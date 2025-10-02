@@ -28,14 +28,23 @@ export default function MyApplicationsPage() {
   
   // Vérifier si l'utilisateur est un candidat
   const isCandidat = session?.user?.role === "candidat";
-  
+
+
+
+
+    console.log('Session data:', session);
+console.log('User role:', session?.user?.role);
+console.log('User ID:', session?.user?.id);
+
+
+
   // Rediriger si l'utilisateur n'est pas un candidat
   useEffect(() => {
     if (session && !isCandidat) {
       router.push("/");
     }
   }, [session, isCandidat, router]);
-  
+
   // Charger les candidatures depuis l'API
   useEffect(() => {
     const fetchApplications = async () => {
@@ -244,10 +253,8 @@ export default function MyApplicationsPage() {
                           <p className="text-green-700 font-medium">Félicitations ! Votre candidature a été acceptée.</p>
                           <p className="text-green-600 mt-2">Le recruteur vous contactera prochainement pour la suite du processus.</p>
                           <div className="mt-3">
-                            <Button asChild>
-                              <Link href={`/interviews/new?candidate=${session.user.id}`}>
-                                Passer à l'entretien
-                              </Link>
+                            <Button onClick={() => router.push(`/interviews/new?candidate=${session?.user?.id}`)}>
+                              Passer l'entretien
                             </Button>
                           </div>
                         </div>

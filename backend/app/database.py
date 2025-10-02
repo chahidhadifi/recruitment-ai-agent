@@ -1,4 +1,4 @@
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, event
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 import os
@@ -6,6 +6,7 @@ import time
 import logging
 from sqlalchemy.exc import OperationalError
 from sqlalchemy.sql import text
+from urllib.parse import quote_plus
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -18,154 +19,209 @@ DB_HOST = os.getenv("POSTGRES_HOST", "db")
 DB_PORT = os.getenv("POSTGRES_PORT", "5432")
 DB_NAME = os.getenv("POSTGRES_DB", "fastapi_db")
 
-# Construct database URL with proper escaping
-# Use urllib.parse to properly escape special characters in password
-from urllib.parse import quote_plus
+# Properly encode password
 DB_PASSWORD_ENCODED = quote_plus(DB_PASSWORD)
 SQLALCHEMY_DATABASE_URL = f"postgresql://{DB_USER}:{DB_PASSWORD_ENCODED}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
 
-# Also check if DATABASE_URL is directly provided
+# Override with DATABASE_URL if provided
 if os.getenv("DATABASE_URL"):
-    # Parse and encode the password in DATABASE_URL if provided
     db_url = os.getenv("DATABASE_URL")
-    if '://' in db_url and '@' in db_url:
-        prefix, suffix = db_url.split('@', 1)
-        if ':' in prefix:
-            auth_parts = prefix.split(':')
-            if len(auth_parts) >= 3:
-                user_part = auth_parts[1].split('//')[-1]
-                password_part = auth_parts[2]
-                encoded_password = quote_plus(password_part)
-                prefix = f"{auth_parts[0]}://{user_part}:{encoded_password}"
-        SQLALCHEMY_DATABASE_URL = f"{prefix}@{suffix}"
-    else:
+    # Simple validation
+    if '://' in db_url:
         SQLALCHEMY_DATABASE_URL = db_url
+        logger.info("Using DATABASE_URL from environment")
     
 logger.info(f"Connecting to database at {DB_HOST}:{DB_PORT}/{DB_NAME} with user {DB_USER}")
 
-# Log database connection details (without exposing full password)
-db_url_parts = SQLALCHEMY_DATABASE_URL.split('@')
-if len(db_url_parts) > 1:
-    auth_parts = db_url_parts[0].split(':')
-    if len(auth_parts) > 2:
-        # Only show first character of password for security
-        masked_password = auth_parts[2][0] + '*****' if auth_parts[2] else ''
-        logger.info(f"Connecting to database with user: {auth_parts[1].split('//')[1]}, password: {masked_password}, host: {db_url_parts[1]}")
-else:
-    logger.info(f"Database URL format unexpected: {SQLALCHEMY_DATABASE_URL.split(':')[0]}")
+
+def mask_database_url(url: str) -> str:
+    """Mask password in database URL for logging"""
+    if '@' not in url:
+        return url
+    
+    try:
+        prefix, suffix = url.split('@', 1)
+        if '://' in prefix and ':' in prefix:
+            protocol, rest = prefix.split('//', 1)
+            if ':' in rest:
+                user, _ = rest.split(':', 1)
+                return f"{protocol}//{user}:****@{suffix}"
+    except Exception:
+        pass
+    return url.split(':')[0] + "://****"
 
 
-# Create engine with retry logic
-def get_engine(url, max_retries=10, retry_interval=5):
+def create_database_if_not_exists(db_url: str, db_name: str) -> bool:
+    """Create database if it doesn't exist"""
+    try:
+        # Connect to postgres database to create our target database
+        postgres_url = db_url.rsplit('/', 1)[0] + '/postgres'
+        temp_engine = create_engine(
+            postgres_url, 
+            isolation_level='AUTOCOMMIT',
+            pool_pre_ping=True
+        )
+        
+        with temp_engine.connect() as connection:
+            # Check if database exists
+            query = text("SELECT 1 FROM pg_database WHERE datname = :db_name")
+            result = connection.execute(query, {"db_name": db_name})
+            exists = result.fetchone() is not None
+            
+            if not exists:
+                # Create the database
+                connection.execute(text(f'CREATE DATABASE "{db_name}"'))
+                logger.info(f"Successfully created database '{db_name}'")
+                temp_engine.dispose()
+                time.sleep(2)  # Wait for database to be ready
+                return True
+            else:
+                logger.info(f"Database '{db_name}' already exists")
+        
+        temp_engine.dispose()
+        return True
+        
+    except Exception as e:
+        logger.error(f"Failed to create database: {str(e)}")
+        return False
+
+
+def get_engine(url: str, max_retries: int = 10, retry_interval: int = 5):
+    """Create database engine with retry logic"""
+    masked_url = mask_database_url(url)
+    logger.info(f"Attempting to connect to database: {masked_url}")
+    
     retries = 0
     last_error = None
     
-    # Mask password in log
-    masked_url = url
-    if '@' in url:
-        prefix, suffix = url.split('@', 1)
-        if ':' in prefix and '//' in prefix:
-            protocol, rest = prefix.split('//', 1)
-            if ':' in rest:
-                user, password_rest = rest.split(':', 1)
-                if password_rest:
-                    masked_url = f"{protocol}//{user}:****@{suffix}"
-    
-    logger.info(f"Attempting to connect to database with URL: {masked_url}")
-    
     while retries < max_retries:
         try:
-            # Create engine with SQLAlchemy 1.4 syntax
-            engine = create_engine(url)
+            # Create engine with recommended settings
+            engine = create_engine(
+                url,
+                pool_pre_ping=True,  # Verify connections before using them
+                pool_recycle=3600,   # Recycle connections after 1 hour
+                pool_size=5,         # Connection pool size
+                max_overflow=10,     # Max overflow connections
+                echo=False           # Set to True for SQL query logging
+            )
             
             # Test connection
-            connection = engine.connect()
-            connection.execute(text("SELECT 1"))
-            connection.close()
+            with engine.connect() as connection:
+                connection.execute(text("SELECT 1"))
             
             logger.info("Database connection successful")
             return engine
                 
         except OperationalError as e:
-            last_error = e
-            retries += 1
             error_msg = str(e)
             
-            # Check if the error is about the database not existing
-            if "database \"fastapi_db\" does not exist" in error_msg:
+            # Check if database doesn't exist
+            if "does not exist" in error_msg and DB_NAME in error_msg:
                 logger.warning(f"Database '{DB_NAME}' does not exist. Attempting to create it...")
                 
-                # Create a connection to the default 'postgres' database to create our database
-                try:
-                    # Construct a URL to the postgres database
-                    postgres_url = f"postgresql://{DB_USER}:{DB_PASSWORD_ENCODED}@{DB_HOST}:{DB_PORT}/postgres"
-                    # Use AUTOCOMMIT to allow database creation
-                    temp_engine = create_engine(postgres_url, isolation_level='AUTOCOMMIT')
-                    
-                    with temp_engine.connect() as connection:
-                        # Check if database already exists
-                        query = text(f"SELECT 1 FROM pg_database WHERE datname = '{DB_NAME}'")
-                        result = connection.execute(query)
-                        exists = result.fetchone() is not None
-                        
-                        if not exists:
-                            # Create the database
-                            connection.execute(text(f"CREATE DATABASE {DB_NAME}"))
-                            logger.info(f"Successfully created database '{DB_NAME}'")
-                        else:
-                            logger.info(f"Database '{DB_NAME}' already exists")
-                    
-                    # Close the temporary engine
-                    temp_engine.dispose()
-                    # Wait a moment for the database to be available
-                    time.sleep(2)
-                    continue  # Skip the rest of this iteration and retry the main connection
-                    
-                except Exception as create_error:
-                    logger.error(f"Failed to create database: {str(create_error)}")
-                    # Continue with normal retry logic
+                if create_database_if_not_exists(url, DB_NAME):
+                    continue  # Retry connection
+                else:
+                    logger.error("Failed to create database, aborting")
+                    raise
             
-            logger.warning(f"Database connection attempt {retries} failed: {error_msg}")
+            # Regular retry logic for other errors
+            retries += 1
+            last_error = e
+            logger.warning(f"Database connection attempt {retries}/{max_retries} failed: {error_msg}")
+            
             if retries < max_retries:
                 logger.info(f"Retrying in {retry_interval} seconds...")
                 time.sleep(retry_interval)
             else:
-                logger.error(f"Failed to connect to database after {max_retries} attempts. Last error: {error_msg}")
+                logger.error(f"Failed to connect after {max_retries} attempts")
                 raise
                 
         except Exception as e:
-            last_error = e
             retries += 1
-            logger.warning(f"Database connection attempt {retries} failed with unexpected error: {str(e)}")
+            last_error = e
+            logger.warning(f"Unexpected error on attempt {retries}/{max_retries}: {str(e)}")
+            
             if retries < max_retries:
                 logger.info(f"Retrying in {retry_interval} seconds...")
                 time.sleep(retry_interval)
             else:
-                logger.error(f"Failed to connect to database after {max_retries} attempts. Last error: {str(e)}")
+                logger.error(f"Failed to connect after {max_retries} attempts")
                 raise
+    
+    # This shouldn't be reached, but just in case
+    if last_error:
+        raise last_error
 
-# Create engine with foreign key constraints disabled
+
+# Create the engine
 engine = get_engine(SQLALCHEMY_DATABASE_URL)
 
-# Execute raw SQL to disable foreign key constraints
-with engine.connect() as connection:
-    # Set the session_replication_role to 'replica' to disable foreign key constraints
-    connection.execute(text("SET session_replication_role = 'replica';"))
-    # Verify the setting was applied
-    result = connection.execute(text("SHOW session_replication_role;")).fetchone()
-    role = result[0] if result else "unknown"
-    logger.info(f"Foreign key constraints disabled in the database session (role: {role})")
-    if role != "replica":
-        logger.warning("Failed to disable foreign key constraints - this may cause issues with data insertion")
-        
-    # Set this at the database level to ensure it persists for all connections
+# WARNING: Disabling foreign key constraints is dangerous!
+# Only do this if you absolutely need to (e.g., for bulk data loading)
+DISABLE_FOREIGN_KEY_CONSTRAINTS = os.getenv("DISABLE_FK_CONSTRAINTS", "false").lower() == "true"
+
+if DISABLE_FOREIGN_KEY_CONSTRAINTS:
+    logger.warning("⚠️  Foreign key constraints will be DISABLED for all connections!")
+    logger.warning("⚠️  This can lead to data integrity issues. Use with caution!")
+    
+    # Set up event listener to disable FK constraints on every connection
+    @event.listens_for(engine, "connect")
+    def set_session_replication_role(dbapi_conn, connection_record):
+        """Disable foreign key constraints for each new connection"""
+        cursor = dbapi_conn.cursor()
+        cursor.execute("SET session_replication_role = 'replica';")
+        cursor.close()
+        logger.debug("Foreign key constraints disabled for new connection")
+    
+    # Try to set at database level (requires superuser privileges)
     try:
-        connection.execute(text(f"ALTER DATABASE {DB_NAME} SET session_replication_role = 'replica';"))
-        logger.info("Set session_replication_role to 'replica' at database level")
+        with engine.connect() as connection:
+            connection.execute(text(f'ALTER DATABASE "{DB_NAME}" SET session_replication_role = "replica";'))
+            connection.commit()
+            logger.info(f"Set session_replication_role at database level for '{DB_NAME}'")
     except Exception as e:
         logger.warning(f"Could not set session_replication_role at database level: {str(e)}")
-        logger.info("Will rely on session-level settings instead")
+        logger.info("Using connection-level event listener instead")
+else:
+    logger.info("Foreign key constraints are ENABLED (default)")
 
+# Create sessionmaker
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
+# Create declarative base
 Base = declarative_base()
+
+
+# Dependency for FastAPI routes
+def get_db():
+    """Database session dependency for FastAPI"""
+    db = SessionLocal()
+    try:
+        yield db
+    finally:
+        db.close()
+
+
+# Health check function
+def check_database_connection() -> bool:
+    """Check if database is accessible"""
+    try:
+        with engine.connect() as connection:
+            connection.execute(text("SELECT 1"))
+        return True
+    except Exception as e:
+        logger.error(f"Database health check failed: {str(e)}")
+        return False
+
+
+# Initialize database tables
+def init_db():
+    """Create all tables defined in models"""
+    try:
+        Base.metadata.create_all(bind=engine)
+        logger.info("Database tables created successfully")
+    except Exception as e:
+        logger.error(f"Failed to create database tables: {str(e)}")
+        raise

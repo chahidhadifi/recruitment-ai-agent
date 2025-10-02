@@ -12,11 +12,10 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copy application code
 COPY ./app ./app
 
-# Create empty service account file to avoid errors if not mounted
-RUN touch ./app/service-account.json
+# No longer using Alembic for migrations
 
-# Copy Docker-specific .env file
-COPY .env.docker .env
+# Copy environment example file
+COPY .env.example .env
 
 # Expose port
 EXPOSE 8000

@@ -1,19 +1,16 @@
-FROM node:20-alpine
+FROM node:18-alpine
 
 WORKDIR /app
 
-# Install dependencies
-COPY package.json package-lock.json ./
-RUN npm ci
+# Copier package.json et installer les dépendances
+COPY package*.json ./
+RUN npm install
 
-# Copy project files
+# Copier le reste du code (sera remplacé par le bind mount)
 COPY . .
 
-# Copy Docker-specific .env file
-COPY .env.docker .env.local
-
-# Expose the port the app runs on
+# Exposer le port
 EXPOSE 3000
 
-# Start the application in development mode for hot reloading
+# Commande de développement avec hot reload
 CMD ["npm", "run", "dev"]

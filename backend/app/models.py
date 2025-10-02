@@ -55,7 +55,6 @@ class Job(Base):
     company_linkedin = Column(String, nullable=True)
     recruiter_id = Column(Integer, nullable=False)
     desired_candidates = Column(Integer, nullable=True)
-    duration = Column(Integer, nullable=True)  # Durée en minutes
     
     # Relationships
     # recruiter = relationship("RecruiterProfile", back_populates="jobs", primaryjoin="Job.recruiter_id == RecruiterProfile.id")
@@ -69,8 +68,6 @@ class ApplicationStatus(enum.Enum):
     accepted = "accepted"
     rejected = "rejected"
     analyzed = "analyzed"
-    accepted_after_interview = "accepted_after_interview"
-    rejected_after_interview = "rejected_after_interview"
 
 
 class JobApplication(Base):

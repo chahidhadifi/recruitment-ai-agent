@@ -104,7 +104,7 @@ export default function Home() {
                     <p className="italic text-muted-foreground">&laquo;Grâce à cette plateforme, nous avons réduit notre temps de recrutement de 60% tout en améliorant la qualité de nos embauches. Un outil indispensable pour notre équipe RH.&raquo;</p>
                   </div>
                   <div className="mt-4 pt-4 border-t border-border">
-                    <p className="font-semibold">Sophie Martin</p>
+                    <p className="font-semibold">Naima CHOU</p>
                     <p className="text-sm text-muted-foreground">Directrice RH, TechInnovate</p>
                   </div>
                 </div>
